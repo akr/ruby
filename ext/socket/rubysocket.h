@@ -44,6 +44,13 @@
 #  include <netdb.h>
 #endif
 
+#ifdef HAVE_NETPACKET_PACKET_H
+#  include <netpacket/packet.h>
+#endif
+#ifdef HAVE_NET_ETHERNET_H
+#  include <net/ethernet.h>
+#endif
+
 #include <errno.h>
 
 #ifdef HAVE_SYS_UN_H

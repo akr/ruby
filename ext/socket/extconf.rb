@@ -35,6 +35,8 @@ end
   netinet/tcp.h
   netinet/udp.h
   arpa/inet.h
+  netpacket/packet.h
+  net/ethernet.h
   sys/un.h
   ifaddrs.h
   sys/ioctl.h

@@ -1053,6 +1053,61 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
           }
 #endif
 
+#ifdef AF_PACKET
+          case AF_PACKET:
+          {
+            struct sockaddr_ll *addr;
+            char *sep = "";
+            addr = (struct sockaddr_ll *)&rai->addr;
+            if (rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_ll, sll_halen) + sizeof(addr->sll_halen))) {
+                rb_str_catf(ret, "too-short-AF_PACKET-sockaddr(%lu)", (unsigned long)rai->sockaddr_len);
+                break;
+            }
+            if (rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen)) {
+                rb_str_catf(ret, "too-short-AF_PACKET-sockaddr(%lu)", (unsigned long)rai->sockaddr_len);
+                sep = " ";
+            }
+            else if (rai->sockaddr_len > (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen)) {
+                rb_str_catf(ret, "too-long-AF_PACKET-sockaddr(%lu)", (unsigned long)rai->sockaddr_len);
+                sep = " ";
+            }
+            if (offsetof(struct sockaddr_ll, sll_protocol) + sizeof(addr->sll_protocol) <= rai->sockaddr_len) {
+                rb_str_catf(ret, "%sprotocol:%d", sep, addr->sll_protocol);
+                sep = " ";
+            }
+            if (offsetof(struct sockaddr_ll, sll_ifindex) + sizeof(addr->sll_ifindex) <= rai->sockaddr_len) {
+                rb_str_catf(ret, "%sifindex:%d", sep, addr->sll_ifindex);
+                sep = " ";
+            }
+            if (offsetof(struct sockaddr_ll, sll_hatype) + sizeof(addr->sll_hatype) <= rai->sockaddr_len) {
+                rb_str_catf(ret, "%shatype:%d", sep, addr->sll_hatype);
+                sep = " ";
+            }
+            if (offsetof(struct sockaddr_ll, sll_pkttype) + sizeof(addr->sll_pkttype) <= rai->sockaddr_len) {
+                rb_str_catf(ret, "%spkttype:%d", sep, addr->sll_pkttype);
+                sep = " ";
+            }
+            if (rai->sockaddr_len != (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen)) {
+                if (offsetof(struct sockaddr_ll, sll_halen) + sizeof(addr->sll_halen) <= rai->sockaddr_len) {
+                    rb_str_catf(ret, "%shalen:%d", sep, addr->sll_halen);
+                    sep = " ";
+                }
+            }
+            if (offsetof(struct sockaddr_ll, sll_addr) < rai->sockaddr_len) {
+                socklen_t len, i;
+                rb_str_catf(ret, "%shaddr", sep);
+                len = addr->sll_halen;
+                if (rai->sockaddr_len < offsetof(struct sockaddr_ll, sll_addr) + len)
+                    len = rai->sockaddr_len - offsetof(struct sockaddr_ll, sll_addr);
+                for (i = 0; i < len; i++) {
+                    rb_str_catf(ret, ":%02x", addr->sll_addr[i]);
+                }
+                sep = " ";
+            }
+            break;
+          }
+#endif
+
           default:
           {
             ID id = rsock_intern_family(rai->addr.addr.sa_family);
