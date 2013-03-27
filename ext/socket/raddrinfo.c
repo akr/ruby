@@ -969,22 +969,40 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
           {
             struct sockaddr_in *addr;
             int port;
-            if (rai->sockaddr_len < (socklen_t)sizeof(struct sockaddr_in)) {
-                rb_str_catf(ret, "too-short-AF_INET-sockaddr %d bytes", (int)rai->sockaddr_len);
-            }
-            else {
-                addr = &rai->addr.in;
-                rb_str_catf(ret, "%d.%d.%d.%d",
-                            ((unsigned char*)&addr->sin_addr)[0],
-                            ((unsigned char*)&addr->sin_addr)[1],
-                            ((unsigned char*)&addr->sin_addr)[2],
-                            ((unsigned char*)&addr->sin_addr)[3]);
-                port = ntohs(addr->sin_port);
-                if (port)
-                    rb_str_catf(ret, ":%d", port);
-                if ((socklen_t)sizeof(struct sockaddr_in) < rai->sockaddr_len)
-                    rb_str_catf(ret, "(sockaddr %d bytes too long)", (int)(rai->sockaddr_len - sizeof(struct sockaddr_in)));
-            }
+	    addr = &rai->addr.in;
+	    if (((char*)&addr->sin_addr)-(char*)addr+0+1 <= rai->sockaddr_len)
+		rb_str_catf(ret, "%d", ((unsigned char*)&addr->sin_addr)[0]);
+	    else
+		rb_str_cat2(ret, "?");
+	    if (((char*)&addr->sin_addr)-(char*)addr+1+1 <= rai->sockaddr_len)
+		rb_str_catf(ret, ".%d", ((unsigned char*)&addr->sin_addr)[1]);
+	    else
+		rb_str_cat2(ret, ".?");
+	    if (((char*)&addr->sin_addr)-(char*)addr+2+1 <= rai->sockaddr_len)
+		rb_str_catf(ret, ".%d", ((unsigned char*)&addr->sin_addr)[2]);
+	    else
+		rb_str_cat2(ret, ".?");
+	    if (((char*)&addr->sin_addr)-(char*)addr+3+1 <= rai->sockaddr_len)
+		rb_str_catf(ret, ".%d", ((unsigned char*)&addr->sin_addr)[3]);
+	    else
+		rb_str_cat2(ret, ".?");
+
+	    if (((char*)&addr->sin_port)-(char*)addr+sizeof(addr->sin_port) < rai->sockaddr_len) {
+		port = ntohs(addr->sin_port);
+		if (port)
+		    rb_str_catf(ret, ":%d", port);
+	    }
+	    else {
+		rb_str_cat2(ret, ":?");
+	    }
+	    if ((socklen_t)sizeof(struct sockaddr_in) < rai->sockaddr_len)
+		rb_str_catf(ret, " (%d bytes too long for %d bytes sockaddr_in)",
+		  ((int)rai->sockaddr_len - (int)sizeof(struct sockaddr_in)),
+		  (int)sizeof(struct sockaddr_in));
+	    else if ((socklen_t)sizeof(struct sockaddr_in) > rai->sockaddr_len)
+		rb_str_catf(ret, " (%d bytes too short for %d bytes sockaddr_in)",
+		  ((int)sizeof(struct sockaddr_in) - (int)rai->sockaddr_len),
+		  (int)sizeof(struct sockaddr_in));
             break;
           }
 
