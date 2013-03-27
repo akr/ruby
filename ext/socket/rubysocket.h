@@ -94,8 +94,8 @@
 #ifdef HAVE_UCRED_H
 #  include <ucred.h>
 #endif
-#ifdef HAVE_UTIL_H
-#  include <util.h>
+#ifdef HAVE_NET_IF_DL_H
+#  include <net/if_dl.h>
 #endif
 
 #ifndef HAVE_TYPE_SOCKLEN_T
@@ -169,6 +169,9 @@ typedef union {
 #endif
 #ifdef HAVE_TYPE_STRUCT_SOCKADDR_UN
   struct sockaddr_un un;
+#endif
+#ifdef HAVE_TYPE_STRUCT_SOCKADDR_DL
+  struct sockaddr_dl dl; /* AF_LINK */
 #endif
   struct sockaddr_storage storage; 
   char place_holder[2048]; /* sockaddr_storage is not enough for Unix domain sockets on SunOS and Darwin. */

@@ -1115,11 +1115,12 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
 #endif
 
 #ifdef AF_LINK
+	  /* AF_LINK is defined in 4.4BSD derivations since Net2.
+	     link_ntoa is also defined at Net2. */
           case AF_LINK:
 	  {
-	    char buf[4096];
-	    sockaddr_snprintf(buf, sizeof(buf), "LINK %a %I", &rai->addr.addr);
-	    rb_str_cat2(ret, buf);
+	    rb_str_cat2(ret, "LINK ");
+	    rb_str_cat2(ret, link_ntoa(&rai->addr.dl));
             break;
           }
 #endif

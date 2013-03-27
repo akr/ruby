@@ -45,7 +45,7 @@ end
   sys/param.h
   sys/ucred.h
   ucred.h
-  util.h
+  net/if_dl.h
   arpa/nameser.h
   resolv.h
 ].each {|h|
@@ -60,6 +60,8 @@ have_struct_member("struct sockaddr_in", "sin_len", headers) # 4.4BSD
 if have_type("struct sockaddr_un", headers) # POSIX
   have_struct_member("struct sockaddr_un", "sun_len", headers) # 4.4BSD
 end
+
+have_type("struct sockaddr_dl", headers) # AF_LINK address.  4.4BSD since Net2
 
 have_type("struct sockaddr_storage", headers)
 
@@ -85,8 +87,6 @@ have_type("struct ipv6_mreq", headers) # RFC 3493
 
 have_struct_member('struct msghdr', 'msg_control', headers) unless $mswin or $mingw
 have_struct_member('struct msghdr', 'msg_accrights', headers)
-
-have_library("util", "sockaddr_snprintf") # NetBSD
 
 if have_func(test_func, headers)
 
