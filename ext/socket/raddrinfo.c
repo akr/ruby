@@ -959,12 +959,18 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
         rb_str_cat2(ret, "too-short-sockaddr");
     else {
         switch (rai->addr.addr.sa_family) {
+          case AF_UNSPEC:
+	  {
+	    rb_str_cat2(ret, "UNSPEC");
+            break;
+	  }
+
           case AF_INET:
           {
             struct sockaddr_in *addr;
             int port;
             if (rai->sockaddr_len < (socklen_t)sizeof(struct sockaddr_in)) {
-                rb_str_cat2(ret, "too-short-AF_INET-sockaddr");
+                rb_str_catf(ret, "too-short-AF_INET-sockaddr %d bytes", (int)rai->sockaddr_len);
             }
             else {
                 addr = &rai->addr.in;
@@ -990,7 +996,7 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
             int port;
             int error;
             if (rai->sockaddr_len < (socklen_t)sizeof(struct sockaddr_in6)) {
-                rb_str_cat2(ret, "too-short-AF_INET6-sockaddr");
+                rb_str_catf(ret, "too-short-AF_INET6-sockaddr %d bytes", (int)rai->sockaddr_len);
             }
             else {
                 addr = &rai->addr.in6;
@@ -1040,11 +1046,11 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
                 }
                 if (printable_only) { /* only printable, no space */
                     if (s[0] != '/') /* relative path */
-                        rb_str_cat2(ret, "AF_UNIX ");
+                        rb_str_cat2(ret, "UNIX ");
                     rb_str_cat(ret, s, p - s);
                 }
                 else {
-                    rb_str_cat2(ret, "AF_UNIX");
+                    rb_str_cat2(ret, "UNIX");
                     while (s < e)
                         rb_str_catf(ret, ":%02x", (unsigned char)*s++);
                 }
@@ -1104,6 +1110,16 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
                 }
                 sep = " ";
             }
+            break;
+          }
+#endif
+
+#ifdef AF_LINK
+          case AF_LINK:
+	  {
+	    char buf[4096];
+	    sockaddr_snprintf(buf, sizeof(buf), "LINK %a %I", &rai->addr.addr);
+	    rb_str_cat2(ret, buf);
             break;
           }
 #endif

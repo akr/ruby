@@ -94,6 +94,9 @@
 #ifdef HAVE_UCRED_H
 #  include <ucred.h>
 #endif
+#ifdef HAVE_UTIL_H
+#  include <util.h>
+#endif
 
 #ifndef HAVE_TYPE_SOCKLEN_T
 typedef int socklen_t;

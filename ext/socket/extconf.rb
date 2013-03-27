@@ -45,6 +45,7 @@ end
   sys/param.h
   sys/ucred.h
   ucred.h
+  util.h
   arpa/nameser.h
   resolv.h
 ].each {|h|
@@ -84,6 +85,8 @@ have_type("struct ipv6_mreq", headers) # RFC 3493
 
 have_struct_member('struct msghdr', 'msg_control', headers) unless $mswin or $mingw
 have_struct_member('struct msghdr', 'msg_accrights', headers)
+
+have_library("util", "sockaddr_snprintf") # NetBSD
 
 if have_func(test_func, headers)
 
