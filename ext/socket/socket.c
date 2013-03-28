@@ -1560,6 +1560,12 @@ sockaddr_obj(struct sockaddr *addr, socklen_t len)
     return rsock_addrinfo_new(addr, len, addr->sa_family, 0, 0, Qnil, Qnil);
 }
 
+VALUE
+rsock_sockaddr_obj(struct sockaddr *addr, socklen_t len)
+{
+    return sockaddr_obj(addr, len);
+}
+
 #endif
 
 #if defined(HAVE_GETIFADDRS) || (defined(SIOCGLIFCONF) && defined(SIOCGLIFNUM) && !defined(__hpux)) || defined(SIOCGIFCONF) ||  defined(_WIN32)

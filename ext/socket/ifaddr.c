@@ -115,14 +115,71 @@ rsock_getifaddrs(void)
 }
 
 static VALUE
+ifaddr_name(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    return rb_str_new_cstr(ifa->ifa_name);
+}
+
+static VALUE
+ifaddr_flags(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    return UINT2NUM(ifa->ifa_flags);
+}
+
+static VALUE
+ifaddr_addr(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    if (ifa->ifa_addr)
+        return rsock_sockaddr_obj(ifa->ifa_addr, rsock_sockaddr_len(ifa->ifa_addr));
+    return Qnil;
+}
+
+static VALUE
+ifaddr_netmask(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    if (ifa->ifa_netmask)
+        return rsock_sockaddr_obj(ifa->ifa_netmask, rsock_sockaddr_len(ifa->ifa_netmask));
+    return Qnil;
+}
+
+static VALUE
+ifaddr_broadaddr(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    if ((ifa->ifa_flags & IFF_BROADCAST) && ifa->ifa_broadaddr)
+        return rsock_sockaddr_obj(ifa->ifa_broadaddr, rsock_sockaddr_len(ifa->ifa_broadaddr));
+    return Qnil;
+}
+
+static VALUE
+ifaddr_dstaddr(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    if ((ifa->ifa_flags & IFF_POINTOPOINT) && ifa->ifa_dstaddr)
+        return rsock_sockaddr_obj(ifa->ifa_dstaddr, rsock_sockaddr_len(ifa->ifa_dstaddr));
+    return Qnil;
+}
+
+static VALUE
 ifaddr_inspect(VALUE self)
 {
     rb_ifaddr_t *rifaddr = get_ifaddr(self);
     struct ifaddrs *ifa;
     VALUE result;
-    result = rb_str_new_cstr("#<");
 
     ifa = rifaddr->ifaddr;
+
+    result = rb_str_new_cstr("#<");
 
     rb_str_append(result, rb_class_name(CLASS_OF(self)));
     rb_str_cat2(result, " ");
@@ -179,6 +236,12 @@ rsock_init_sockifaddr(void)
      */
     rb_cSockIfaddr = rb_define_class_under(rb_cSocket, "Ifaddr", rb_cData);
     rb_define_method(rb_cSockIfaddr, "inspect", ifaddr_inspect, 0);
+    rb_define_method(rb_cSockIfaddr, "name", ifaddr_name, 0);
+    rb_define_method(rb_cSockIfaddr, "flags", ifaddr_flags, 0);
+    rb_define_method(rb_cSockIfaddr, "addr", ifaddr_addr, 0);
+    rb_define_method(rb_cSockIfaddr, "netmask", ifaddr_netmask, 0);
+    rb_define_method(rb_cSockIfaddr, "broadaddr", ifaddr_broadaddr, 0);
+    rb_define_method(rb_cSockIfaddr, "dstaddr", ifaddr_dstaddr, 0);
 
     rb_define_singleton_method(rb_cSocket, "getifaddrs", socket_s_getifaddrs, 0);
 }
