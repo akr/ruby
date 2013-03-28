@@ -36,7 +36,9 @@ ifaddr_free(void *ptr)
     rb_ifaddr_root_t *root = get_root(ifaddr);
     root->refcount--;
     if (root->refcount == 0) {
+/* fprintf(stderr, "freeifaddrs %lx\n", (unsigned long)root->ary[0].ifaddr); */
         freeifaddrs(root->ary[0].ifaddr);
+        xfree(root);
     }
 }
 
@@ -87,6 +89,7 @@ rsock_getifaddrs(void)
     ret = getifaddrs(&ifaddrs);
     if (ret == -1)
         rb_sys_fail("getifaddrs");
+/* fprintf(stderr, "getifaddrs %lx\n", (unsigned long)ifaddrs); */
 
     numifaddrs = 0;
     for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next)
