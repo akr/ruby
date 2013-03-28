@@ -175,16 +175,54 @@ ifaddr_inspect(VALUE self)
 {
     rb_ifaddr_t *rifaddr = get_ifaddr(self);
     struct ifaddrs *ifa;
+    unsigned int flags;
     VALUE result;
 
     ifa = rifaddr->ifaddr;
+    flags = ifa->ifa_flags;
 
     result = rb_str_new_cstr("#<");
 
     rb_str_append(result, rb_class_name(CLASS_OF(self)));
     rb_str_cat2(result, " ");
     rb_str_cat2(result, ifa->ifa_name);
-    rb_str_catf(result, " %#x", ifa->ifa_flags);
+
+    //rb_str_catf(result, " %#x", ifa->ifa_flags);
+    if (flags) {
+        char *sep = " ";
+#define INSPECT_BIT(bit, name) \
+        if (flags & (bit)) { rb_str_catf(result, "%s" name, sep); flags &= ~(bit); sep = ","; }
+        INSPECT_BIT(IFF_UP, "UP")
+        INSPECT_BIT(IFF_BROADCAST, "BROADCAST")
+        INSPECT_BIT(IFF_DEBUG, "DEBUG")
+        INSPECT_BIT(IFF_LOOPBACK, "LOOPBACK")
+        INSPECT_BIT(IFF_POINTOPOINT, "POINTOPOINT")
+        INSPECT_BIT(IFF_RUNNING, "RUNNING")
+        INSPECT_BIT(IFF_NOARP, "NOARP")
+        INSPECT_BIT(IFF_PROMISC, "PROMISC")
+        INSPECT_BIT(IFF_NOTRAILERS, "NOTRAILERS")
+        INSPECT_BIT(IFF_ALLMULTI, "ALLMULTI")
+        INSPECT_BIT(IFF_MASTER, "MASTER")
+        INSPECT_BIT(IFF_SLAVE, "SLAVE")
+        INSPECT_BIT(IFF_MULTICAST, "MULTICAST")
+        INSPECT_BIT(IFF_PORTSEL, "PORTSEL")
+        INSPECT_BIT(IFF_AUTOMEDIA, "AUTOMEDIA")
+        INSPECT_BIT(IFF_DYNAMIC, "DYNAMIC")
+#ifdef IFF_LOWER_UP
+        INSPECT_BIT(IFF_LOWER_UP, "LOWER_UP")
+#endif
+#ifdef IFF_DORMANT
+        INSPECT_BIT(IFF_DORMANT, "DORMANT")
+#endif
+#ifdef IFF_ECHO
+        INSPECT_BIT(IFF_ECHO, "ECHO")
+#endif
+        if (flags) {
+            rb_str_catf(result, "%s%#x", sep, flags);
+        }
+#undef INSPECT_BIT
+    }
+
     if (ifa->ifa_addr) {
       rb_str_cat2(result, " [");
       rsock_inspect_sockaddr(ifa->ifa_addr,
