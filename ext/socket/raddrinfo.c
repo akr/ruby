@@ -1134,13 +1134,16 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
 
 #ifdef AF_LINK
 	  /* AF_LINK is defined in 4.4BSD derivations since Net2.
-	     link_ntoa is also defined at Net2. */
+	     link_ntoa is also defined at Net2.
+             However Debian GNU/kFreeBSD defines AF_LINK but don't have link_ntoa.  */
+#  ifdef HAVE_LINK_NTOA
           case AF_LINK:
 	  {
 	    rb_str_cat2(ret, "LINK ");
 	    rb_str_cat2(ret, link_ntoa(&rai->addr.dl));
             break;
           }
+#  endif
 #endif
 
           default:

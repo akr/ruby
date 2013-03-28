@@ -115,6 +115,7 @@ EOF
   have_func('inet_ntop(0, (const void *)0, (char *)0, 0)', headers) or
     have_func("inet_ntoa(*(struct in_addr *)NULL)", headers)
   have_func('inet_pton(0, "", (void *)0)', headers) or have_func('inet_aton("", (struct in_addr *)0)', headers)
+  have_func("link_ntoa", headers)
   have_func('getservbyport(0, "")', headers)
   have_func("getifaddrs", headers)
 

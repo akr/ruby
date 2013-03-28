@@ -499,7 +499,7 @@ cloexec_accept(int socket, struct sockaddr *address, socklen_t *address_len)
     if (try_accept4) {
         int flags = 0;
 #ifdef SOCK_CLOEXEC
-        flags |= SOCK_CLOEXEC
+        flags |= SOCK_CLOEXEC;
 #endif
         ret = accept4(socket, address, address_len, flags);
         /* accept4 is available since Linux 2.6.28, glibc 2.10. */
