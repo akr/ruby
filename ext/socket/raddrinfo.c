@@ -1135,15 +1135,58 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
 #ifdef AF_LINK
 	  /* AF_LINK is defined in 4.4BSD derivations since Net2.
 	     link_ntoa is also defined at Net2.
-             However Debian GNU/kFreeBSD defines AF_LINK but don't have link_ntoa.  */
-#  ifdef HAVE_LINK_NTOA
+             However Debian GNU/kFreeBSD defines AF_LINK but
+             don't have link_ntoa.  */
           case AF_LINK:
 	  {
-	    rb_str_cat2(ret, "LINK ");
-	    rb_str_cat2(ret, link_ntoa(&rai->addr.dl));
+#  ifdef HAVE_LINK_NTOA
+	    rb_str_catf(ret, "LINK %s", link_ntoa(&rai->addr.dl));
+#  else
+            struct sockaddr_dl *addr = &rai->addr.dl;
+            char *np = NULL, *ap = NULL, *endp;
+            int nlen = 0, alen = 0;
+            int i, off;
+
+            endp = ((char *)addr) + rai->sockaddr_len;
+
+            rb_str_cat2(ret, "LINK");
+
+            if (offsetof(struct sockaddr_dl, sdl_data) < rai->sockaddr_len) {
+                np = addr->sdl_data;
+                nlen = addr->sdl_nlen;
+                if (endp - np < nlen)
+                    nlen = endp - np;
+            }
+            off = addr->sdl_nlen;
+
+            if (offsetof(struct sockaddr_dl, sdl_data) + off < rai->sockaddr_len) {
+                ap = addr->sdl_data + off;
+                alen = addr->sdl_alen;
+                if (endp - ap < alen)
+                    alen = endp - ap;
+            }
+
+            if (np)
+                rb_str_catf(ret, " %.*s", nlen, np);
+            else
+                rb_str_cat2(ret, " ?");
+
+            if (ap) {
+                for (i = 0; i < alen; i++)
+                    rb_str_catf(ret, "%s%02x", i == 0 ? " " : ":", (unsigned char)ap[i]);
+            }
+
+            if (rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_dl, sdl_nlen) + sizeof(addr->sdl_nlen)) ||
+                rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_dl, sdl_alen) + sizeof(addr->sdl_alen)) ||
+                rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_dl, sdl_slen) + sizeof(addr->sdl_slen)) ||
+                /* longer length is possible behavior because struct sockaddr_dl has "minimum work area, can be larger" as the last field.
+                 * cf. Net2:/usr/src/sys/net/if_dl.h. */
+                rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_dl, sdl_data) + addr->sdl_nlen + addr->sdl_alen + addr->sdl_slen))
+                rb_str_catf(ret, " (%d bytes for %d bytes sockaddr_dl)",
+                    (int)rai->sockaddr_len, (int)sizeof(struct sockaddr_dl));
+#  endif
             break;
           }
-#  endif
 #endif
 
           default:
