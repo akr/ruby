@@ -995,13 +995,9 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
 	    else {
 		rb_str_cat2(ret, ":?");
 	    }
-	    if ((socklen_t)sizeof(struct sockaddr_in) < rai->sockaddr_len)
-		rb_str_catf(ret, " (%d bytes too long for %d bytes sockaddr_in)",
-		  ((int)rai->sockaddr_len - (int)sizeof(struct sockaddr_in)),
-		  (int)sizeof(struct sockaddr_in));
-	    else if ((socklen_t)sizeof(struct sockaddr_in) > rai->sockaddr_len)
-		rb_str_catf(ret, " (%d bytes too short for %d bytes sockaddr_in)",
-		  ((int)sizeof(struct sockaddr_in) - (int)rai->sockaddr_len),
+	    if ((socklen_t)sizeof(struct sockaddr_in) != rai->sockaddr_len)
+		rb_str_catf(ret, " (%d bytes for %d bytes sockaddr_in)",
+		  (int)rai->sockaddr_len,
 		  (int)sizeof(struct sockaddr_in));
             break;
           }
