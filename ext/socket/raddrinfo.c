@@ -1074,6 +1074,7 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
 #endif
 
 #ifdef AF_PACKET
+          /* GNU/Linux */
           case AF_PACKET:
           {
             struct sockaddr_ll *addr;
