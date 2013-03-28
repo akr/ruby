@@ -1139,9 +1139,13 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
              don't have link_ntoa.  */
           case AF_LINK:
 	  {
-#  ifdef HAVE_LINK_NTOA
-	    rb_str_catf(ret, "LINK %s", link_ntoa(&rai->addr.dl));
-#  else
+	    /*
+	     * Bit different format using link_ntoa():
+	     * This doesn't work on Debian GNU/kFreeBSD.
+	     *
+	     * rb_str_catf(ret, "LINK %s", link_ntoa(&rai->addr.dl));
+	     * break;
+	     */
             struct sockaddr_dl *addr = &rai->addr.dl;
             char *np = NULL, *ap = NULL, *endp;
             int nlen = 0, alen = 0;
@@ -1184,7 +1188,6 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
                 rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_dl, sdl_data) + addr->sdl_nlen + addr->sdl_alen + addr->sdl_slen))
                 rb_str_catf(ret, " (%d bytes for %d bytes sockaddr_dl)",
                     (int)rai->sockaddr_len, (int)sizeof(struct sockaddr_dl));
-#  endif
             break;
           }
 #endif
