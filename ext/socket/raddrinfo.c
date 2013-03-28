@@ -1140,8 +1140,9 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
           case AF_LINK:
 	  {
 	    /*
-	     * Bit different format using link_ntoa():
-	     * This doesn't work on Debian GNU/kFreeBSD.
+	     * Simple implementation using link_ntoa():
+	     * This doesn't work on Debian GNU/kFreeBSD 6.0.7 (squeeze).
+             * Also, the format is bit different.
 	     *
 	     * rb_str_catf(ret, "LINK %s", link_ntoa(&rai->addr.dl));
 	     * break;
