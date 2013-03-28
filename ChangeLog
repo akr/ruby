@@ -1,8 +1,74 @@
+Thu Mar 28 07:05:25 2013  Tanaka Akira  <akr@fsij.org>
+
+	* include/ruby/intern.h: Delete redundant inclusions caused by
+	  AC_INCLUDES_DEFAULT in defines.h.
+
+	* include/ruby/defines.h: Ditto.
+
+	* include/ruby/ruby.h: Ditto.
+
+	* include/ruby/st.h: Ditto.
+
+Thu Mar 28 06:51:31 2013  Tanaka Akira  <akr@fsij.org>
+
+	* include/ruby/defines.h: Fix a compilation error on NetBSD,
+	  "type of formal parameter 1 is incomplete" for the rb_thread_wait_for
+	  invocation in rb_file_flock, by including header files as
+	  AC_INCLUDES_DEFAULT of autoconf.
+
+Wed Mar 27 22:09:14 2013  Tanaka Akira  <akr@fsij.org>
+
+	* numeric.c (LONG_MIN_MINUS_ONE_IS_LESS_THAN): New macro.
+	  (LLONG_MIN_MINUS_ONE_IS_LESS_THAN): Ditto.
+	  (rb_num2long): Use LONG_MIN_MINUS_ONE_IS_LESS_THAN.
+	  (rb_num2ulong): Ditto.
+	  (rb_num2ll): Use LLONG_MIN_MINUS_ONE_IS_LESS_THAN.
+	  (rb_num2ull): Ditto.
+
+	* test/-ext-/num2int/test_num2int.rb (assert_num2i_success): Test the
+	  value converted into a Float if Float can represent the value
+	  exactly.
+	  (assert_num2i_error): Ditto.
+
+Wed Mar 27 20:59:47 2013  Tanaka Akira  <akr@fsij.org>
+
+	* test/-ext-/num2int/test_num2int.rb (assert_num2i_success): New
+	  utility method.
+	  (assert_num2i_error): Ditto.
+
+Wed Mar 27 20:37:59 2013  Tanaka Akira  <akr@fsij.org>
+
+	* time.c (num_exact): Use to_r method only if to_int method is
+	  available.
+	  [ruby-core:53764] [Bug #8173] Reported by Hiro Asari.
+
+Wed Mar 27 12:07:40 2013  Tanaka Akira  <akr@fsij.org>
+
+	* test/-ext-/num2int/test_num2int.rb (test_num2ll): test LLONG_MIN,
+	  not LONG_MIN.
+
+Wed Mar 27 12:02:45 2013  Tanaka Akira  <akr@fsij.org>
+
+	* internal.h (TIMET_MAX_PLUS_ONE): definition simplified.
+
+Wed Mar 27 06:39:41 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* lib/mkmf.rb (MAIN_DOES_NOTHING): force to refer symbols for tests
+	  to be preserved.  [ruby-core:53745] [Bug #8169]
+
+Wed Mar 27 05:15:37 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* configure.in (RUBY_REPLACE_TYPE): define SIGNEDNESS_OF_type same as
+	  check_signedness of mkmf.rb.
+
+	* internal.h (TIMET_MAX, TIMET_MIN, TIMET_MAX_PLUS_ONE): use
+	  SIGNEDNESS_OF_TIME_T.
+
 Wed Mar 27 00:28:45 2013  Tanaka Akira  <akr@fsij.org>
 
 	* internal.h (TIMET_MAX_PLUS_ONE): Defined.
 
-	* thread.c (double2timeval): Saturate out-of-range values. 
+	* thread.c (double2timeval): Saturate out-of-range values.
 
 Tue Mar 26 23:41:18 2013  Tanaka Akira  <akr@fsij.org>
 
