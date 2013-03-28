@@ -1521,6 +1521,12 @@ sockaddr_len(struct sockaddr *addr)
     }
 }
 
+socklen_t
+rsock_sockaddr_len(struct sockaddr *addr)
+{
+    return sockaddr_len(addr);
+}
+
 static VALUE
 sockaddr_obj(struct sockaddr *addr, socklen_t len)
 {
@@ -2052,5 +2058,5 @@ Init_socket()
 #endif
 
     rb_define_singleton_method(rb_cSocket, "ip_address_list", socket_s_ip_address_list, 0);
-    rb_define_singleton_method(rb_cSocket, "getifaddrs", socket_s_getifaddrs, 0);
+    rb_define_singleton_method(rb_cSocket, "getifaddrs_ary", socket_s_getifaddrs, 0);
 }

@@ -470,7 +470,8 @@ EOS
     "unixserver.#{$OBJEXT}",
     "option.#{$OBJEXT}",
     "ancdata.#{$OBJEXT}",
-    "raddrinfo.#{$OBJEXT}"
+    "raddrinfo.#{$OBJEXT}",
+    "ifaddr.#{$OBJEXT}"
   ]
 
   if getaddr_info_ok == :wide or
