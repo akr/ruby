@@ -1084,7 +1084,11 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
                 rb_str_catf(ret, " protocol:%d", ntohs(addr->sll_protocol));
             }
             if (offsetof(struct sockaddr_ll, sll_ifindex) + sizeof(addr->sll_ifindex) <= rai->sockaddr_len) {
-                rb_str_catf(ret, " ifindex:%d", addr->sll_ifindex);
+                char buf[IFNAMSIZ];
+                if (if_indextoname(addr->sll_ifindex, buf) == NULL)
+                    rb_str_catf(ret, " ifindex:%d", addr->sll_ifindex);
+                else
+                    rb_str_catf(ret, " %s", buf);
             }
             if (offsetof(struct sockaddr_ll, sll_hatype) + sizeof(addr->sll_hatype) <= rai->sockaddr_len) {
                 rb_str_catf(ret, " hatype:%d", addr->sll_hatype);
