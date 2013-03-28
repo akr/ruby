@@ -1077,53 +1077,53 @@ inspect_sockaddr(VALUE addrinfo, VALUE ret)
           case AF_PACKET:
           {
             struct sockaddr_ll *addr;
-            char *sep = "";
             addr = (struct sockaddr_ll *)&rai->addr;
-            if (rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_ll, sll_halen) + sizeof(addr->sll_halen))) {
-                rb_str_catf(ret, "too-short-AF_PACKET-sockaddr(%lu)", (unsigned long)rai->sockaddr_len);
-                break;
-            }
-            if (rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen)) {
-                rb_str_catf(ret, "too-short-AF_PACKET-sockaddr(%lu)", (unsigned long)rai->sockaddr_len);
-                sep = " ";
-            }
-            else if (rai->sockaddr_len > (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen)) {
-                rb_str_catf(ret, "too-long-AF_PACKET-sockaddr(%lu)", (unsigned long)rai->sockaddr_len);
-                sep = " ";
-            }
+            rb_str_cat2(ret, "PACKET");
+
             if (offsetof(struct sockaddr_ll, sll_protocol) + sizeof(addr->sll_protocol) <= rai->sockaddr_len) {
-                rb_str_catf(ret, "%sprotocol:%d", sep, addr->sll_protocol);
-                sep = " ";
+                rb_str_catf(ret, " protocol:%d", ntohs(addr->sll_protocol));
             }
             if (offsetof(struct sockaddr_ll, sll_ifindex) + sizeof(addr->sll_ifindex) <= rai->sockaddr_len) {
-                rb_str_catf(ret, "%sifindex:%d", sep, addr->sll_ifindex);
-                sep = " ";
+                rb_str_catf(ret, " ifindex:%d", addr->sll_ifindex);
             }
             if (offsetof(struct sockaddr_ll, sll_hatype) + sizeof(addr->sll_hatype) <= rai->sockaddr_len) {
-                rb_str_catf(ret, "%shatype:%d", sep, addr->sll_hatype);
-                sep = " ";
+                rb_str_catf(ret, " hatype:%d", addr->sll_hatype);
             }
             if (offsetof(struct sockaddr_ll, sll_pkttype) + sizeof(addr->sll_pkttype) <= rai->sockaddr_len) {
-                rb_str_catf(ret, "%spkttype:%d", sep, addr->sll_pkttype);
-                sep = " ";
+                if (addr->sll_pkttype == PACKET_HOST)
+                    rb_str_cat2(ret, " HOST");
+                else if (addr->sll_pkttype == PACKET_BROADCAST)
+                    rb_str_cat2(ret, " BROADCAST");
+                else if (addr->sll_pkttype == PACKET_MULTICAST)
+                    rb_str_cat2(ret, " MULTICAST");
+                else if (addr->sll_pkttype == PACKET_OTHERHOST)
+                    rb_str_cat2(ret, " OTHERHOST");
+                else if (addr->sll_pkttype == PACKET_OUTGOING)
+                    rb_str_cat2(ret, " OUTGOING");
+                else
+                    rb_str_catf(ret, " pkttype:%d", addr->sll_pkttype);
             }
             if (rai->sockaddr_len != (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen)) {
                 if (offsetof(struct sockaddr_ll, sll_halen) + sizeof(addr->sll_halen) <= rai->sockaddr_len) {
-                    rb_str_catf(ret, "%shalen:%d", sep, addr->sll_halen);
-                    sep = " ";
+                    rb_str_catf(ret, " halen:%d", addr->sll_halen);
                 }
             }
             if (offsetof(struct sockaddr_ll, sll_addr) < rai->sockaddr_len) {
                 socklen_t len, i;
-                rb_str_catf(ret, "%shaddr", sep);
+                rb_str_cat2(ret, " hwaddr");
                 len = addr->sll_halen;
                 if (rai->sockaddr_len < offsetof(struct sockaddr_ll, sll_addr) + len)
                     len = rai->sockaddr_len - offsetof(struct sockaddr_ll, sll_addr);
                 for (i = 0; i < len; i++) {
                     rb_str_catf(ret, ":%02x", addr->sll_addr[i]);
                 }
-                sep = " ";
             }
+
+            if (rai->sockaddr_len < (socklen_t)(offsetof(struct sockaddr_ll, sll_halen) + sizeof(addr->sll_halen)) ||
+                (socklen_t)(offsetof(struct sockaddr_ll, sll_addr) + addr->sll_halen) != rai->sockaddr_len)
+                rb_str_catf(ret, " (%d bytes for %d bytes sockaddr_ll)",
+                    (int)rai->sockaddr_len, (int)sizeof(struct sockaddr_ll));
+
             break;
           }
 #endif
