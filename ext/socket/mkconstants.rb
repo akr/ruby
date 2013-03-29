@@ -704,61 +704,61 @@ LOCAL_PEERCRED	nil	Retrieve peer credentials
 LOCAL_CREDS	nil	Pass credentials to receiver
 LOCAL_CONNWAIT	nil	Connect blocks until accepted
 
-IFF_802_1Q_VLAN      nil 802_1Q_VLAN
-IFF_ALLMULTI         nil ALLMULTI
-IFF_ALTPHYS          nil ALTPHYS
-IFF_AUTOMEDIA        nil AUTOMEDIA
-IFF_BONDING          nil BONDING
-IFF_BRIDGE_PORT      nil BRIDGE_PORT
-IFF_BROADCAST        nil BROADCAST
-IFF_CANTCHANGE       nil CANTCHANGE
-IFF_CANTCONFIG       nil CANTCONFIG
-IFF_DEBUG            nil DEBUG
-IFF_DISABLE_NETPOLL  nil DISABLE_NETPOLL
-IFF_DONT_BRIDGE      nil DONT_BRIDGE
-IFF_DORMANT          nil DORMANT
-IFF_DRV_OACTIVE      nil DRV_OACTIVE
-IFF_DRV_RUNNING      nil DRV_RUNNING
-IFF_DYING            nil DYING
-IFF_DYNAMIC          nil DYNAMIC
-IFF_EBRIDGE          nil EBRIDGE
-IFF_ECHO             nil ECHO
-IFF_ISATAP           nil ISATAP
-IFF_LINK0            nil LINK0
-IFF_LINK1            nil LINK1
-IFF_LINK2            nil LINK2
-IFF_LIVE_ADDR_CHANGE nil LIVE_ADDR_CHANGE
-IFF_LOOPBACK         nil LOOPBACK
-IFF_LOWER_UP         nil LOWER_UP
-IFF_MACVLAN_PORT     nil MACVLAN_PORT
-IFF_MASTER           nil MASTER
-IFF_MASTER_8023AD    nil MASTER_8023AD
-IFF_MASTER_ALB       nil MASTER_ALB
-IFF_MASTER_ARPMON    nil MASTER_ARPMON
-IFF_MONITOR          nil MONITOR
-IFF_MULTICAST        nil MULTICAST
-IFF_NOARP            nil NOARP
-IFF_NOTRAILERS       nil NOTRAILERS
-IFF_OACTIVE          nil OACTIVE
-IFF_OVS_DATAPATH     nil OVS_DATAPATH
-IFF_POINTOPOINT      nil POINTOPOINT
-IFF_PORTSEL          nil PORTSEL
-IFF_PPROMISC         nil PPROMISC
-IFF_PROMISC          nil PROMISC
-IFF_RENAMING         nil RENAMING
-IFF_ROUTE            nil ROUTE
-IFF_RUNNING          nil RUNNING
-IFF_SIMPLEX          nil SIMPLEX
-IFF_SLAVE            nil SLAVE
-IFF_SLAVE_INACTIVE   nil SLAVE_INACTIVE
-IFF_SLAVE_NEEDARP    nil SLAVE_NEEDARP
-IFF_SMART            nil SMART
-IFF_STATICARP        nil STATICARP
-IFF_SUPP_NOFCS       nil SUPP_NOFCS
-IFF_TEAM_PORT        nil TEAM_PORT
-IFF_TX_SKB_SHARING   nil TX_SKB_SHARING
-IFF_UNICAST_FLT      nil UNICAST_FLT
-IFF_UP               nil UP
-IFF_VOLATILE         nil VOLATILE
-IFF_WAN_HDLC         nil WAN_HDLC
-IFF_XMIT_DST_RELEASE nil XMIT_DST_RELEASE
+IFF_802_1Q_VLAN      nil 802.1Q VLAN device
+IFF_ALLMULTI         nil receive all multicast packets
+IFF_ALTPHYS          nil use alternate physical connection
+IFF_AUTOMEDIA        nil auto media select active
+IFF_BONDING          nil bonding master or slave
+IFF_BRIDGE_PORT      nil device used as bridge port
+IFF_BROADCAST        nil broadcast address valid
+IFF_CANTCONFIG       nil unconfigurable using ioctl(2)
+IFF_DEBUG            nil turn on debugging
+IFF_DISABLE_NETPOLL  nil disable netpoll at run-time
+IFF_DONT_BRIDGE      nil disallow bridging this ether dev
+IFF_DORMANT          nil driver signals dormant
+IFF_DRV_OACTIVE      nil tx hardware queue is full
+IFF_DRV_RUNNING      nil resources allocated
+IFF_DYING            nil interface is winding down
+IFF_DYNAMIC          nil dialup device with changing addresses
+IFF_EBRIDGE          nil ethernet bridging device
+IFF_ECHO             nil echo sent packets
+IFF_ISATAP           nil ISATAP interface (RFC4214)
+IFF_LINK0            nil per link layer defined bit 0
+IFF_LINK1            nil per link layer defined bit 1
+IFF_LINK2            nil per link layer defined bit 2
+IFF_LIVE_ADDR_CHANGE nil hardware address change when it's running
+IFF_LOOPBACK         nil loopback net
+IFF_LOWER_UP         nil driver signals L1 up
+IFF_MACVLAN_PORT     nil device used as macvlan port
+IFF_MASTER           nil master of a load balancer
+IFF_MASTER_8023AD    nil bonding master, 802.3ad.
+IFF_MASTER_ALB       nil bonding master, balance-alb.
+IFF_MASTER_ARPMON    nil bonding master, ARP mon in use
+IFF_MONITOR          nil user-requested monitor mode
+IFF_MULTICAST        nil supports multicast
+IFF_NOARP            nil no address resolution protocol
+IFF_NOTRAILERS       nil avoid use of trailers
+IFF_OACTIVE          nil transmission in progress
+IFF_OVS_DATAPATH     nil device used as Open vSwitch datapath port
+IFF_POINTOPOINT      nil point-to-point link
+IFF_PORTSEL          nil can set media type
+IFF_PPROMISC         nil user-requested promisc mode
+IFF_PROMISC          nil receive all packets
+IFF_RENAMING         nil interface is being renamed
+IFF_ROUTE            nil routing entry installed
+IFF_RUNNING          nil resources allocated
+IFF_SIMPLEX          nil can't hear own transmissions
+IFF_SLAVE            nil slave of a load balancer
+IFF_SLAVE_INACTIVE   nil bonding slave not the curr. active
+IFF_SLAVE_NEEDARP    nil need ARPs for validation
+IFF_SMART            nil interface manages own routes
+IFF_STATICARP        nil static ARP
+IFF_SUPP_NOFCS       nil sending custom FCS
+IFF_TEAM_PORT        nil used as team port
+IFF_TX_SKB_SHARING   nil sharing skbs on transmit
+IFF_UNICAST_FLT      nil unicast filtering
+IFF_UP               nil interface is up
+IFF_WAN_HDLC         nil WAN HDLC device
+IFF_XMIT_DST_RELEASE nil dev_hard_start_xmit() is allowed to release skb->dst
+IFF_VOLATILE         nil volatile flags
+IFF_CANTCHANGE       nil flags not changeable
