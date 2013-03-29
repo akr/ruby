@@ -170,16 +170,83 @@ ifaddr_dstaddr(VALUE self)
     return Qnil;
 }
 
+static void
+ifaddr_inspect_flags(unsigned int flags, VALUE result)
+{
+    char *sep = " ";
+#define INSPECT_BIT(bit, name) \
+    if (flags & (bit)) { rb_str_catf(result, "%s" name, sep); flags &= ~(bit); sep = ","; }
+#ifdef IFF_UP
+    INSPECT_BIT(IFF_UP, "UP")
+#endif
+#ifdef IFF_BROADCAST
+    INSPECT_BIT(IFF_BROADCAST, "BROADCAST")
+#endif
+#ifdef IFF_DEBUG
+    INSPECT_BIT(IFF_DEBUG, "DEBUG")
+#endif
+#ifdef IFF_LOOPBACK
+    INSPECT_BIT(IFF_LOOPBACK, "LOOPBACK")
+#endif
+#ifdef IFF_POINTOPOINT
+    INSPECT_BIT(IFF_POINTOPOINT, "POINTOPOINT")
+#endif
+#ifdef IFF_RUNNING
+    INSPECT_BIT(IFF_RUNNING, "RUNNING")
+#endif
+#ifdef IFF_NOARP
+    INSPECT_BIT(IFF_NOARP, "NOARP")
+#endif
+#ifdef IFF_PROMISC
+    INSPECT_BIT(IFF_PROMISC, "PROMISC")
+#endif
+#ifdef IFF_NOTRAILERS
+    INSPECT_BIT(IFF_NOTRAILERS, "NOTRAILERS")
+#endif
+#ifdef IFF_ALLMULTI
+    INSPECT_BIT(IFF_ALLMULTI, "ALLMULTI")
+#endif
+#ifdef IFF_MASTER
+    INSPECT_BIT(IFF_MASTER, "MASTER")
+#endif
+#ifdef IFF_SLAVE
+    INSPECT_BIT(IFF_SLAVE, "SLAVE")
+#endif
+#ifdef IFF_MULTICAST
+    INSPECT_BIT(IFF_MULTICAST, "MULTICAST")
+#endif
+#ifdef IFF_PORTSEL
+    INSPECT_BIT(IFF_PORTSEL, "PORTSEL")
+#endif
+#ifdef IFF_AUTOMEDIA
+    INSPECT_BIT(IFF_AUTOMEDIA, "AUTOMEDIA")
+#endif
+#ifdef IFF_DYNAMIC
+    INSPECT_BIT(IFF_DYNAMIC, "DYNAMIC")
+#endif
+#ifdef IFF_LOWER_UP
+    INSPECT_BIT(IFF_LOWER_UP, "LOWER_UP")
+#endif
+#ifdef IFF_DORMANT
+    INSPECT_BIT(IFF_DORMANT, "DORMANT")
+#endif
+#ifdef IFF_ECHO
+    INSPECT_BIT(IFF_ECHO, "ECHO")
+#endif
+#undef INSPECT_BIT
+    if (flags) {
+        rb_str_catf(result, "%s%#x", sep, flags);
+    }
+}
+
 static VALUE
 ifaddr_inspect(VALUE self)
 {
     rb_ifaddr_t *rifaddr = get_ifaddr(self);
     struct ifaddrs *ifa;
-    unsigned int flags;
     VALUE result;
 
     ifa = rifaddr->ifaddr;
-    flags = ifa->ifa_flags;
 
     result = rb_str_new_cstr("#<");
 
@@ -187,41 +254,8 @@ ifaddr_inspect(VALUE self)
     rb_str_cat2(result, " ");
     rb_str_cat2(result, ifa->ifa_name);
 
-    //rb_str_catf(result, " %#x", ifa->ifa_flags);
-    if (flags) {
-        char *sep = " ";
-#define INSPECT_BIT(bit, name) \
-        if (flags & (bit)) { rb_str_catf(result, "%s" name, sep); flags &= ~(bit); sep = ","; }
-        INSPECT_BIT(IFF_UP, "UP")
-        INSPECT_BIT(IFF_BROADCAST, "BROADCAST")
-        INSPECT_BIT(IFF_DEBUG, "DEBUG")
-        INSPECT_BIT(IFF_LOOPBACK, "LOOPBACK")
-        INSPECT_BIT(IFF_POINTOPOINT, "POINTOPOINT")
-        INSPECT_BIT(IFF_RUNNING, "RUNNING")
-        INSPECT_BIT(IFF_NOARP, "NOARP")
-        INSPECT_BIT(IFF_PROMISC, "PROMISC")
-        INSPECT_BIT(IFF_NOTRAILERS, "NOTRAILERS")
-        INSPECT_BIT(IFF_ALLMULTI, "ALLMULTI")
-        INSPECT_BIT(IFF_MASTER, "MASTER")
-        INSPECT_BIT(IFF_SLAVE, "SLAVE")
-        INSPECT_BIT(IFF_MULTICAST, "MULTICAST")
-        INSPECT_BIT(IFF_PORTSEL, "PORTSEL")
-        INSPECT_BIT(IFF_AUTOMEDIA, "AUTOMEDIA")
-        INSPECT_BIT(IFF_DYNAMIC, "DYNAMIC")
-#ifdef IFF_LOWER_UP
-        INSPECT_BIT(IFF_LOWER_UP, "LOWER_UP")
-#endif
-#ifdef IFF_DORMANT
-        INSPECT_BIT(IFF_DORMANT, "DORMANT")
-#endif
-#ifdef IFF_ECHO
-        INSPECT_BIT(IFF_ECHO, "ECHO")
-#endif
-        if (flags) {
-            rb_str_catf(result, "%s%#x", sep, flags);
-        }
-#undef INSPECT_BIT
-    }
+    if (ifa->ifa_flags)
+        ifaddr_inspect_flags(ifa->ifa_flags, result);
 
     if (ifa->ifa_addr) {
       rb_str_cat2(result, " [");
