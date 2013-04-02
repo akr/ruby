@@ -1323,6 +1323,10 @@ module MiniTest
           end
           trap 'INFO', 'DEFAULT' if SUPPORTS_INFO_SIGNAL
         end
+        if !(live_tempfiles = ObjectSpace.each_object(Tempfile).find_all {|t| t.path }).empty?
+          puts nil, "after #{self.class}\##{self.__name__}", *live_tempfiles.map {|t| t.inspect }
+          live_tempfiles.each {|t| t.unlink }
+        end
         result
       end
 
