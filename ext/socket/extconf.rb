@@ -411,7 +411,7 @@ EOF
   have_func('inet_pton(0, "", (void *)0)', headers) or
     have_func('inet_aton("", (struct in_addr *)0)', headers)
   have_func('getservbyport(0, "")', headers)
-  have_func("getifaddrs((struct ifaddrs **)NULL)", headers)
+  have_getifaddrs = have_func("getifaddrs((struct ifaddrs **)NULL)", headers)
 
   have_func("getpeereid", headers)
 
@@ -556,8 +556,9 @@ EOS
     "option.#{$OBJEXT}",
     "ancdata.#{$OBJEXT}",
     "raddrinfo.#{$OBJEXT}",
-    "ifaddr.#{$OBJEXT}"
   ]
+
+  $objs << "ifaddr.#{$OBJEXT}" if have_getifaddrs
 
   if getaddr_info_ok == :wide
     if !have_type("struct in6_addr", headers) and have_type("struct in_addr6", headers)
