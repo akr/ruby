@@ -121,6 +121,18 @@ ifaddr_name(VALUE self)
 }
 
 static VALUE
+ifaddr_ifindex(VALUE self)
+{
+    rb_ifaddr_t *rifaddr = get_ifaddr(self);
+    struct ifaddrs *ifa = rifaddr->ifaddr;
+    unsigned int ifindex = if_nametoindex(ifa->ifa_name);
+    if (ifindex == 0) {
+        rb_raise(rb_eArgError, "invalid interface name: %s", ifa->ifa_name);
+    }
+    return UINT2NUM(ifindex);
+}
+
+static VALUE
 ifaddr_flags(VALUE self)
 {
     rb_ifaddr_t *rifaddr = get_ifaddr(self);
@@ -307,6 +319,7 @@ rsock_init_sockifaddr(void)
     rb_cSockIfaddr = rb_define_class_under(rb_cSocket, "Ifaddr", rb_cData);
     rb_define_method(rb_cSockIfaddr, "inspect", ifaddr_inspect, 0);
     rb_define_method(rb_cSockIfaddr, "name", ifaddr_name, 0);
+    rb_define_method(rb_cSockIfaddr, "ifindex", ifaddr_ifindex, 0);
     rb_define_method(rb_cSockIfaddr, "flags", ifaddr_flags, 0);
     rb_define_method(rb_cSockIfaddr, "addr", ifaddr_addr, 0);
     rb_define_method(rb_cSockIfaddr, "netmask", ifaddr_netmask, 0);
