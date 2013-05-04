@@ -362,7 +362,9 @@ ifaddr_inspect(VALUE self)
     rb_str_cat2(result, ">");
     return result;
 }
+#endif
 
+#ifdef HAVE_GETIFADDRS
 /*
  * call-seq:
  *   Socket.getifaddrs => [ifaddr1, ...]
@@ -407,6 +409,8 @@ socket_s_getifaddrs(VALUE self)
 {
     return rsock_getifaddrs();
 }
+#else
+#define socket_s_getifaddrs rb_f_notimplement
 #endif
 
 void
@@ -427,7 +431,7 @@ rsock_init_sockifaddr(void)
     rb_define_method(rb_cSockIfaddr, "netmask", ifaddr_netmask, 0);
     rb_define_method(rb_cSockIfaddr, "broadaddr", ifaddr_broadaddr, 0);
     rb_define_method(rb_cSockIfaddr, "dstaddr", ifaddr_dstaddr, 0);
+#endif
 
     rb_define_singleton_method(rb_cSocket, "getifaddrs", socket_s_getifaddrs, 0);
-#endif
 }
