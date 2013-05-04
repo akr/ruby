@@ -1946,42 +1946,6 @@ socket_s_ip_address_list(VALUE self)
 #define socket_s_ip_address_list rb_f_notimplement
 #endif
 
-#if defined(HAVE_GETIFADDRS)
-static VALUE
-socket_s_getifaddrs(VALUE self)
-{
-#if defined(HAVE_GETIFADDRS)
-    struct ifaddrs *ifp = NULL;
-    struct ifaddrs *p;
-    int ret;
-    VALUE list;
-
-    ret = getifaddrs(&ifp);
-    if (ret == -1) {
-        rb_sys_fail("getifaddrs");
-    }
-
-    list = rb_ary_new();
-    for (p = ifp; p; p = p->ifa_next) {
-        rb_ary_push(list,
-            rb_ary_new3(6,
-                p->ifa_name == NULL ? Qnil : rb_str_new2(p->ifa_name),
-                UINT2NUM(p->ifa_flags),
-                p->ifa_addr == NULL ? Qnil : sockaddr_obj(p->ifa_addr, sockaddr_len(p->ifa_addr)),
-                p->ifa_netmask == NULL ? Qnil : sockaddr_obj(p->ifa_netmask, sockaddr_len(p->ifa_netmask)),
-                p->ifa_broadaddr == NULL ? Qnil : sockaddr_obj(p->ifa_broadaddr, sockaddr_len(p->ifa_broadaddr)),
-                ULONG2NUM((unsigned long)p->ifa_data)));
-    }
-
-    freeifaddrs(ifp);
-
-    return list;
-#endif
-}
-#else
-#define socket_s_getifaddrs rb_f_notimplement
-#endif
-
 void
 Init_socket()
 {
@@ -2137,5 +2101,4 @@ Init_socket()
 #endif
 
     rb_define_singleton_method(rb_cSocket, "ip_address_list", socket_s_ip_address_list, 0);
-    rb_define_singleton_method(rb_cSocket, "getifaddrs_ary", socket_s_getifaddrs, 0);
 }
