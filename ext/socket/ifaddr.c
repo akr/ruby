@@ -112,6 +112,13 @@ rsock_getifaddrs(void)
     return result;
 }
 
+/*
+ * call-seq:
+ *   getifaddr.name => string
+ *
+ * Returns the interface name of _getifaddr_.
+ */
+
 static VALUE
 ifaddr_name(VALUE self)
 {
@@ -119,6 +126,13 @@ ifaddr_name(VALUE self)
     struct ifaddrs *ifa = rifaddr->ifaddr;
     return rb_str_new_cstr(ifa->ifa_name);
 }
+
+/*
+ * call-seq:
+ *   getifaddr.ifindex => integer
+ *
+ * Returns the interface index of _getifaddr_.
+ */
 
 static VALUE
 ifaddr_ifindex(VALUE self)
@@ -132,6 +146,13 @@ ifaddr_ifindex(VALUE self)
     return UINT2NUM(ifindex);
 }
 
+/*
+ * call-seq:
+ *   getifaddr.flags => integer
+ *
+ * Returns the flags of _getifaddr_.
+ */
+
 static VALUE
 ifaddr_flags(VALUE self)
 {
@@ -139,6 +160,14 @@ ifaddr_flags(VALUE self)
     struct ifaddrs *ifa = rifaddr->ifaddr;
     return UINT2NUM(ifa->ifa_flags);
 }
+
+/*
+ * call-seq:
+ *   getifaddr.addr => addrinfo
+ *
+ * Returns the address of _getifaddr_.
+ * nil is returned if address is not available in _getifaddr_.
+ */
 
 static VALUE
 ifaddr_addr(VALUE self)
@@ -150,6 +179,14 @@ ifaddr_addr(VALUE self)
     return Qnil;
 }
 
+/*
+ * call-seq:
+ *   getifaddr.netmask => addrinfo
+ *
+ * Returns the netmask address of _getifaddr_.
+ * nil is returned if netmask is not available in _getifaddr_.
+ */
+
 static VALUE
 ifaddr_netmask(VALUE self)
 {
@@ -160,6 +197,14 @@ ifaddr_netmask(VALUE self)
     return Qnil;
 }
 
+/*
+ * call-seq:
+ *   getifaddr.broadaddr => addrinfo
+ *
+ * Returns the broadcast address of _getifaddr_.
+ * nil is returned if the flags doesn't have IFF_BROADCAST.
+ */
+
 static VALUE
 ifaddr_broadaddr(VALUE self)
 {
@@ -169,6 +214,14 @@ ifaddr_broadaddr(VALUE self)
         return rsock_sockaddr_obj(ifa->ifa_broadaddr, rsock_sockaddr_len(ifa->ifa_broadaddr));
     return Qnil;
 }
+
+/*
+ * call-seq:
+ *   getifaddr.dstaddr => addrinfo
+ *
+ * Returns the destination address of _getifaddr_.
+ * nil is returned if the flags doesn't have IFF_POINTOPOINT.
+ */
 
 static VALUE
 ifaddr_dstaddr(VALUE self)
@@ -249,6 +302,13 @@ ifaddr_inspect_flags(unsigned int flags, VALUE result)
     }
 }
 
+/*
+ * call-seq:
+ *   getifaddr.inspect => string
+ *
+ * Returns a string to show contents of _getifaddr_.
+ */
+
 static VALUE
 ifaddr_inspect(VALUE self)
 {
@@ -301,6 +361,15 @@ ifaddr_inspect(VALUE self)
     rb_str_cat2(result, ">");
     return result;
 }
+
+/*
+ * call-seq:
+ *   Socket.getifaddrs => [ifaddr1, ...]
+ *
+ * Returns an array of interface addresses.
+ * An element of the array is an instance of Socket::Ifaddr.
+ *
+ */
 
 static VALUE
 socket_s_getifaddrs(VALUE self)
