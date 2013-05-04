@@ -1,5 +1,6 @@
 #include "rubysocket.h"
 
+#ifdef HAVE_GETIFADDRS
 VALUE rb_cSockIfaddr;
 
 typedef struct rb_ifaddr_tag rb_ifaddr_t;
@@ -406,10 +407,12 @@ socket_s_getifaddrs(VALUE self)
 {
     return rsock_getifaddrs();
 }
+#endif
 
 void
 rsock_init_sockifaddr(void)
 {
+#ifdef HAVE_GETIFADDRS
     /*
      * Document-class: Socket::Ifaddr
      *
@@ -426,4 +429,5 @@ rsock_init_sockifaddr(void)
     rb_define_method(rb_cSockIfaddr, "dstaddr", ifaddr_dstaddr, 0);
 
     rb_define_singleton_method(rb_cSocket, "getifaddrs", socket_s_getifaddrs, 0);
+#endif
 }

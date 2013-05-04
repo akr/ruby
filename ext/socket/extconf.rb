@@ -556,9 +556,9 @@ EOS
     "option.#{$OBJEXT}",
     "ancdata.#{$OBJEXT}",
     "raddrinfo.#{$OBJEXT}",
+    "ifaddr.#{$OBJEXT}"
   ]
 
-  $objs << "ifaddr.#{$OBJEXT}" if have_getifaddrs
 
   if getaddr_info_ok == :wide
     if !have_type("struct in6_addr", headers) and have_type("struct in_addr6", headers)
