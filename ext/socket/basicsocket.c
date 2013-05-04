@@ -80,7 +80,7 @@ bsock_shutdown(int argc, VALUE *argv, VALUE sock)
     }
     GetOpenFile(sock, fptr);
     if (shutdown(fptr->fd, how) == -1)
-	rb_sys_fail(0);
+	rb_sys_fail("shutdown(2)");
 
     return INT2FIX(0);
 }
@@ -243,13 +243,13 @@ bsock_setsockopt(int argc, VALUE *argv, VALUE sock)
       default:
 	StringValue(val);
 	v = RSTRING_PTR(val);
-	vlen = RSTRING_LENINT(val);
+	vlen = RSTRING_SOCKLEN(val);
 	break;
     }
 
     rb_io_check_closed(fptr);
     if (setsockopt(fptr->fd, level, option, v, vlen) < 0)
-	rb_sys_fail_path(fptr->pathv);
+        rsock_sys_fail_path("setsockopt(2)", fptr->pathv);
 
     return INT2FIX(0);
 }
@@ -330,7 +330,7 @@ bsock_getsockopt(VALUE sock, VALUE lev, VALUE optname)
     rb_io_check_closed(fptr);
 
     if (getsockopt(fptr->fd, level, option, buf, &len) < 0)
-	rb_sys_fail_path(fptr->pathv);
+	rsock_sys_fail_path("getsockopt(2)", fptr->pathv);
 
     return rsock_sockopt_new(family, level, option, rb_str_new(buf, len));
 }
@@ -429,7 +429,7 @@ bsock_getpeereid(VALUE self)
     gid_t egid;
     GetOpenFile(self, fptr);
     if (getpeereid(fptr->fd, &euid, &egid) == -1)
-	rb_sys_fail("getpeereid");
+	rb_sys_fail("getpeereid(3)");
     return rb_assoc_new(UIDT2NUM(euid), GIDT2NUM(egid));
 #elif defined(SO_PEERCRED) /* GNU/Linux */
     rb_io_t *fptr;
@@ -445,7 +445,7 @@ bsock_getpeereid(VALUE self)
     VALUE ret;
     GetOpenFile(self, fptr);
     if (getpeerucred(fptr->fd, &uc) == -1)
-	rb_sys_fail("getpeerucred");
+	rb_sys_fail("getpeerucred(3C)");
     ret = rb_assoc_new(UIDT2NUM(ucred_geteuid(uc)), GIDT2NUM(ucred_getegid(uc)));
     ucred_free(uc);
     return ret;
@@ -555,7 +555,7 @@ rsock_bsock_send(int argc, VALUE *argv, VALUE sock)
 	SockAddrStringValue(to);
 	to = rb_str_new4(to);
 	arg.to = (struct sockaddr *)RSTRING_PTR(to);
-	arg.tolen = (socklen_t)RSTRING_LENINT(to);
+	arg.tolen = RSTRING_SOCKLEN(to);
 	func = rsock_sendto_blocking;
     }
     else {

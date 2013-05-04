@@ -238,7 +238,7 @@ class CGI
         arr.each {|c| buf << "Set-Cookie: #{c}#{EOL}" }
       when Hash
         hash = cookie
-        hash.each {|name, c| buf << "Set-Cookie: #{c}#{EOL}" }
+        hash.each_value {|c| buf << "Set-Cookie: #{c}#{EOL}" }
       end
     end
     if @output_cookies
@@ -832,29 +832,23 @@ class CGI
     when "html3"
       require 'cgi/html'
       extend Html3
-      element_init()
       extend HtmlExtension
     when "html4"
       require 'cgi/html'
       extend Html4
-      element_init()
       extend HtmlExtension
     when "html4Tr"
       require 'cgi/html'
       extend Html4Tr
-      element_init()
       extend HtmlExtension
     when "html4Fr"
       require 'cgi/html'
       extend Html4Tr
-      element_init()
       extend Html4Fr
-      element_init()
       extend HtmlExtension
     when "html5"
       require 'cgi/html'
       extend Html5
-      element_init()
       extend HtmlExtension
     end
   end

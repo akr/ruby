@@ -18,24 +18,75 @@ with all sufficient information, see the ChangeLog file.
   * added environment variable:
     * RUBY_HEAP_SLOTS_GROWTH_FACTOR: growth rate of the heap.
 
+* IO
+  * extended methods:
+    * IO#seek accepts symbols (:CUR, :END, :SET) for 2nd argument.
+
 * Mutex
   * misc
     * Mutex#owned? is no longer experimental.
+
+* String
+  * New methods:
+    * added String#scrub to verify and fix invalid byte sequence.
+  * extended methods:
+    * If invalid: :replace is specified for String#encode, replace
+      invalid byte sequence even if the destination encoding equals to
+      the source encoding.
+
+* pack/unpack (Array/String)
+  * Q! and q! directives for long long type if platform has the type.
 
 === Core classes compatibility issues (excluding feature bug fixes)
 
 * Module#ancestors
 
-  The ancestors of a singleton class now include that singleton class.
+  The ancestors of a singleton class now include singleton classes,
+  in particular itself.
 
 === Stdlib updates (outstanding ones only)
 
+* Matrix
+  * Added Vector#cross_product.
+
 * Net::SMTP
-  * Added Net::SMTP#rset to implement the RSET comamnd
+  * Added Net::SMTP#rset to implement the RSET command
+
+* Pathname
+  * New methods:
+    * Pathname#write
+    * Pathname#binwrite
+
+* OpenSSL::BN
+  * extended methods:
+    * OpenSSL::BN.new allows Fixnum/Bignum argument.
+
+* open-uri
+  * Support multiple fields with same field name (like Set-Cookie).
+
+* Resolv
+  * New methods:
+    * Resolv::DNS.fetch_resource
+  * One-shot multicast DNS support
+  * Support LOC resources
 
 * Rinda::RingServer, Rinda::RingFinger
   * Rinda now supports multicast sockets.  See Rinda::RingServer and
     Rinda::RingFinger for details.
 
+* Tempfile
+  * New methods:
+    * Tempfile.create
+
 === Stdlib compatibility issues (excluding feature bug fixes)
+
+* URI
+  * incompatible changes:
+    * URI.decode_www_form follows current WHATWG URL Standard.
+      It gets encoding argument to specify the character encoding.
+      It now allows loose percent encoded strings, but denies ;-separator.
+    * URI.encode_www_form follows current WHATWG URL Standard.
+      It gets encoding argument to convert before percent encode.
+      UTF-16 strings aren't converted to UTF-8 before percent encode by default.
+
 === C API updates

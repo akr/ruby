@@ -598,7 +598,7 @@ w_object(VALUE obj, struct dump_arg *arg, int limit)
     st_table *ivtbl = 0;
     st_data_t num;
     int hasiv = 0;
-#define has_ivars(obj, ivtbl) (((ivtbl) = rb_generic_ivar_table(obj)) != 0 || \
+#define has_ivars(obj, ivtbl) ((((ivtbl) = rb_generic_ivar_table(obj)) != 0) || \
 			       (!SPECIAL_CONST_P(obj) && !ENCODING_IS_ASCII8BIT(obj)))
 
     if (limit == 0) {
@@ -656,11 +656,8 @@ w_object(VALUE obj, struct dump_arg *arg, int limit)
 
 	    v = rb_funcall2(obj, s_mdump, 0, 0);
 	    check_dump_arg(arg, s_mdump);
-	    hasiv = has_ivars(v, ivtbl);
-	    if (hasiv) w_byte(TYPE_IVAR, arg);
 	    w_class(TYPE_USRMARSHAL, obj, arg, FALSE);
 	    w_object(v, arg, limit);
-	    if (hasiv) w_ivar(v, ivtbl, &c_arg);
 	    return;
 	}
 	if (rb_obj_respond_to(obj, s_dump, TRUE)) {
@@ -1338,7 +1335,7 @@ r_entry0(VALUE v, st_index_t num, struct load_arg *arg)
 }
 
 static VALUE
-r_leave(VALUE v, struct load_arg *arg)
+r_fixup_compat(VALUE v, struct load_arg *arg)
 {
     st_data_t data;
     if (st_lookup(arg->compat_tbl, v, &data)) {
@@ -1352,10 +1349,42 @@ r_leave(VALUE v, struct load_arg *arg)
         st_delete(arg->compat_tbl, &key, 0);
         v = real_obj;
     }
+    return v;
+}
+
+static VALUE
+r_post_proc(VALUE v, struct load_arg *arg)
+{
     if (arg->proc) {
 	v = rb_funcall(arg->proc, s_call, 1, v);
 	check_load_arg(arg, s_call);
     }
+    return v;
+}
+
+static VALUE
+r_leave(VALUE v, struct load_arg *arg)
+{
+    v = r_fixup_compat(v, arg);
+    v = r_post_proc(v, arg);
+    return v;
+}
+
+static int
+copy_ivar_i(st_data_t key, st_data_t val, st_data_t arg)
+{
+    VALUE obj = (VALUE)arg, value = (VALUE)val;
+    ID vid = (ID)key;
+
+    if (!rb_ivar_defined(obj, vid))
+	rb_ivar_set(obj, vid, value);
+    return ST_CONTINUE;
+}
+
+static VALUE
+r_copy_ivar(VALUE v, VALUE data)
+{
+    rb_ivar_foreach(data, copy_ivar_i, (st_data_t)v);
     return v;
 }
 
@@ -1461,10 +1490,7 @@ r_object0(struct load_arg *arg, int *ivp, VALUE extmod)
 	    rb_raise(rb_eArgError, "dump format error (unlinked)");
 	}
 	v = (VALUE)link;
-	if (arg->proc) {
-	    v = rb_funcall(arg->proc, s_call, 1, v);
-	    check_load_arg(arg, s_call);
-	}
+	r_post_proc(v, arg);
 	break;
 
       case TYPE_IVAR:
@@ -1785,7 +1811,9 @@ r_object0(struct load_arg *arg, int *ivp, VALUE extmod)
 	    data = r_object(arg);
 	    rb_funcall2(v, s_mload, 1, &data);
 	    check_load_arg(arg, s_mload);
-            v = r_leave(v, arg);
+	    v = r_fixup_compat(v, arg);
+	    v = r_copy_ivar(v, data);
+	    v = r_post_proc(v, arg);
 	    if (!NIL_P(extmod)) {
 		if (oldclass) append_extmod(v, extmod);
 		rb_ary_clear(extmod);

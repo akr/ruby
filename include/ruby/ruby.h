@@ -55,9 +55,7 @@ extern "C" {
 
 #include <stdarg.h>
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility push(default)
-#endif
+RUBY_SYMBOL_EXPORT_BEGIN
 
 /* Make alloca work the best possible way.  */
 #ifdef __GNUC__
@@ -336,8 +334,8 @@ rb_long2int_inline(long n)
 #define MODET2NUM(v) INT2NUM(v)
 #endif
 
-#define FIX2LONG(x) (long)RSHIFT((SIGNED_VALUE)(x),1)
-#define FIX2ULONG(x) ((((VALUE)(x))>>1)&LONG_MAX)
+#define FIX2LONG(x) ((long)RSHIFT((SIGNED_VALUE)(x),1))
+#define FIX2ULONG(x) ((unsigned long)FIX2LONG(x))
 #define FIXNUM_P(f) (((int)(SIGNED_VALUE)(f))&FIXNUM_FLAG)
 #define POSFIXABLE(f) ((f) < FIXNUM_MAX+1)
 #define NEGFIXABLE(f) ((f) >= FIXNUM_MIN)
@@ -1212,7 +1210,7 @@ rb_num2char_inline(VALUE x)
 
 #define ALLOCA_N(type,n) ((type*)alloca(sizeof(type)*(n)))
 
-void *rb_alloc_tmp_buffer(volatile VALUE *store, long len);
+void *rb_alloc_tmp_buffer(volatile VALUE *store, long len) RUBY_ATTR_ALLOC_SIZE((2));
 void rb_free_tmp_buffer(volatile VALUE *store);
 /* allocates _n_ bytes temporary buffer and stores VALUE including it
  * in _v_.  _n_ may be evaluated twice. */
@@ -1356,6 +1354,7 @@ NORETURN(void rb_sys_fail(const char*));
 NORETURN(void rb_sys_fail_str(VALUE));
 NORETURN(void rb_mod_sys_fail(VALUE, const char*));
 NORETURN(void rb_mod_sys_fail_str(VALUE, VALUE));
+NORETURN(void rb_readwrite_sys_fail(int, const char*));
 NORETURN(void rb_iter_break(void));
 NORETURN(void rb_iter_break_value(VALUE));
 NORETURN(void rb_exit(int));
@@ -1374,6 +1373,10 @@ PRINTF_ARGS(void rb_sys_warning(const char*, ...), 1, 2);
 /* reports always */
 PRINTF_ARGS(void rb_warn(const char*, ...), 1, 2);
 PRINTF_ARGS(void rb_compile_warn(const char *, int, const char*, ...), 3, 4);
+
+/* for rb_readwrite_sys_fail first argument */
+#define RB_IO_WAIT_READABLE 0
+#define RB_IO_WAIT_WRITABLE 1
 
 typedef VALUE rb_block_call_func(VALUE, VALUE, int, VALUE*);
 
@@ -1708,9 +1711,7 @@ void ruby_sig_finalize(void);
 
 /*! @} */
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility pop
-#endif
+RUBY_SYMBOL_EXPORT_END
 
 #if defined(__cplusplus)
 #if 0

@@ -57,6 +57,10 @@ extern "C" {
 # include <unistd.h>
 #endif
 
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>
+#endif
+
 #define RUBY
 
 #ifdef __cplusplus
@@ -88,9 +92,12 @@ extern "C" {
 #define ANYARGS
 #endif
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility push(default)
+#ifndef RUBY_SYMBOL_EXPORT_BEGIN
+# define RUBY_SYMBOL_EXPORT_BEGIN /* begin */
+# define RUBY_SYMBOL_EXPORT_END   /* end */
 #endif
+
+RUBY_SYMBOL_EXPORT_BEGIN
 
 #define xmalloc ruby_xmalloc
 #define xmalloc2 ruby_xmalloc2
@@ -99,16 +106,26 @@ extern "C" {
 #define xrealloc2 ruby_xrealloc2
 #define xfree ruby_xfree
 
-void *xmalloc(size_t);
-void *xmalloc2(size_t,size_t);
-void *xcalloc(size_t,size_t);
-void *xrealloc(void*,size_t);
-void *xrealloc2(void*,size_t,size_t);
+#if defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+# define RUBY_ATTR_ALLOC_SIZE(params) __attribute__ ((__alloc_size__ params))
+#else
+# define RUBY_ATTR_ALLOC_SIZE(params)
+#endif
+
+void *xmalloc(size_t) RUBY_ATTR_ALLOC_SIZE((1));
+void *xmalloc2(size_t,size_t) RUBY_ATTR_ALLOC_SIZE((1,2));
+void *xcalloc(size_t,size_t) RUBY_ATTR_ALLOC_SIZE((1,2));
+void *xrealloc(void*,size_t) RUBY_ATTR_ALLOC_SIZE((2));
+void *xrealloc2(void*,size_t,size_t) RUBY_ATTR_ALLOC_SIZE((2,3));
 void xfree(void*);
 
 #define STRINGIZE(expr) STRINGIZE0(expr)
 #ifndef STRINGIZE0
 #define STRINGIZE0(expr) #expr
+#endif
+
+#ifdef HAVE_LONG_LONG
+# define HAVE_TRUE_LONG_LONG 1
 #endif
 
 #if SIZEOF_LONG_LONG > 0
@@ -186,8 +203,6 @@ void xfree(void*);
 
 #if defined(__BEOS__) && !defined(__HAIKU__) && !defined(BONE)
 #include <net/socket.h> /* intern.h needs fd_set definition */
-#elif defined (__SYMBIAN32__) && defined (HAVE_SYS_SELECT_H)
-# include <sys/select.h>
 #endif
 
 #ifdef __SYMBIAN32__
@@ -281,9 +296,7 @@ void rb_ia64_flushrs(void);
     RUBY_ALIAS_FUNCTION_TYPE(VALUE, prot, name, args)
 #endif
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility pop
-#endif
+RUBY_SYMBOL_EXPORT_END
 
 #if defined(__cplusplus)
 #if 0

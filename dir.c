@@ -544,6 +544,7 @@ dir_inspect(VALUE dir)
 /*
  *  call-seq:
  *     dir.path -> string or nil
+ *     dir.to_path -> string or nil
  *
  *  Returns the path parameter passed to <em>dir</em>'s constructor.
  *
@@ -730,9 +731,10 @@ dir_seek(VALUE dir, VALUE pos)
 #define dir_seek rb_f_notimplement
 #endif
 
+#ifdef HAVE_SEEKDIR
 /*
  *  call-seq:
- *     dir.pos( integer ) -> integer
+ *     dir.pos = integer  -> integer
  *
  *  Synonym for <code>Dir#seek</code>, but returns the position
  *  parameter.
@@ -750,6 +752,9 @@ dir_set_pos(VALUE dir, VALUE pos)
     dir_seek(dir, pos);
     return pos;
 }
+#else
+#define dir_set_pos rb_f_notimplement
+#endif
 
 /*
  *  call-seq:
@@ -1433,9 +1438,6 @@ glob_helper(
 	    IF_HAVE_HFS(VALUE utf8str = Qnil);
 
 	    if (recursive && dp->d_name[0] == '.') {
-		/* RECURSIVE never match dot files unless FNM_DOTMATCH is set */
-		if (!(flags & FNM_DOTMATCH)) continue;
-
 		/* always skip current and parent directories not to recurse infinitely */
 		if (!dp->d_name[1]) continue;
 		if (dp->d_name[1] == '.' && !dp->d_name[2]) continue;
@@ -1460,7 +1462,8 @@ glob_helper(
 		break;
 	    }
 	    name = buf + pathlen + (dirsep != 0);
-	    if (recursive) {
+	    if (recursive && ((flags & FNM_DOTMATCH) || dp->d_name[0] != '.')) {
+		/* RECURSIVE never match dot files unless FNM_DOTMATCH is set */
 #ifndef _WIN32
 		if (do_lstat(buf, &st, flags) == 0)
 		    new_isdir = S_ISDIR(st.st_mode) ? YES : S_ISLNK(st.st_mode) ? UNKNOWN : NO;
@@ -2030,6 +2033,9 @@ fnmatch_brace(const char *pattern, VALUE val, void *enc)
  *                          Regexp, including set negation
  *                          (<code>[^a-z]</code>).
  *  <code> \ </code>::      Escapes the next metacharacter.
+ *  <code>{a,b}</code>::    Matches pattern a and pattern b if
+ *                          <code>File::FNM_EXTGLOB</code> flag is enabled.
+ *                          Behaves like a Regexp union (<code>(?:a|b)</code>).
  *
  *  <i>flags</i> is a bitwise OR of the <code>FNM_xxx</code>
  *  parameters. The same glob pattern and flags are used by
@@ -2037,7 +2043,9 @@ fnmatch_brace(const char *pattern, VALUE val, void *enc)
  *
  *     File.fnmatch('cat',       'cat')        #=> true  # match entire string
  *     File.fnmatch('cat',       'category')   #=> false # only match partial string
- *     File.fnmatch('c{at,ub}s', 'cats')       #=> false # { } isn't supported
+ *
+ *     File.fnmatch('c{at,ub}s', 'cats')                    #=> false # { } isn't supported by default
+ *     File.fnmatch('c{at,ub}s', 'cats', File::FNM_EXTGLOB) #=> true  # { } is supported on FNM_EXTGLOB
  *
  *     File.fnmatch('c?t',     'cat')          #=> true  # '?' match only 1 character
  *     File.fnmatch('c??t',    'cat')          #=> false # ditto
@@ -2055,7 +2063,7 @@ fnmatch_brace(const char *pattern, VALUE val, void *enc)
  *
  *     File.fnmatch('\?',   '?')                       #=> true  # escaped wildcard becomes ordinary
  *     File.fnmatch('\a',   'a')                       #=> true  # escaped ordinary remains ordinary
- *     File.fnmatch('\a',   '\a', File::FNM_NOESCAPE)  #=> true  # FNM_NOESACPE makes '\' ordinary
+ *     File.fnmatch('\a',   '\a', File::FNM_NOESCAPE)  #=> true  # FNM_NOESCAPE makes '\' ordinary
  *     File.fnmatch('[\?]', '?')                       #=> true  # can escape inside bracket expression
  *
  *     File.fnmatch('*',   '.profile')                      #=> false # wildcard doesn't match leading

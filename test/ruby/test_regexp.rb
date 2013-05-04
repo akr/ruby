@@ -1,6 +1,6 @@
 # coding: US-ASCII
 require 'test/unit'
-require 'envutil'
+require_relative 'envutil'
 
 class TestRegexp < Test::Unit::TestCase
   def setup
@@ -914,9 +914,10 @@ class TestRegexp < Test::Unit::TestCase
     assert_warning(/duplicated/) { Regexp.new('[\u3042\u3044\u3046\u3041-\u3047]') }
 
     bug7471 = '[ruby-core:50344]'
-    EnvUtil.verbose_warning do
-      assert_warning(/\A\z/, bug7471) { Regexp.new('[\D]') =~ "\u3042" }
-    end
+    assert_warning('', bug7471) { Regexp.new('[\D]') =~ "\u3042" }
+
+    bug8151 = '[ruby-core:53649]'
+    assert_warning(/\A\z/, bug8151) { Regexp.new('(?:[\u{33}])').to_s }
   end
 
   def test_property_warn

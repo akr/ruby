@@ -309,13 +309,17 @@ VALUE
 rb_int2big(SIGNED_VALUE n)
 {
     long neg = 0;
+    VALUE u;
     VALUE big;
 
     if (n < 0) {
-	n = -n;
+        u = 1 + (VALUE)(-(n + 1)); /* u = -n avoiding overflow */
 	neg = 1;
     }
-    big = rb_uint2big(n);
+    else {
+        u = n;
+    }
+    big = rb_uint2big(u);
     if (neg) {
 	RBIGNUM_SET_SIGN(big, 0);
     }
@@ -828,13 +832,17 @@ static VALUE
 rb_ll2big(LONG_LONG n)
 {
     long neg = 0;
+    unsigned LONG_LONG u;
     VALUE big;
 
     if (n < 0) {
-	n = -n;
+        u = 1 + (unsigned LONG_LONG)(-(n + 1)); /* u = -n avoiding overflow */
 	neg = 1;
     }
-    big = rb_ull2big(n);
+    else {
+        u = n;
+    }
+    big = rb_ull2big(u);
     if (neg) {
 	RBIGNUM_SET_SIGN(big, 0);
     }
@@ -879,27 +887,31 @@ static void bigdivmod(VALUE x, VALUE y, volatile VALUE *divp, volatile VALUE *mo
 static inline int
 ones(register unsigned long x)
 {
-#if SIZEOF_LONG == 8
-# define MASK_55 0x5555555555555555UL
-# define MASK_33 0x3333333333333333UL
-# define MASK_0f 0x0f0f0f0f0f0f0f0fUL
+#if GCC_VERSION_SINCE(3, 4, 0)
+    return  __builtin_popcountl(x);
 #else
-# define MASK_55 0x55555555UL
-# define MASK_33 0x33333333UL
-# define MASK_0f 0x0f0f0f0fUL
-#endif
+#   if SIZEOF_LONG == 8
+#       define MASK_55 0x5555555555555555UL
+#       define MASK_33 0x3333333333333333UL
+#       define MASK_0f 0x0f0f0f0f0f0f0f0fUL
+#   else
+#       define MASK_55 0x55555555UL
+#       define MASK_33 0x33333333UL
+#       define MASK_0f 0x0f0f0f0fUL
+#   endif
     x -= (x >> 1) & MASK_55;
     x = ((x >> 2) & MASK_33) + (x & MASK_33);
     x = ((x >> 4) + x) & MASK_0f;
     x += (x >> 8);
     x += (x >> 16);
-#if SIZEOF_LONG == 8
+#   if SIZEOF_LONG == 8
     x += (x >> 32);
-#endif
+#   endif
     return (int)(x & 0x7f);
-#undef MASK_0f
-#undef MASK_33
-#undef MASK_55
+#   undef MASK_0f
+#   undef MASK_33
+#   undef MASK_55
+#endif
 }
 
 static inline unsigned long
@@ -1095,6 +1107,8 @@ big2str_karatsuba(VALUE x, int base, char* ptr,
 
     b = power_cache_get_power(base, n1, &m1);
     bigdivmod(x, b, &q, &r);
+    rb_obj_hide(q);
+    rb_obj_hide(r);
     lh = big2str_karatsuba(q, base, ptr, (len - m1)/2,
 			   len - m1, hbase, trim);
     rb_big_resize(q, 0);
@@ -1222,14 +1236,16 @@ rb_big2ulong(VALUE x)
 {
     VALUE num = big2ulong(x, "unsigned long", TRUE);
 
-    if (!RBIGNUM_SIGN(x)) {
-	unsigned long v = (unsigned long)(-(long)num);
-
-	if (v <= LONG_MAX)
-	    rb_raise(rb_eRangeError, "bignum out of range of unsigned long");
-	return (VALUE)v;
+    if (RBIGNUM_POSITIVE_P(x)) {
+        return num;
     }
-    return num;
+    else {
+        if (num <= LONG_MAX)
+            return -(long)num;
+        if (num == 1+(unsigned long)(-(LONG_MIN+1)))
+            return LONG_MIN;
+    }
+    rb_raise(rb_eRangeError, "bignum out of range of unsigned long");
 }
 
 SIGNED_VALUE
@@ -1237,12 +1253,17 @@ rb_big2long(VALUE x)
 {
     VALUE num = big2ulong(x, "long", TRUE);
 
-    if ((long)num < 0 &&
-	(RBIGNUM_SIGN(x) || (long)num != LONG_MIN)) {
-	rb_raise(rb_eRangeError, "bignum too big to convert into `long'");
+    if (RBIGNUM_POSITIVE_P(x)) {
+        if (num <= LONG_MAX)
+            return num;
     }
-    if (!RBIGNUM_SIGN(x)) return -(SIGNED_VALUE)num;
-    return num;
+    else {
+        if (num <= LONG_MAX)
+            return -(long)num;
+        if (num == 1+(unsigned long)(-(LONG_MIN+1)))
+            return LONG_MIN;
+    }
+    rb_raise(rb_eRangeError, "bignum too big to convert into `long'");
 }
 
 #if HAVE_LONG_LONG
@@ -1270,15 +1291,16 @@ rb_big2ull(VALUE x)
 {
     unsigned LONG_LONG num = big2ull(x, "unsigned long long");
 
-    if (!RBIGNUM_SIGN(x)) {
-	LONG_LONG v = -(LONG_LONG)num;
-
-	/* FIXNUM_MIN-1 .. LLONG_MIN mapped into 0xbfffffffffffffff .. LONG_MAX+1 */
-	if ((unsigned LONG_LONG)v <= LLONG_MAX)
-	    rb_raise(rb_eRangeError, "bignum out of range of unsigned long long");
-	return v;
+    if (RBIGNUM_POSITIVE_P(x)) {
+        return num;
     }
-    return num;
+    else {
+        if (num <= LLONG_MAX)
+            return -(LONG_LONG)num;
+        if (num == 1+(unsigned LONG_LONG)(-(LLONG_MIN+1)))
+            return LLONG_MIN;
+    }
+    rb_raise(rb_eRangeError, "bignum out of range of unsigned long long");
 }
 
 LONG_LONG
@@ -1286,12 +1308,17 @@ rb_big2ll(VALUE x)
 {
     unsigned LONG_LONG num = big2ull(x, "long long");
 
-    if ((LONG_LONG)num < 0 && (RBIGNUM_SIGN(x)
-			       || (LONG_LONG)num != LLONG_MIN)) {
-	rb_raise(rb_eRangeError, "bignum too big to convert into `long long'");
+    if (RBIGNUM_POSITIVE_P(x)) {
+        if (num <= LLONG_MAX)
+            return num;
     }
-    if (!RBIGNUM_SIGN(x)) return -(LONG_LONG)num;
-    return num;
+    else {
+        if (num <= LLONG_MAX)
+            return -(LONG_LONG)num;
+        if (num == 1+(unsigned LONG_LONG)(-(LLONG_MIN+1)))
+            return LLONG_MIN;
+    }
+    rb_raise(rb_eRangeError, "bignum too big to convert into `long long'");
 }
 
 #endif  /* HAVE_LONG_LONG */
@@ -1686,6 +1713,7 @@ rb_big_eq(VALUE x, VALUE y)
 {
     switch (TYPE(y)) {
       case T_FIXNUM:
+	if (bignorm(x) == y) return Qtrue;
 	y = rb_int2big(FIX2LONG(y));
 	break;
       case T_BIGNUM:
@@ -3758,6 +3786,7 @@ rb_big_coerce(VALUE x, VALUE y)
 /*
  *  call-seq:
  *     big.abs -> aBignum
+ *     big.magnitude -> aBignum
  *
  *  Returns the absolute value of <i>big</i>.
  *

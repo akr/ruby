@@ -717,27 +717,6 @@ num_exact(VALUE v)
 
 /* time_t */
 
-#ifndef TYPEOF_TIMEVAL_TV_SEC
-# define TYPEOF_TIMEVAL_TV_SEC time_t
-#endif
-#ifndef TYPEOF_TIMEVAL_TV_USEC
-# if INT_MAX >= 1000000
-# define TYPEOF_TIMEVAL_TV_USEC int
-# else
-# define TYPEOF_TIMEVAL_TV_USEC long
-# endif
-#endif
-
-#if SIZEOF_TIME_T == SIZEOF_LONG
-typedef unsigned long unsigned_time_t;
-#elif SIZEOF_TIME_T == SIZEOF_INT
-typedef unsigned int unsigned_time_t;
-#elif SIZEOF_TIME_T == SIZEOF_LONG_LONG
-typedef unsigned LONG_LONG unsigned_time_t;
-#else
-# error cannot find integer type which size is same as time_t.
-#endif
-
 static wideval_t
 rb_time_magnify(wideval_t w)
 {
@@ -1718,7 +1697,10 @@ localtime_with_gmtoff_zone(const time_t *t, struct tm *result, long *gmtoff, con
 
         if (zone) {
 #if defined(HAVE_TM_ZONE)
-            *zone = zone_str(tm.tm_zone);
+            if (tm.tm_zone)
+                *zone = zone_str(tm.tm_zone);
+            else
+                *zone = zone_str("(NO-TIMEZONE-ABBREVIATION)");
 #elif defined(HAVE_TZNAME) && defined(HAVE_DAYLIGHT)
             /* this needs tzset or localtime, instead of localtime_r */
             *zone = zone_str(tzname[daylight && tm.tm_isdst]);
@@ -2794,7 +2776,7 @@ timegm_noleapsecond(struct tm *tm)
 #endif
 
 #ifdef DEBUG_GUESSRANGE
-#define DEBUG_REPORT_GUESSRANGE fprintf(stderr, "find time guess range: %ld - %ld : %lu\n", guess_lo, guess_hi, (unsigned_time_t)(guess_hi-guess_lo))
+#define DEBUG_REPORT_GUESSRANGE fprintf(stderr, "find time guess range: %ld - %ld : %"PRI_TIMET_PREFIX"u\n", guess_lo, guess_hi, (unsigned_time_t)(guess_hi-guess_lo))
 #else
 #define DEBUG_REPORT_GUESSRANGE
 #endif
@@ -4476,6 +4458,7 @@ strftimev(const char *fmt, VALUE time, rb_encoding *enc)
  *      %S - Second of the minute (00..60)
  *
  *      %L - Millisecond of the second (000..999)
+ *           The digits under millisecond are truncated to not produce 1000.
  *      %N - Fractional seconds digits, default is 9 digits (nanosecond)
  *              %3N  milli second (3 digits)
  *              %6N  micro second (6 digits)
@@ -4485,6 +4468,8 @@ strftimev(const char *fmt, VALUE time, rb_encoding *enc)
  *              %18N atto second (18 digits)
  *              %21N zepto second (21 digits)
  *              %24N yocto second (24 digits)
+ *           The digits under the specified length are truncated to avoid
+ *           carry up.
  *
  *    Time zone:
  *      %z - Time zone as hour and minute offset from UTC (e.g. +0900)

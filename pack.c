@@ -11,16 +11,34 @@
 
 #include "ruby/ruby.h"
 #include "ruby/encoding.h"
+#include "internal.h"
 #include <sys/types.h>
 #include <ctype.h>
 #include <errno.h>
 
-#define GCC_VERSION_SINCE(major, minor, patchlevel) \
-  (defined(__GNUC__) && !defined(__INTEL_COMPILER) && \
-   ((__GNUC__ > (major)) ||  \
-    (__GNUC__ == (major) && __GNUC_MINOR__ > (minor)) || \
-    (__GNUC__ == (major) && __GNUC_MINOR__ == (minor) && __GNUC_PATCHLEVEL__ >= (patchlevel))))
-#if SIZEOF_SHORT != 2 || SIZEOF_LONG != 4
+/*
+ * It is intentional that the condition for natstr is HAVE_TRUE_LONG_LONG
+ * instead of HAVE_LONG_LONG or LONG_LONG.
+ * This means q! and Q! means always the standard long long type and
+ * causes ArgumentError for platforms which has no long long type,
+ * even if the platform has an implementation specific 64bit type.
+ * This behavior is consistent with the document of pack/unpack.
+ */
+#ifdef HAVE_TRUE_LONG_LONG
+static const char natstr[] = "sSiIlLqQ";
+#else
+static const char natstr[] = "sSiIlL";
+#endif
+static const char endstr[] = "sSiIlLqQ";
+
+#ifdef HAVE_TRUE_LONG_LONG
+/* It is intentional to use long long instead of LONG_LONG. */
+# define NATINT_LEN_Q NATINT_LEN(long long, 8)
+#else
+# define NATINT_LEN_Q 8
+#endif
+
+#if SIZEOF_SHORT != 2 || SIZEOF_LONG != 4 || (defined(HAVE_TRUE_LONG_LONG) && SIZEOF_LONG_LONG != 8)
 # define NATINT_PACK
 #endif
 
@@ -303,24 +321,30 @@ static unsigned long utf8_to_uv(const char*,long*);
  *      S_, S!    | Integer | unsigned short, native endian
  *      I, I_, I! | Integer | unsigned int, native endian
  *      L_, L!    | Integer | unsigned long, native endian
+ *      Q_, Q!    | Integer | unsigned long long, native endian (ArgumentError
+ *                |         | if the platform has no long long type.)
+ *                |         | (Q_ and Q! is available since Ruby 2.1.)
  *                |         |
  *      s_, s!    | Integer | signed short, native endian
  *      i, i_, i! | Integer | signed int, native endian
  *      l_, l!    | Integer | signed long, native endian
+ *      q_, q!    | Integer | signed long long, native endian (ArgumentError
+ *                |         | if the platform has no long long type.)
+ *                |         | (q_ and q! is available since Ruby 2.1.)
  *                |         |
  *      S> L> Q>  | Integer | same as the directives without ">" except
  *      s> l> q>  |         | big endian
  *      S!> I!>   |         | (available since Ruby 1.9.3)
- *      L!>       |         | "S>" is same as "n"
+ *      L!> Q!>   |         | "S>" is same as "n"
  *      s!> i!>   |         | "L>" is same as "N"
- *      l!>       |         |
+ *      l!> q!>   |         |
  *                |         |
  *      S< L< Q<  | Integer | same as the directives without "<" except
  *      s< l< q<  |         | little endian
  *      S!< I!<   |         | (available since Ruby 1.9.3)
- *      L!<       |         | "S<" is same as "v"
+ *      L!< Q!<   |         | "S<" is same as "v"
  *      s!< i!<   |         | "L<" is same as "V"
- *      l!<       |         |
+ *      l!< q!<   |         |
  *                |         |
  *      n         | Integer | 16-bit unsigned, network (big-endian) byte order
  *      N         | Integer | 32-bit unsigned, network (big-endian) byte order
@@ -412,9 +436,6 @@ pack_pack(VALUE ary, VALUE fmt)
 	}
 
 	{
-	    static const char natstr[] = "sSiIlL";
-	    static const char endstr[] = "sSiIlLqQ";
-
           modifiers:
 	    switch (*p) {
 	      case '_':
@@ -650,62 +671,62 @@ pack_pack(VALUE ary, VALUE fmt)
 	    }
 	    break;
 
-	  case 's':		/* signed short */
+	  case 's':		/* s for int16_t, s! for signed short */
             integer_size = NATINT_LEN(short, 2);
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'S':		/* unsigned short */
+	  case 'S':		/* S for uint16_t, S! for unsigned short */
             integer_size = NATINT_LEN(short, 2);
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'i':		/* signed int */
+	  case 'i':		/* i and i! for signed int */
             integer_size = (int)sizeof(int);
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'I':		/* unsigned int */
+	  case 'I':		/* I and I! for unsigned int */
             integer_size = (int)sizeof(int);
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'l':		/* signed long */
+	  case 'l':		/* l for int32_t, l! for signed long */
             integer_size = NATINT_LEN(long, 4);
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'L':		/* unsigned long */
+	  case 'L':		/* L for uint32_t, L! for unsigned long */
             integer_size = NATINT_LEN(long, 4);
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'q':		/* signed quad (64bit) int */
-	    integer_size = 8;
+	  case 'q':		/* q for int64_t, q! for signed long long */
+	    integer_size = NATINT_LEN_Q;
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'Q':		/* unsigned quad (64bit) int */
-	    integer_size = 8;
+	  case 'Q':		/* Q for uint64_t, Q! for unsigned long long */
+	    integer_size = NATINT_LEN_Q;
             bigendian_p = BIGENDIAN_P();
             goto pack_integer;
 
-	  case 'n':		/* unsigned short (network byte-order)  */
+	  case 'n':		/* 16 bit (2 bytes) integer (network byte-order)  */
             integer_size = 2;
             bigendian_p = 1;
             goto pack_integer;
 
-	  case 'N':		/* unsigned long (network byte-order) */
+	  case 'N':		/* 32 bit (4 bytes) integer (network byte-order) */
             integer_size = 4;
             bigendian_p = 1;
             goto pack_integer;
 
-	  case 'v':		/* unsigned short (VAX byte-order) */
+	  case 'v':		/* 16 bit (2 bytes) integer (VAX byte-order) */
             integer_size = 2;
             bigendian_p = 0;
             goto pack_integer;
 
-	  case 'V':		/* unsigned long (VAX byte-order) */
+	  case 'V':		/* 32 bit (4 bytes) integer (VAX byte-order) */
             integer_size = 4;
             bigendian_p = 0;
             goto pack_integer;
@@ -1249,10 +1270,16 @@ infected_str_new(const char *ptr, long len, VALUE str)
  *      S_, S!    | Integer | unsigned short, native endian
  *      I, I_, I! | Integer | unsigned int, native endian
  *      L_, L!    | Integer | unsigned long, native endian
+ *      Q_, Q!    | Integer | unsigned long long, native endian (ArgumentError
+ *                |         | if the platform has no long long type.)
+ *                |         | (Q_ and Q! is available since Ruby 2.1.)
  *                |         |
  *      s_, s!    | Integer | signed short, native endian
  *      i, i_, i! | Integer | signed int, native endian
  *      l_, l!    | Integer | signed long, native endian
+ *      q_, q!    | Integer | signed long long, native endian (ArgumentError
+ *                |         | if the platform has no long long type.)
+ *                |         | (q_ and q! is available since Ruby 2.1.)
  *                |         |
  *      S> L> Q>  | Integer | same as the directives without ">" except
  *      s> l> q>  |         | big endian
@@ -1361,9 +1388,6 @@ pack_unpack(VALUE str, VALUE fmt)
 
 	star = 0;
 	{
-	    static const char natstr[] = "sSiIlL";
-	    static const char endstr[] = "sSiIlLqQ";
-
           modifiers:
 	    switch (*p) {
 	      case '_':
@@ -1590,13 +1614,13 @@ pack_unpack(VALUE str, VALUE fmt)
 
 	  case 'q':
 	    signed_p = 1;
-	    integer_size = 8;
+	    integer_size = NATINT_LEN_Q;
 	    bigendian_p = BIGENDIAN_P();
 	    goto unpack_integer;
 
 	  case 'Q':
 	    signed_p = 0;
-	    integer_size = 8;
+	    integer_size = NATINT_LEN_Q;
 	    bigendian_p = BIGENDIAN_P();
 	    goto unpack_integer;
 
@@ -1917,7 +1941,7 @@ pack_unpack(VALUE str, VALUE fmt)
 
 	  case 'm':
 	    {
-		VALUE buf = infected_str_new(0, (send - s)*3/4, str);
+		VALUE buf = infected_str_new(0, (send - s + 3)*3/4, str); /* +3 is for skipping paddings */
 		char *ptr = RSTRING_PTR(buf);
 		int a = -1,b = -1,c = 0,d = 0;
 		static signed char b64_xtable[256];
@@ -1980,11 +2004,12 @@ pack_unpack(VALUE str, VALUE fmt)
 			*ptr++ = castchar(a << 2 | b >> 4);
 			*ptr++ = castchar(b << 4 | c >> 2);
 			*ptr++ = castchar(c << 6 | d);
+			a = -1;
 		    }
 		    if (a != -1 && b != -1) {
-			if (c == -1 && *s == '=')
+			if (c == -1)
 			    *ptr++ = castchar(a << 2 | b >> 4);
-			else if (c != -1 && *s == '=') {
+			else {
 			    *ptr++ = castchar(a << 2 | b >> 4);
 			    *ptr++ = castchar(b << 4 | c >> 2);
 			}

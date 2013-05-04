@@ -416,7 +416,7 @@ static int
 iseq_add_mark_object(rb_iseq_t *iseq, VALUE v)
 {
     if (!SPECIAL_CONST_P(v)) {
-	rb_ary_push(iseq->mark_ary, v);
+	rb_iseq_add_mark_object(iseq, v);
     }
     return COMPILE_OK;
 }
@@ -4499,6 +4499,11 @@ iseq_compile_each(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE * node, int poped)
 			ADD_INSN2(args, line, getlocal, INT2FIX(idx), INT2FIX(lvar_level));
 		    }
 		    ADD_SEND(args, line, ID2SYM(id_core_hash_merge_ptr), INT2FIX(i * 2 + 1));
+		    if (liseq->arg_rest != -1) {
+			ADD_INSN1(args, line, newarray, INT2FIX(1));
+			ADD_INSN (args, line, concatarray);
+			--argc;
+		    }
 		}
 	    }
 	}
@@ -5175,7 +5180,12 @@ iseq_compile_each(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE * node, int poped)
 	break;
       }
       case NODE_DEFINED:{
-	if (!poped) {
+	if (poped) break;
+	if (!node->nd_head) {
+	    VALUE str = rb_iseq_defined_string(DEFINED_NIL);
+	    ADD_INSN1(ret, nd_line(node), putobject, str);
+	}
+	else {
 	    LABEL *lfinish[2];
 	    lfinish[0] = NEW_LABEL(line);
 	    lfinish[1] = 0;

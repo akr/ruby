@@ -14,9 +14,7 @@ extern "C" {
 
 #include "ruby/defines.h"
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility push(default)
-#endif
+RUBY_SYMBOL_EXPORT_BEGIN
 
 #if SIZEOF_LONG == SIZEOF_VOIDP
 typedef unsigned long st_data_t;
@@ -104,6 +102,7 @@ st_table *st_init_strcasetable(void);
 st_table *st_init_strcasetable_with_size(st_index_t);
 int st_delete(st_table *, st_data_t *, st_data_t *); /* returns 0:notfound 1:deleted */
 int st_delete_safe(st_table *, st_data_t *, st_data_t *, st_data_t);
+int st_shift(st_table *, st_data_t *, st_data_t *); /* returns 0:notfound 1:deleted */
 int st_insert(st_table *, st_data_t, st_data_t);
 int st_insert2(st_table *, st_data_t, st_data_t, st_data_t (*)(st_data_t));
 int st_lookup(st_table *, st_data_t, st_data_t *);
@@ -130,9 +129,7 @@ st_index_t st_hash_end(st_index_t h);
 st_index_t st_hash_start(st_index_t h);
 #define st_hash_start(h) ((st_index_t)(h))
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility pop
-#endif
+RUBY_SYMBOL_EXPORT_END
 
 #if defined(__cplusplus)
 #if 0

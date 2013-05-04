@@ -1293,12 +1293,8 @@ rb_zstream_finish(VALUE obj)
 
 /*
  * call-seq:
- *   flush_next_out                 -> String
- *   flush_next_out { |chunk| ... } -> nil
+ *   flush_next_in -> input
  *
- * Flushes output buffer and returns all data in that buffer.  If a block is
- * given each chunk is yielded to the block until the current output buffer
- * has been flushed.
  */
 static VALUE
 rb_zstream_flush_next_in(VALUE obj)
@@ -1313,7 +1309,13 @@ rb_zstream_flush_next_in(VALUE obj)
 }
 
 /*
- * Flushes output buffer and returns all data in that buffer.
+ * call-seq:
+ *   flush_next_out                 -> String
+ *   flush_next_out { |chunk| ... } -> nil
+ *
+ * Flushes output buffer and returns all data in that buffer.  If a block is
+ * given each chunk is yielded to the block until the current output buffer
+ * has been flushed.
  */
 static VALUE
 rb_zstream_flush_next_out(VALUE obj)
@@ -1850,12 +1852,12 @@ rb_inflate_s_allocate(VALUE klass)
  * == Example
  *
  *   open "compressed.file" do |compressed_io|
- *     inflate = Zlib::Inflate.new(Zlib::MAX_WBITS + 32)
+ *     zi = Zlib::Inflate.new(Zlib::MAX_WBITS + 32)
  *
  *     begin
  *       open "uncompressed.file", "w+" do |uncompressed_io|
  *         uncompressed_io << zi.inflate(compressed_io.read)
- *       }
+ *       end
  *     ensure
  *       zi.close
  *     end
@@ -3188,13 +3190,9 @@ rb_gzfile_set_mtime(VALUE obj, VALUE mtime)
 	rb_raise(cGzError, "header is already written");
     }
 
-    if (FIXNUM_P(mtime)) {
-	gz->mtime = FIX2INT(mtime);
-    }
-    else {
-	val = rb_Integer(mtime);
-	gz->mtime = FIXNUM_P(val) ? FIX2UINT(val) : rb_big2ulong(val);
-    }
+    val = rb_Integer(mtime);
+    gz->mtime = NUM2UINT(val);
+
     return mtime;
 }
 

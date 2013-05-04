@@ -72,13 +72,13 @@ class TestReadline < Test::Unit::TestCase
       with_temp_stdio do |stdin, stdout|
         stdin.write("hello\n")
         stdin.close
-        stdout.close
+        stdout.flush
         line = replace_stdio(stdin.path, stdout.path) {
           Readline.readline("> ", true)
         }
         assert_equal("hello", line)
         assert_equal(true, line.tainted?)
-        stdout.open
+        stdout.rewind
         assert_equal("> ", stdout.read(2))
         assert_equal(1, Readline::HISTORY.length)
         assert_equal("hello", Readline::HISTORY[0])
@@ -118,8 +118,8 @@ class TestReadline < Test::Unit::TestCase
           actual_point = Readline.point
           actual_line_buffer = Readline.line_buffer
           stdin.write(" finish\n")
-          stdin.close
-          stdout.close
+          stdin.flush
+          stdout.flush
           return ["complete"]
         }
 
@@ -137,8 +137,8 @@ class TestReadline < Test::Unit::TestCase
         assert_equal(true, Readline.line_buffer.tainted?)
         assert_equal(22, Readline.point)
 
-        stdin.open
-        stdout.open
+        stdin.rewind
+        stdout.rewind
 
         stdin.write("first second\t")
         stdin.flush
@@ -291,7 +291,10 @@ class TestReadline < Test::Unit::TestCase
     else
       results = %W"\xa1\xa1 \xa1\xa2".map {|s| s.force_encoding(locale)}
     end or
+    begin
+      return if assert_under_utf8
       skip("missing test for locale #{locale.name}")
+    end
     expected = results[0][0...1]
     Readline.completion_case_fold = false
     assert_equal(expected, with_pipe {|r, w| w << "\t"}, bug5941)
@@ -374,31 +377,29 @@ class TestReadline < Test::Unit::TestCase
   end if !/EditLine/n.match(Readline::VERSION)
 
   def test_modify_text_in_pre_input_hook
-    begin
-      stdin = Tempfile.new("readline_redisplay_stdin")
-      stdout = Tempfile.new("readline_redisplay_stdout")
-      stdin.write("world\n")
-      stdin.close
-      Readline.pre_input_hook = proc do
-        assert_equal("", Readline.line_buffer)
-        Readline.insert_text("hello ")
-        Readline.redisplay
-      end
-      replace_stdio(stdin.path, stdout.path) do
-        line = Readline.readline("> ")
-        assert_equal("hello world", line)
-      end
-      assert_equal("> hello world\n", stdout.read)
-      stdout.close
-    rescue NotImplementedError
-    ensure
+    with_temp_stdio {|stdin, stdout|
       begin
-        Readline.pre_input_hook = nil
+        stdin.write("world\n")
+        stdin.close
+        Readline.pre_input_hook = proc do
+          assert_equal("", Readline.line_buffer)
+          Readline.insert_text("hello ")
+          Readline.redisplay
+        end
+        replace_stdio(stdin.path, stdout.path) do
+          line = Readline.readline("> ")
+          assert_equal("hello world", line)
+        end
+        assert_equal("> hello world\n", stdout.read)
+        stdout.close
       rescue NotImplementedError
+      ensure
+        begin
+          Readline.pre_input_hook = nil
+        rescue NotImplementedError
+        end
       end
-      stdin.close(true)
-      stdout.close(true)
-    end
+    }
   end if !/EditLine|\A4\.3\z/n.match(Readline::VERSION)
 
   def test_input_metachar
@@ -417,7 +418,10 @@ class TestReadline < Test::Unit::TestCase
   end if !/EditLine/n.match(Readline::VERSION)
 
   def test_input_metachar_multibyte
-    skip 'this test needs UTF-8 locale' unless Encoding.find("locale") == Encoding::UTF_8
+    unless Encoding.find("locale") == Encoding::UTF_8
+      return if assert_under_utf8
+      skip 'this test needs UTF-8 locale'
+    end
     bug6602 = '[ruby-core:45683]'
     Readline::HISTORY << "\u3042\u3093"
     Readline::HISTORY << "\u3044\u3093"
@@ -466,12 +470,11 @@ class TestReadline < Test::Unit::TestCase
   end
 
   def with_temp_stdio
-    stdin = Tempfile.new("test_readline_stdin")
-    stdout = Tempfile.new("test_readline_stdout")
-    yield stdin, stdout
-  ensure
-    stdin.close(true) if stdin
-    stdout.close(true) if stdout
+    Tempfile.create("test_readline_stdin") {|stdin|
+      Tempfile.create("test_readline_stdout") {|stdout|
+        yield stdin, stdout
+      }
+    }
   end
 
   def with_pipe
@@ -495,5 +498,16 @@ class TestReadline < Test::Unit::TestCase
 
   def get_default_internal_encoding
     return Encoding.default_internal || Encoding.find("locale")
+  end
+
+  def assert_under_utf8
+    return false if ENV['LC_ALL'] == 'UTF-8'
+    loc = caller_locations(1, 1)[0].base_label.to_s
+    require_relative "../ruby/envutil"
+    assert_separately([{"LC_ALL"=>"UTF-8"}, "-r", __FILE__], <<SRC)
+#skip "test \#{ENV['LC_ALL']}"
+#{self.class.name}.new(#{loc.dump}).run(Test::Unit::Runner.new)
+SRC
+    return true
   end
 end if defined?(::Readline)

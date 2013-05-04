@@ -110,6 +110,10 @@
 # endif
 #endif
 
+#ifndef EWOULDBLOCK
+# define EWOULDBLOCK EAGAIN
+#endif
+
 #if defined(HAVE___SYSCALL) && (defined(__APPLE__) || defined(__OpenBSD__))
 /* Mac OS X and OpenBSD have __syscall but don't define it in headers */
 off_t __syscall(quad_t number, ...);
@@ -133,6 +137,16 @@ VALUE rb_eEOFError;
 VALUE rb_eIOError;
 VALUE rb_mWaitReadable;
 VALUE rb_mWaitWritable;
+extern VALUE rb_eEAGAIN;
+extern VALUE rb_eEWOULDBLOCK;
+extern VALUE rb_eEINPROGRESS;
+
+static VALUE rb_eEAGAINWaitReadable;
+static VALUE rb_eEAGAINWaitWritable;
+static VALUE rb_eEWOULDBLOCKWaitReadable;
+static VALUE rb_eEWOULDBLOCKWaitWritable;
+static VALUE rb_eEINPROGRESSWaitWritable;
+static VALUE rb_eEINPROGRESSWaitReadable;
 
 VALUE rb_stdin, rb_stdout, rb_stderr;
 VALUE rb_deferr;		/* rescue VIM plugin */
@@ -148,6 +162,7 @@ static VALUE argf;
 static ID id_write, id_read, id_getc, id_flush, id_readpartial, id_set_encoding;
 static VALUE sym_mode, sym_perm, sym_extenc, sym_intenc, sym_encoding, sym_open_args;
 static VALUE sym_textmode, sym_binmode, sym_autoclose;
+static VALUE sym_SET, sym_CUR, sym_END;
 
 struct argf {
     VALUE filename, current_file;
@@ -201,9 +216,8 @@ rb_maygvl_fd_fix_cloexec(int fd)
 void
 rb_fd_fix_cloexec(int fd)
 {
-    rb_atomic_t afd = (rb_atomic_t)fd;
     rb_maygvl_fd_fix_cloexec(fd);
-    if (max_file_descriptor < afd) max_file_descriptor = afd;
+    rb_update_max_fd(fd);
 }
 
 int
@@ -1533,6 +1547,18 @@ rb_io_seek(VALUE io, VALUE offset, int whence)
     return INT2FIX(0);
 }
 
+static int
+interpret_seek_whence(VALUE vwhence)
+{
+    if (vwhence == sym_SET)
+        return SEEK_SET;
+    if (vwhence == sym_CUR)
+        return SEEK_CUR;
+    if (vwhence == sym_END)
+        return SEEK_END;
+    return NUM2INT(vwhence);
+}
+
 /*
  *  call-seq:
  *     ios.seek(amount, whence=IO::SEEK_SET)  ->  0
@@ -1540,12 +1566,12 @@ rb_io_seek(VALUE io, VALUE offset, int whence)
  *  Seeks to a given offset <i>anInteger</i> in the stream according to
  *  the value of <i>whence</i>:
  *
- *    IO::SEEK_CUR  | Seeks to _amount_ plus current position
- *    --------------+----------------------------------------------------
- *    IO::SEEK_END  | Seeks to _amount_ plus end of stream (you probably
- *                  | want a negative value for _amount_)
- *    --------------+----------------------------------------------------
- *    IO::SEEK_SET  | Seeks to the absolute location given by _amount_
+ *    :CUR or IO::SEEK_CUR  | Seeks to _amount_ plus current position
+ *    ----------------------+--------------------------------------------------
+ *    :END or IO::SEEK_END  | Seeks to _amount_ plus end of stream (you
+ *                          | probably want a negative value for _amount_)
+ *    ----------------------+--------------------------------------------------
+ *    :SET or IO::SEEK_SET  | Seeks to the absolute location given by _amount_
  *
  *  Example:
  *
@@ -1561,7 +1587,7 @@ rb_io_seek_m(int argc, VALUE *argv, VALUE io)
     int whence = SEEK_SET;
 
     if (rb_scan_args(argc, argv, "11", &offset, &ptrname) == 2) {
-	whence = NUM2INT(ptrname);
+	whence = interpret_seek_whence(ptrname);
     }
 
     return rb_io_seek(io, offset, whence);
@@ -2342,6 +2368,9 @@ rb_io_set_nonblock(rb_io_t *fptr)
     }
 }
 
+void
+rb_readwrite_sys_fail(int writable, const char *mesg);
+
 static VALUE
 io_getpartial(int argc, VALUE *argv, VALUE io, int nonblock)
 {
@@ -2380,7 +2409,7 @@ io_getpartial(int argc, VALUE *argv, VALUE io, int nonblock)
             if (!nonblock && rb_io_wait_readable(fptr->fd))
                 goto again;
             if (nonblock && (errno == EWOULDBLOCK || errno == EAGAIN))
-                rb_mod_sys_fail(rb_mWaitReadable, "read would block");
+                rb_readwrite_sys_fail(RB_IO_WAIT_READABLE, "read would block");
             rb_sys_fail_path(fptr->pathv);
         }
     }
@@ -2599,7 +2628,7 @@ rb_io_write_nonblock(VALUE io, VALUE str)
 
     if (n == -1) {
         if (errno == EWOULDBLOCK || errno == EAGAIN)
-            rb_mod_sys_fail(rb_mWaitWritable, "write would block");
+            rb_readwrite_sys_fail(RB_IO_WAIT_WRITABLE, "write would block");
         rb_sys_fail_path(fptr->pathv);
     }
 
@@ -4418,7 +4447,7 @@ rb_io_sysseek(int argc, VALUE *argv, VALUE io)
     off_t pos;
 
     if (rb_scan_args(argc, argv, "11", &offset, &ptrname) == 2) {
-	whence = NUM2INT(ptrname);
+	whence = interpret_seek_whence(ptrname);
     }
     pos = NUM2OFFT(offset);
     GetOpenFile(io, fptr);
@@ -4831,7 +4860,7 @@ rb_io_oflags_modestr(int oflags)
  * Qnil => no encoding specified (internal only)
  */
 static void
-rb_io_ext_int_to_encs(rb_encoding *ext, rb_encoding *intern, rb_encoding **enc, rb_encoding **enc2)
+rb_io_ext_int_to_encs(rb_encoding *ext, rb_encoding *intern, rb_encoding **enc, rb_encoding **enc2, int fmode)
 {
     int default_ext = 0;
 
@@ -4842,7 +4871,8 @@ rb_io_ext_int_to_encs(rb_encoding *ext, rb_encoding *intern, rb_encoding **enc, 
     if (intern == NULL && ext != rb_ascii8bit_encoding())
 	/* If external is ASCII-8BIT, no default transcoding */
 	intern = rb_default_internal_encoding();
-    if (intern == NULL || intern == (rb_encoding *)Qnil || intern == ext) {
+    if (intern == NULL || intern == (rb_encoding *)Qnil ||
+	(!(fmode & FMODE_SETENC_BY_BOM) && (intern == ext))) {
 	/* No internal encoding => use external + no transcoding */
 	*enc = (default_ext && intern != ext) ? NULL : ext;
 	*enc2 = NULL;
@@ -4865,6 +4895,7 @@ parse_mode_enc(const char *estr, rb_encoding **enc_p, rb_encoding **enc2_p, int 
     const char *p;
     char encname[ENCODING_MAXNAMELEN+1];
     int idx, idx2;
+    int fmode = fmode_p ? *fmode_p : 0;
     rb_encoding *ext_enc, *int_enc;
 
     /* parse estr as "enc" or "enc2:enc" or "enc:-" */
@@ -4876,7 +4907,7 @@ parse_mode_enc(const char *estr, rb_encoding **enc_p, rb_encoding **enc2_p, int 
 	    idx = -1;
 	else {
 	    if (io_encname_bom_p(estr, len)) {
-		if (fmode_p) *fmode_p |= FMODE_SETENC_BY_BOM;
+		fmode |= FMODE_SETENC_BY_BOM;
 		estr += 4;
                 len -= 4;
             }
@@ -4889,7 +4920,7 @@ parse_mode_enc(const char *estr, rb_encoding **enc_p, rb_encoding **enc2_p, int 
     else {
 	long len = strlen(estr);
 	if (io_encname_bom_p(estr, len)) {
-	    if (fmode_p) *fmode_p |= FMODE_SETENC_BY_BOM;
+	    fmode |= FMODE_SETENC_BY_BOM;
 	    estr += 4;
             len -= 4;
 	    memcpy(encname, estr, len);
@@ -4898,6 +4929,7 @@ parse_mode_enc(const char *estr, rb_encoding **enc_p, rb_encoding **enc2_p, int 
 	}
 	idx = rb_enc_find_index(estr);
     }
+    if (fmode_p) *fmode_p = fmode;
 
     if (idx >= 0)
 	ext_enc = rb_enc_from_index(idx);
@@ -4917,7 +4949,7 @@ parse_mode_enc(const char *estr, rb_encoding **enc_p, rb_encoding **enc2_p, int 
 	    idx2 = rb_enc_find_index(p);
 	    if (idx2 < 0)
 		unsupported_encoding(p);
-	    else if (idx2 == idx) {
+	    else if (!(fmode & FMODE_SETENC_BY_BOM) && (idx2 == idx)) {
 		int_enc = (rb_encoding *)Qnil;
 	    }
 	    else
@@ -4925,7 +4957,7 @@ parse_mode_enc(const char *estr, rb_encoding **enc_p, rb_encoding **enc2_p, int 
 	}
     }
 
-    rb_io_ext_int_to_encs(ext_enc, int_enc, enc_p, enc2_p);
+    rb_io_ext_int_to_encs(ext_enc, int_enc, enc_p, enc2_p, fmode);
 }
 
 int
@@ -4986,12 +5018,12 @@ rb_io_extract_encoding_option(VALUE opt, rb_encoding **enc_p, rb_encoding **enc2
 	    parse_mode_enc(StringValueCStr(tmp), enc_p, enc2_p, fmode_p);
 	}
 	else {
-	    rb_io_ext_int_to_encs(rb_to_encoding(encoding), NULL, enc_p, enc2_p);
+	    rb_io_ext_int_to_encs(rb_to_encoding(encoding), NULL, enc_p, enc2_p, 0);
 	}
     }
     else if (extenc != Qundef || intenc != Qundef) {
         extracted = 1;
-	rb_io_ext_int_to_encs(extencoding, intencoding, enc_p, enc2_p);
+	rb_io_ext_int_to_encs(extencoding, intencoding, enc_p, enc2_p, 0);
     }
     return extracted;
 }
@@ -5066,7 +5098,7 @@ rb_io_extract_modeenc(VALUE *vmode_p, VALUE *vperm_p, VALUE opthash,
     vmode = *vmode_p;
 
     /* Set to defaults */
-    rb_io_ext_int_to_encs(NULL, NULL, &enc, &enc2);
+    rb_io_ext_int_to_encs(NULL, NULL, &enc, &enc2, 0);
 
   vmode_handle:
     if (NIL_P(vmode)) {
@@ -5094,7 +5126,7 @@ rb_io_extract_modeenc(VALUE *vmode_p, VALUE *vperm_p, VALUE opthash,
 	    rb_encoding *e;
 
 	    e = (fmode & FMODE_BINMODE) ? rb_ascii8bit_encoding() : NULL;
-	    rb_io_ext_int_to_encs(e, NULL, &enc, &enc2);
+	    rb_io_ext_int_to_encs(e, NULL, &enc, &enc2, fmode);
 	}
     }
 
@@ -5118,7 +5150,7 @@ rb_io_extract_modeenc(VALUE *vmode_p, VALUE *vperm_p, VALUE opthash,
             oflags |= O_BINARY;
 #endif
 	    if (!has_enc)
-		rb_io_ext_int_to_encs(rb_ascii8bit_encoding(), NULL, &enc, &enc2);
+		rb_io_ext_int_to_encs(rb_ascii8bit_encoding(), NULL, &enc, &enc2, fmode);
 	}
 #if DEFAULT_TEXTMODE
 	else if (NIL_P(vmode)) {
@@ -5341,12 +5373,15 @@ static void
 io_set_encoding_by_bom(VALUE io)
 {
     int idx = io_strip_bom(io);
+    rb_io_t *fptr;
 
+    GetOpenFile(io, fptr);
     if (idx) {
-	rb_io_t *fptr;
-	GetOpenFile(io, fptr);
 	io_encoding_set(fptr, rb_enc_from_encoding(rb_enc_from_index(idx)),
 		rb_io_internal_encoding(io), Qnil);
+    }
+    else {
+	fptr->encs.enc2 = NULL;
     }
 }
 
@@ -5357,7 +5392,7 @@ rb_file_open_generic(VALUE io, VALUE filename, int oflags, int fmode, convconfig
     convconfig_t cc;
     if (!convconfig) {
 	/* Set to default encodings */
-	rb_io_ext_int_to_encs(NULL, NULL, &cc.enc, &cc.enc2);
+	rb_io_ext_int_to_encs(NULL, NULL, &cc.enc, &cc.enc2, fmode);
         cc.ecflags = 0;
         cc.ecopts = Qnil;
         convconfig = &cc;
@@ -5391,7 +5426,7 @@ rb_file_open_internal(VALUE io, VALUE filename, const char *modestr)
 	/* Set to default encodings */
 
 	e = (fmode & FMODE_BINMODE) ? rb_ascii8bit_encoding() : NULL;
-	rb_io_ext_int_to_encs(e, NULL, &convconfig.enc, &convconfig.enc2);
+	rb_io_ext_int_to_encs(e, NULL, &convconfig.enc, &convconfig.enc2, fmode);
         convconfig.ecflags = 0;
         convconfig.ecopts = Qnil;
     }
@@ -7573,13 +7608,15 @@ argf_forward(int argc, VALUE *argv, VALUE argf)
 } while (0)
 
 static void
-argf_close(VALUE file)
+argf_close(VALUE argf)
 {
+    VALUE file = ARGF.current_file;
     if (file == rb_stdin) return;
     if (RB_TYPE_P(file, T_FILE)) {
 	rb_io_set_write_io(file, Qnil);
     }
     rb_funcall3(file, rb_intern("close"), 0, 0);
+    ARGF.init_p = -1;
 }
 
 static int
@@ -7744,6 +7781,7 @@ argf_next_argv(VALUE argf)
 	    rb_stdout = orig_stdout;
 	}
     }
+    if (ARGF.init_p == -1) ARGF.init_p = 1;
     return TRUE;
 }
 
@@ -7766,7 +7804,7 @@ argf_getline(int argc, VALUE *argv, VALUE argf)
 	    line = rb_io_getline(argc, argv, ARGF.current_file);
 	}
 	if (NIL_P(line) && ARGF.next_p != -1) {
-	    argf_close(ARGF.current_file);
+	    argf_close(argf);
 	    ARGF.next_p = 1;
 	    goto retry;
 	}
@@ -7992,7 +8030,7 @@ argf_readlines(int argc, VALUE *argv, VALUE argf)
 	}
 	else {
 	    lines = rb_io_readlines(argc, argv, ARGF.current_file);
-	    argf_close(ARGF.current_file);
+	    argf_close(argf);
 	}
 	ARGF.next_p = 1;
 	rb_ary_concat(ary, lines);
@@ -9046,7 +9084,7 @@ io_encoding_set(rb_io_t *fptr, VALUE v1, VALUE v2, VALUE opt)
     else {
 	if (NIL_P(v1)) {
 	    /* Set to default encodings */
-	    rb_io_ext_int_to_encs(NULL, NULL, &enc, &enc2);
+	    rb_io_ext_int_to_encs(NULL, NULL, &enc, &enc2, 0);
 	    SET_UNIVERSAL_NEWLINE_DECORATOR_IF_ENC2(enc2, ecflags);
             ecopts = Qnil;
 	}
@@ -9058,7 +9096,7 @@ io_encoding_set(rb_io_t *fptr, VALUE v1, VALUE v2, VALUE opt)
                 ecflags = rb_econv_prepare_options(opt, &ecopts, ecflags);
 	    }
 	    else {
-		rb_io_ext_int_to_encs(find_encoding(v1), NULL, &enc, &enc2);
+		rb_io_ext_int_to_encs(find_encoding(v1), NULL, &enc, &enc2, 0);
 		SET_UNIVERSAL_NEWLINE_DECORATOR_IF_ENC2(enc2, ecflags);
                 ecopts = Qnil;
 	    }
@@ -10645,7 +10683,7 @@ argf_read(int argc, VALUE *argv, VALUE argf)
     else if (!NIL_P(tmp)) rb_str_append(str, tmp);
     if (NIL_P(tmp) || NIL_P(length)) {
 	if (ARGF.next_p != -1) {
-	    argf_close(ARGF.current_file);
+	    argf_close(argf);
 	    ARGF.next_p = 1;
 	    goto retry;
 	}
@@ -10681,30 +10719,19 @@ static VALUE argf_getpartial(int argc, VALUE *argv, VALUE argf, int nonblock);
  *     ARGF.readpartial(maxlen)              -> string
  *     ARGF.readpartial(maxlen, outbuf)      -> outbuf
  *
- *  Reads at most _maxlen_ bytes from the ARGF stream. It blocks only if
- *  +ARGF+ has no data immediately available. If the optional _outbuf_
- *  argument is present, it must reference a String, which will receive the
- *  data.
+ *  Reads at most _maxlen_ bytes from the ARGF stream.
+ *
+ *  If the optional _outbuf_ argument is present,
+ *  it must reference a String, which will receive the data.
  *  The <i>outbuf</i> will contain only the received data after the method call
  *  even if it is not empty at the beginning.
- *  It raises <code>EOFError</code> on end of file.
  *
- *  +readpartial+ is designed for streams such as pipes, sockets, and ttys. It
- *  blocks only when no data is immediately available. This means that it
- *  blocks only when following all conditions hold:
+ *  It raises <code>EOFError</code> on end of ARGF stream.
+ *  Since ARGF stream is a concatenation of multiple files,
+ *  internally EOF is occur for each file.
+ *  ARGF.readpartial returns empty strings for EOFs except the last one and
+ *  raises <code>EOFError</code> for the last one.
  *
- *  * The byte buffer in the +IO+ object is empty.
- *  * The content of the stream is empty.
- *  * The stream has not reached EOF.
- *
- *  When +readpartial+ blocks, it waits for data or EOF. If some data is read,
- *  +readpartial+ returns with the data. If EOF is reached, readpartial raises
- *  an +EOFError+.
- *
- *  When +readpartial+ doesn't block, it returns or raises immediately.  If
- *  the byte buffer is not empty, it returns the data in the buffer. Otherwise, if
- *  the stream has some content, it returns the data in the stream. If the
- *  stream reaches EOF an +EOFError+ is raised.
  */
 
 static VALUE
@@ -10757,7 +10784,7 @@ argf_getpartial(int argc, VALUE *argv, VALUE argf, int nonblock)
         if (ARGF.next_p == -1) {
             rb_eof_error();
         }
-        argf_close(ARGF.current_file);
+        argf_close(argf);
         ARGF.next_p = 1;
         if (RARRAY_LEN(ARGF.argv) == 0)
             rb_eof_error();
@@ -10805,7 +10832,7 @@ argf_getc(VALUE argf)
 	ch = rb_io_getc(ARGF.current_file);
     }
     if (NIL_P(ch) && ARGF.next_p != -1) {
-	argf_close(ARGF.current_file);
+	argf_close(argf);
 	ARGF.next_p = 1;
 	goto retry;
     }
@@ -10845,7 +10872,7 @@ argf_getbyte(VALUE argf)
 	ch = rb_io_getbyte(ARGF.current_file);
     }
     if (NIL_P(ch) && ARGF.next_p != -1) {
-	argf_close(ARGF.current_file);
+	argf_close(argf);
 	ARGF.next_p = 1;
 	goto retry;
     }
@@ -10885,7 +10912,7 @@ argf_readchar(VALUE argf)
 	ch = rb_io_getc(ARGF.current_file);
     }
     if (NIL_P(ch) && ARGF.next_p != -1) {
-	argf_close(ARGF.current_file);
+	argf_close(argf);
 	ARGF.next_p = 1;
 	goto retry;
     }
@@ -10924,7 +10951,25 @@ argf_readbyte(VALUE argf)
     return c;
 }
 
-#define FOREACH_ARGF() for (; next_argv(); ARGF.next_p = 1)
+#define FOREACH_ARGF() while (next_argv())
+
+static VALUE
+argf_block_call_i(VALUE i, VALUE argf, int argc, VALUE *argv)
+{
+    const VALUE current = ARGF.current_file;
+    rb_yield_values2(argc, argv);
+    if (ARGF.init_p == -1 || current != ARGF.current_file) {
+	rb_iter_break_value(Qundef);
+    }
+    return Qnil;
+}
+
+static void
+argf_block_call(ID mid, int argc, VALUE *argv, VALUE argf)
+{
+    VALUE ret = rb_block_call(ARGF.current_file, mid, argc, argv, argf_block_call_i, argf);
+    if (ret != Qundef) ARGF.next_p = 1;
+}
 
 /*
  *  call-seq:
@@ -10963,7 +11008,7 @@ argf_each_line(int argc, VALUE *argv, VALUE argf)
 {
     RETURN_ENUMERATOR(argf, argc, argv);
     FOREACH_ARGF() {
-	rb_block_call(ARGF.current_file, rb_intern("each_line"), argc, argv, 0, 0);
+	argf_block_call(rb_intern("each_line"), argc, argv, argf);
     }
     return argf;
 }
@@ -11010,7 +11055,7 @@ argf_each_byte(VALUE argf)
 {
     RETURN_ENUMERATOR(argf, 0, 0);
     FOREACH_ARGF() {
-	rb_block_call(ARGF.current_file, rb_intern("each_byte"), 0, 0, 0, 0);
+	argf_block_call(rb_intern("each_byte"), 0, 0, argf);
     }
     return argf;
 }
@@ -11049,7 +11094,7 @@ argf_each_char(VALUE argf)
 {
     RETURN_ENUMERATOR(argf, 0, 0);
     FOREACH_ARGF() {
-	rb_block_call(ARGF.current_file, rb_intern("each_char"), 0, 0, 0, 0);
+	argf_block_call(rb_intern("each_char"), 0, 0, argf);
     }
     return argf;
 }
@@ -11088,7 +11133,7 @@ argf_each_codepoint(VALUE argf)
 {
     RETURN_ENUMERATOR(argf, 0, 0);
     FOREACH_ARGF() {
-	rb_block_call(ARGF.current_file, rb_intern("each_codepoint"), 0, 0, 0, 0);
+	argf_block_call(rb_intern("each_codepoint"), 0, 0, argf);
     }
     return argf;
 }
@@ -11224,7 +11269,7 @@ static VALUE
 argf_skip(VALUE argf)
 {
     if (ARGF.init_p && ARGF.next_p == 0) {
-	argf_close(ARGF.current_file);
+	argf_close(argf);
 	ARGF.next_p = 1;
     }
     return argf;
@@ -11252,7 +11297,7 @@ static VALUE
 argf_close_m(VALUE argf)
 {
     next_argv();
-    argf_close(ARGF.current_file);
+    argf_close(argf);
     if (ARGF.next_p != -1) {
 	ARGF.next_p = 1;
     }
@@ -11425,6 +11470,51 @@ static VALUE
 argf_write(VALUE argf, VALUE str)
 {
     return rb_io_write(argf_write_io(argf), str);
+}
+
+void
+rb_readwrite_sys_fail(int writable, const char *mesg)
+{
+    VALUE arg;
+    int n = errno;
+    arg = mesg ? rb_str_new2(mesg) : Qnil;
+    if (writable == RB_IO_WAIT_WRITABLE) {
+	switch (n) {
+	  case EAGAIN:
+	    rb_exc_raise(rb_class_new_instance(1, &arg, rb_eEAGAINWaitWritable));
+	    break;
+#if EAGAIN != EWOULDBLOCK
+	  case EWOULDBLOCK:
+	    rb_exc_raise(rb_class_new_instance(1, &arg, rb_eEWOULDBLOCKWaitWritable));
+	    break;
+#endif
+	  case EINPROGRESS:
+	    rb_exc_raise(rb_class_new_instance(1, &arg, rb_eEINPROGRESSWaitWritable));
+	    break;
+	  default:
+	    rb_mod_sys_fail_str(rb_mWaitWritable, arg);
+	}
+    }
+    else if (writable == RB_IO_WAIT_READABLE) {
+	switch (n) {
+	  case EAGAIN:
+	    rb_exc_raise(rb_class_new_instance(1, &arg, rb_eEAGAINWaitReadable));
+	    break;
+#if EAGAIN != EWOULDBLOCK
+	  case EWOULDBLOCK:
+	    rb_exc_raise(rb_class_new_instance(1, &arg, rb_eEWOULDBLOCKWaitReadable));
+	    break;
+#endif
+	  case EINPROGRESS:
+	    rb_exc_raise(rb_class_new_instance(1, &arg, rb_eEINPROGRESSWaitReadable));
+	    break;
+	  default:
+	    rb_mod_sys_fail_str(rb_mWaitReadable, arg);
+	}
+    }
+    else {
+	rb_bug("invalid read/write type passed to rb_readwrite_sys_fail: %d", writable);
+    }
 }
 
 /*
@@ -11635,6 +11725,25 @@ Init_IO(void)
 
     rb_mWaitReadable = rb_define_module_under(rb_cIO, "WaitReadable");
     rb_mWaitWritable = rb_define_module_under(rb_cIO, "WaitWritable");
+    rb_eEAGAINWaitReadable = rb_define_class_under(rb_cIO, "EAGAINWaitReadable", rb_eEAGAIN);
+    rb_include_module(rb_eEAGAINWaitReadable, rb_mWaitReadable);
+    rb_eEAGAINWaitWritable = rb_define_class_under(rb_cIO, "EAGAINWaitWritable", rb_eEAGAIN);
+    rb_include_module(rb_eEAGAINWaitWritable, rb_mWaitWritable);
+#if EAGAIN == EWOULDBLOCK
+    rb_eEWOULDBLOCKWaitReadable = rb_eEAGAINWaitReadable;
+    rb_define_const(rb_cIO, "EWOULDBLOCKWaitReadable", rb_eEAGAINWaitReadable);
+    rb_eEWOULDBLOCKWaitWritable = rb_eEAGAINWaitWritable;
+    rb_define_const(rb_cIO, "EWOULDBLOCKWaitWritable", rb_eEAGAINWaitWritable);
+#else
+    rb_eEWOULDBLOCKWaitReadable = rb_define_class_under(rb_cIO, "EWOULDBLOCKWaitReadable", rb_eEWOULDBLOCK);
+    rb_include_module(rb_eEWOULDBLOCKWaitReadable, rb_mWaitReadable);
+    rb_eEWOULDBLOCKWaitWritable = rb_define_class_under(rb_cIO, "EWOULDBLOCKWaitWritable", rb_eEWOULDBLOCK);
+    rb_include_module(rb_eEWOULDBLOCKWaitWritable, rb_mWaitWritable);
+#endif
+    rb_eEINPROGRESSWaitReadable = rb_define_class_under(rb_cIO, "EINPROGRESSWaitReadable", rb_eEINPROGRESS);
+    rb_include_module(rb_eEINPROGRESSWaitReadable, rb_mWaitReadable);
+    rb_eEINPROGRESSWaitWritable = rb_define_class_under(rb_cIO, "EINPROGRESSWaitWritable", rb_eEINPROGRESS);
+    rb_include_module(rb_eEINPROGRESSWaitWritable, rb_mWaitWritable);
 
 #if 0
     /* This is necessary only for forcing rdoc handle File::open */
@@ -11894,4 +12003,7 @@ Init_IO(void)
     sym_willneed = ID2SYM(rb_intern("willneed"));
     sym_dontneed = ID2SYM(rb_intern("dontneed"));
     sym_noreuse = ID2SYM(rb_intern("noreuse"));
+    sym_SET = ID2SYM(rb_intern("SET"));
+    sym_CUR = ID2SYM(rb_intern("CUR"));
+    sym_END = ID2SYM(rb_intern("END"));
 }

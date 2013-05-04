@@ -8,9 +8,7 @@ extern "C" {
 #endif
 #endif
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility push(default)
-#endif
+RUBY_SYMBOL_EXPORT_BEGIN
 
 /*
  *  Copyright (c) 1993, Intergraph Corporation
@@ -82,16 +80,21 @@ extern "C++" {			/* template without extern "C++" */
 # if !defined(_INTPTR_T_DEFINED)
 #  ifdef _WIN64
 typedef __int64 intptr_t;
+#    define INTPTR_MAX 9223372036854775807I64
 #  else
 typedef int intptr_t;
+#    define INTPTR_MAX 2147483647
 #  endif
+#  define INTPTR_MIN (-INTPTR_MAX-1)
 #  define _INTPTR_T_DEFINED
 # endif
 # if !defined(_UINTPTR_T_DEFINED)
 #  ifdef _WIN64
 typedef unsigned __int64 uintptr_t;
+#    define UINTPTR_MAX 18446744073709551615UI64
 #  else
 typedef unsigned int uintptr_t;
+#    define UINTPTR_MAX 4294967295U
 #  endif
 #  define _UINTPTR_T_DEFINED
 # endif
@@ -735,9 +738,7 @@ in asynchronous_func_t.
 typedef uintptr_t (*asynchronous_func_t)(uintptr_t self, int argc, uintptr_t* argv);
 uintptr_t rb_w32_asynchronize(asynchronous_func_t func, uintptr_t self, int argc, uintptr_t* argv, uintptr_t intrval);
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility pop
-#endif
+RUBY_SYMBOL_EXPORT_END
 
 #ifdef __MINGW_ATTRIB_PURE
 /* License: Ruby's */

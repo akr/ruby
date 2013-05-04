@@ -9,6 +9,7 @@
 **********************************************************************/
 
 #include "ruby/config.h"
+#include "ruby/missing.h"
 #include "addr2line.h"
 
 #include <stdio.h>
@@ -688,7 +689,7 @@ extern int rb_toupper(int c);
 #define    toupper(c)  rb_toupper(c)
 #define    hex2ascii(hex)  (hex2ascii_data[hex])
 char const hex2ascii_data[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-static __inline int imax(int a, int b) { return (a > b ? a : b); }
+static inline int imax(int a, int b) { return (a > b ? a : b); }
 static int kvprintf(char const *fmt, void (*func)(int), void *arg, int radix, va_list ap);
 
 static void putce(int c)
@@ -768,7 +769,7 @@ kvprintf(char const *fmt, void (*func)(int), void *arg, int radix, va_list ap)
 	char nbuf[MAXNBUF];
 	char *d;
 	const char *p, *percent, *q;
-	u_char *up;
+	unsigned char *up;
 	int ch, n;
 	uintmax_t num;
 	int base, lflag, qflag, tmp, width, ladjust, sharpflag, neg, sign, dot;
@@ -792,7 +793,7 @@ kvprintf(char const *fmt, void (*func)(int), void *arg, int radix, va_list ap)
 	for (;;) {
 		padc = ' ';
 		width = 0;
-		while ((ch = (u_char)*fmt++) != '%' || stop) {
+		while ((ch = (unsigned char)*fmt++) != '%' || stop) {
 			if (ch == '\0')
 				return (retval);
 			PCHAR(ch);
@@ -801,7 +802,7 @@ kvprintf(char const *fmt, void (*func)(int), void *arg, int radix, va_list ap)
 		qflag = 0; lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
 		sign = 0; dot = 0; dwidth = 0; upper = 0;
 		cflag = 0; hflag = 0; jflag = 0; tflag = 0; zflag = 0;
-reswitch:	switch (ch = (u_char)*fmt++) {
+reswitch:	switch (ch = (unsigned char)*fmt++) {
 		case '.':
 			dot = 1;
 			goto reswitch;
@@ -847,7 +848,7 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 				width = n;
 			goto reswitch;
 		case 'b':
-			num = (u_int)va_arg(ap, int);
+			num = (unsigned int)va_arg(ap, int);
 			p = va_arg(ap, char *);
 			for (q = ksprintn(nbuf, num, *p++, NULL, 0); *q;)
 				PCHAR(*q--);
@@ -873,7 +874,7 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 			PCHAR(va_arg(ap, int));
 			break;
 		case 'D':
-			up = va_arg(ap, u_char *);
+			up = va_arg(ap, unsigned char *);
 			p = va_arg(ap, char *);
 			if (!width)
 				width = 16;
@@ -912,7 +913,7 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 			if (jflag)
 				*(va_arg(ap, intmax_t *)) = retval;
 			else if (qflag)
-				*(va_arg(ap, quad_t *)) = retval;
+				*(va_arg(ap, int64_t *)) = retval;
 			else if (lflag)
 				*(va_arg(ap, long *)) = retval;
 			else if (zflag)
@@ -985,25 +986,25 @@ handle_nosign:
 			if (jflag)
 				num = va_arg(ap, uintmax_t);
 			else if (qflag)
-				num = va_arg(ap, u_quad_t);
+				num = va_arg(ap, uint64_t);
 			else if (tflag)
 				num = va_arg(ap, ptrdiff_t);
 			else if (lflag)
-				num = va_arg(ap, u_long);
+				num = va_arg(ap, unsigned long);
 			else if (zflag)
 				num = va_arg(ap, size_t);
 			else if (hflag)
-				num = (u_short)va_arg(ap, int);
+				num = (unsigned short)va_arg(ap, int);
 			else if (cflag)
-				num = (u_char)va_arg(ap, int);
+				num = (unsigned char)va_arg(ap, int);
 			else
-				num = va_arg(ap, u_int);
+				num = va_arg(ap, unsigned int);
 			goto number;
 handle_sign:
 			if (jflag)
 				num = va_arg(ap, intmax_t);
 			else if (qflag)
-				num = va_arg(ap, quad_t);
+				num = va_arg(ap, int64_t);
 			else if (tflag)
 				num = va_arg(ap, ptrdiff_t);
 			else if (lflag)

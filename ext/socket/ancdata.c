@@ -1129,23 +1129,24 @@ bsock_sendmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 {
     rb_io_t *fptr;
     VALUE data, vflags, dest_sockaddr;
-    VALUE *controls_ptr;
     int controls_num;
     struct msghdr mh;
     struct iovec iov;
 #if defined(HAVE_ST_MSG_CONTROL)
     volatile VALUE controls_str = 0;
+    VALUE *controls_ptr = NULL;
+    int family;
 #endif
     int flags;
     ssize_t ss;
-    int family;
 
     rb_secure(4);
     GetOpenFile(sock, fptr);
+#if defined(HAVE_ST_MSG_CONTROL)
     family = rsock_getfamily(fptr->fd);
+#endif
 
     data = vflags = dest_sockaddr = Qnil;
-    controls_ptr = NULL;
     controls_num = 0;
 
     if (argc == 0)
@@ -1153,7 +1154,9 @@ bsock_sendmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
     data = argv[0];
     if (1 < argc) vflags = argv[1];
     if (2 < argc) dest_sockaddr = argv[2];
+#if defined(HAVE_ST_MSG_CONTROL)
     if (3 < argc) { controls_ptr = &argv[3]; controls_num = argc - 3; }
+#endif
 
     StringValue(data);
 
@@ -1255,7 +1258,7 @@ bsock_sendmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
     memset(&mh, 0, sizeof(mh));
     if (!NIL_P(dest_sockaddr)) {
         mh.msg_name = RSTRING_PTR(dest_sockaddr);
-        mh.msg_namelen = RSTRING_LENINT(dest_sockaddr);
+        mh.msg_namelen = RSTRING_SOCKLEN(dest_sockaddr);
     }
     mh.msg_iovlen = 1;
     mh.msg_iov = &iov;
@@ -1264,7 +1267,7 @@ bsock_sendmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 #if defined(HAVE_ST_MSG_CONTROL)
     if (controls_str) {
         mh.msg_control = RSTRING_PTR(controls_str);
-        mh.msg_controllen = RSTRING_LENINT(controls_str);
+        mh.msg_controllen = RSTRING_SOCKLEN(controls_str);
     }
     else {
         mh.msg_control = NULL;
@@ -1285,7 +1288,7 @@ bsock_sendmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 
     if (ss == -1) {
         if (nonblock && (errno == EWOULDBLOCK || errno == EAGAIN))
-            rb_mod_sys_fail(rb_mWaitWritable, "sendmsg(2) would block");
+            rb_readwrite_sys_fail(RB_IO_WAIT_WRITABLE, "sendmsg(2) would block");
 	rb_sys_fail("sendmsg(2)");
     }
 
@@ -1475,11 +1478,11 @@ static VALUE
 bsock_recvmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 {
     rb_io_t *fptr;
-    VALUE vmaxdatlen, vmaxctllen, vflags, vopts;
+    VALUE vmaxdatlen, vmaxctllen, vflags;
+    VALUE vopts;
     int grow_buffer;
     size_t maxdatlen;
     int flags, orig_flags;
-    int request_scm_rights;
     struct msghdr mh;
     struct iovec iov;
     union_sockaddr namebuf;
@@ -1488,6 +1491,7 @@ bsock_recvmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
     VALUE ret;
     ssize_t ss;
 #if defined(HAVE_ST_MSG_CONTROL)
+    int request_scm_rights;
     struct cmsghdr *cmh;
     size_t maxctllen;
     union {
@@ -1502,11 +1506,7 @@ bsock_recvmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 
     rb_secure(4);
 
-    vopts = Qnil;
-    if (0 < argc && RB_TYPE_P(argv[argc-1], T_HASH))
-        vopts = argv[--argc];
-
-    rb_scan_args(argc, argv, "03", &vmaxdatlen, &vflags, &vmaxctllen);
+    rb_scan_args(argc, argv, "03:", &vmaxdatlen, &vflags, &vmaxctllen, &vopts);
 
     maxdatlen = NIL_P(vmaxdatlen) ? sizeof(datbuf0) : NUM2SIZET(vmaxdatlen);
 #if defined(HAVE_ST_MSG_CONTROL)
@@ -1524,9 +1524,11 @@ bsock_recvmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 
     grow_buffer = NIL_P(vmaxdatlen) || NIL_P(vmaxctllen);
 
+#if defined(HAVE_ST_MSG_CONTROL)
     request_scm_rights = 0;
     if (!NIL_P(vopts) && RTEST(rb_hash_aref(vopts, ID2SYM(rb_intern("scm_rights")))))
         request_scm_rights = 1;
+#endif
 
     GetOpenFile(sock, fptr);
     if (rb_io_read_pending(fptr)) {
@@ -1600,7 +1602,7 @@ bsock_recvmsg_internal(int argc, VALUE *argv, VALUE sock, int nonblock)
 
     if (ss == -1) {
         if (nonblock && (errno == EWOULDBLOCK || errno == EAGAIN))
-            rb_mod_sys_fail(rb_mWaitReadable, "recvmsg(2) would block");
+            rb_readwrite_sys_fail(RB_IO_WAIT_READABLE, "recvmsg(2) would block");
 #if defined(HAVE_ST_MSG_CONTROL)
         if (!gc_done && (errno == EMFILE || errno == EMSGSIZE)) {
           /*

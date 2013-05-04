@@ -24,12 +24,10 @@
 static inline VALUE *
 VM_EP_LEP(VALUE *ep)
 {
-    while (1) {
-	if (VM_EP_LEP_P(ep)) {
-	    return ep;
-	}
+    while (!VM_EP_LEP_P(ep)) {
 	ep = VM_EP_PREV_EP(ep);
     }
+    return ep;
 }
 
 VALUE *
@@ -1462,7 +1460,7 @@ rb_vm_control_frame_id_and_class(const rb_control_frame_t *cfp, ID *idp, VALUE *
     }
     while (iseq) {
 	if (RUBY_VM_IFUNC_P(iseq)) {
-	    if (idp) CONST_ID(*idp, "<ifunc>");
+	    if (idp) *idp = idIFUNC;
 	    if (klassp) *klassp = 0;
 	    return 1;
 	}
@@ -1990,7 +1988,7 @@ ruby_thread_init(VALUE self)
 
     th->vm = vm;
     th_init(th, self);
-    rb_iv_set(self, "locals", rb_hash_new());
+    rb_ivar_set(self, rb_intern("locals"), rb_hash_new());
 
     th->top_wrapper = 0;
     th->top_self = rb_vm_top_self();
@@ -2260,6 +2258,8 @@ Init_VM(void)
     rb_define_method_id(klass, id_core_hash_merge_ary, m_core_hash_merge_ary, 2);
     rb_define_method_id(klass, id_core_hash_merge_ptr, m_core_hash_merge_ptr, -1);
     rb_define_method_id(klass, id_core_hash_merge_kwd, m_core_hash_merge_kwd, 2);
+    rb_define_method_id(klass, idProc, rb_block_proc, 0);
+    rb_define_method_id(klass, idLambda, rb_block_lambda, 0);
     rb_obj_freeze(fcore);
     rb_gc_register_mark_object(fcore);
     rb_mRubyVMFrozenCore = fcore;

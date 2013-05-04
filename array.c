@@ -1320,6 +1320,9 @@ rb_ary_fetch(int argc, VALUE *argv, VALUE ary)
 
 /*
  *  call-seq:
+ *     ary.find_index(obj)             ->  int or nil
+ *     ary.find_index { |item| block } ->  int or nil
+ *     ary.find_index                  ->  Enumerator
  *     ary.index(obj)             ->  int or nil
  *     ary.index { |item| block } ->  int or nil
  *     ary.index                  ->  Enumerator
@@ -1339,8 +1342,6 @@ rb_ary_fetch(int argc, VALUE *argv, VALUE ary)
  *     a.index("b")              #=> 1
  *     a.index("z")              #=> nil
  *     a.index { |x| x == "b" }  #=> 1
- *
- *  This is an alias of Array#find_index.
  */
 
 static VALUE
@@ -1839,13 +1840,12 @@ ary_join_1(VALUE obj, VALUE ary, VALUE sep, long i, VALUE result, int *first)
 	    rb_str_buf_append(result, sep);
 
 	val = RARRAY_PTR(ary)[i];
-	switch (TYPE(val)) {
-	  case T_STRING:
+	if (RB_TYPE_P(val, T_STRING)) {
 	  str_join:
 	    rb_str_buf_append(result, val);
 	    *first = FALSE;
-	    break;
-	  case T_ARRAY:
+	}
+	else if (RB_TYPE_P(val, T_ARRAY)) {
 	    obj = val;
 	  ary_join:
 	    if (val == ary) {
@@ -1860,8 +1860,8 @@ ary_join_1(VALUE obj, VALUE ary, VALUE sep, long i, VALUE result, int *first)
 		args[3] = (VALUE)first;
 		rb_exec_recursive(recursive_join, obj, (VALUE)args);
 	    }
-	    break;
-	  default:
+	}
+	else {
 	    tmp = rb_check_string_type(val);
 	    if (!NIL_P(tmp)) {
 		val = tmp;
@@ -3019,8 +3019,8 @@ rb_ary_reject(VALUE ary)
  *
  *  If no block is given, an Enumerator is returned instead.
  *
- *     a = [ "a", "b", "c" ]
- *     a.delete_if {|x| x >= "b" }   #=> ["a"]
+ *     scores = [ 97, 42, 75 ]
+ *     scores.delete_if {|score| score < 80 }   #=> [97]
  */
 
 static VALUE
@@ -3156,6 +3156,7 @@ rb_ary_transpose(VALUE ary)
 /*
  *  call-seq:
  *     ary.replace(other_ary)  -> ary
+ *     ary.initialize_copy(other_ary)	-> ary
  *
  *  Replaces the contents of +self+ with the contents of +other_ary+,
  *  truncating or expanding if necessary.
@@ -3602,7 +3603,7 @@ recursive_eql(VALUE ary1, VALUE ary2, int recur)
  *     ary.eql?(other)  -> true or false
  *
  *  Returns +true+ if +self+ and +other+ are the same object,
- *  or are both arrays with the same content.
+ *  or are both arrays with the same content (according to Object#eql?).
  */
 
 static VALUE
@@ -3656,7 +3657,7 @@ rb_ary_hash(VALUE ary)
  *     ary.include?(object)   -> true or false
  *
  *  Returns +true+ if the given +object+ is present in +self+ (that is, if any
- *  object <code>==</code> +object+), otherwise returns +false+.
+ *  element <code>==</code> +object+), otherwise returns +false+.
  *
  *     a = [ "a", "b", "c" ]
  *     a.include?("b")   #=> true
@@ -5035,15 +5036,14 @@ rb_ary_product(int argc, VALUE *argv, VALUE ary)
     else {
 	/* Compute the length of the result array; return [] if any is empty */
 	for (i = 0; i < n; i++) {
-	    long k = RARRAY_LEN(arrays[i]), l = resultlen;
+	    long k = RARRAY_LEN(arrays[i]);
 	    if (k == 0) {
 		result = rb_ary_new2(0);
 		goto done;
 	    }
-	    resultlen *= k;
-	    if (resultlen < k || resultlen < l || resultlen / k != l) {
+            if (MUL_OVERFLOW_LONG_P(resultlen, k))
 		rb_raise(rb_eRangeError, "too big to product");
-	    }
+	    resultlen *= k;
 	}
 	result = rb_ary_new2(resultlen);
     }

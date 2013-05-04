@@ -47,7 +47,7 @@ rsock_init_sock(VALUE sock, int fd)
     struct stat sbuf;
 
     if (fstat(fd, &sbuf) < 0)
-        rb_sys_fail(0);
+        rb_sys_fail("fstat(2)");
     rb_update_max_fd(fd);
     if (!S_ISSOCK(sbuf.st_mode))
         rb_raise(rb_eArgError, "not a socket file descriptor");
@@ -222,7 +222,7 @@ rsock_s_recvfrom_nonblock(VALUE sock, int argc, VALUE *argv, enum sock_recv_type
 #if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
 	  case EWOULDBLOCK:
 #endif
-            rb_mod_sys_fail(rb_mWaitReadable, "recvfrom(2) would block");
+            rb_readwrite_sys_fail(RB_IO_WAIT_READABLE, "recvfrom(2) would block");
 	}
 	rb_sys_fail("recvfrom(2)");
     }
@@ -475,14 +475,14 @@ make_fd_nonblock(int fd)
 #ifdef F_GETFL
     flags = fcntl(fd, F_GETFL);
     if (flags == -1) {
-        rb_sys_fail(0);
+        rb_sys_fail("fnctl(2)");
     }
 #else
     flags = 0;
 #endif
     flags |= O_NONBLOCK;
     if (fcntl(fd, F_SETFL, flags) == -1) {
-        rb_sys_fail(0);
+        rb_sys_fail("fnctl(2)");
     }
 }
 
@@ -541,7 +541,7 @@ rsock_s_accept_nonblock(VALUE klass, rb_io_t *fptr, struct sockaddr *sockaddr, s
 #if defined EPROTO
 	  case EPROTO:
 #endif
-            rb_mod_sys_fail(rb_mWaitReadable, "accept(2) would block");
+            rb_readwrite_sys_fail(RB_IO_WAIT_READABLE, "accept(2) would block");
 	}
         rb_sys_fail("accept(2)");
     }
@@ -590,7 +590,7 @@ rsock_s_accept(VALUE klass, int fd, struct sockaddr *sockaddr, socklen_t *len)
 	    retry = 0;
 	    goto retry;
 	}
-	rb_sys_fail(0);
+	rb_sys_fail("accept(2)");
     }
     rb_update_max_fd(fd2);
     if (!klass) return INT2NUM(fd2);

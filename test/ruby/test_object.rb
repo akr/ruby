@@ -174,6 +174,14 @@ class TestObject < Test::Unit::TestCase
     assert_equal(:foo, o.instance_variable_get(:@foo))
     assert_equal(nil, o.instance_variable_get(:@bar))
     assert_raise(NameError) { o.instance_variable_get(:foo) }
+    assert_raise(NameError) { o.instance_variable_get("bar") }
+    assert_raise(TypeError) { o.instance_variable_get(1) }
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "@foo"; end
+    def n.count; @count; end
+    assert_equal(:foo, o.instance_variable_get(n))
+    assert_equal(1, n.count)
   end
 
   def test_instance_variable_set
@@ -181,6 +189,15 @@ class TestObject < Test::Unit::TestCase
     o.instance_variable_set(:@foo, :foo)
     assert_equal(:foo, o.instance_eval { @foo })
     assert_raise(NameError) { o.instance_variable_set(:foo, 1) }
+    assert_raise(NameError) { o.instance_variable_set("bar", 1) }
+    assert_raise(TypeError) { o.instance_variable_set(1, 1) }
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "@foo"; end
+    def n.count; @count; end
+    o.instance_variable_set(n, :bar)
+    assert_equal(:bar, o.instance_eval { @foo })
+    assert_equal(1, n.count)
   end
 
   def test_instance_variable_defined
@@ -189,6 +206,14 @@ class TestObject < Test::Unit::TestCase
     assert_equal(true, o.instance_variable_defined?(:@foo))
     assert_equal(false, o.instance_variable_defined?(:@bar))
     assert_raise(NameError) { o.instance_variable_defined?(:foo) }
+    assert_raise(NameError) { o.instance_variable_defined?("bar") }
+    assert_raise(TypeError) { o.instance_variable_defined?(1) }
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "@foo"; end
+    def n.count; @count; end
+    assert_equal(true, o.instance_variable_defined?(n))
+    assert_equal(1, n.count)
   end
 
   def test_remove_instance_variable

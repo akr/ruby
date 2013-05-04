@@ -262,6 +262,12 @@ class TestModule < Test::Unit::TestCase
   def test_const_get
     assert_equal(Math::PI, Math.const_get("PI"))
     assert_equal(Math::PI, Math.const_get(:PI))
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "PI"; end
+    def n.count; @count; end
+    assert_equal(Math::PI, Math.const_get(n))
+    assert_equal(1, n.count)
   end
 
   def test_nested_get
@@ -302,6 +308,20 @@ class TestModule < Test::Unit::TestCase
     assert_equal(99, Other::KOALA)
     Other.const_set("WOMBAT", "Hi")
     assert_equal("Hi", Other::WOMBAT)
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "HOGE"; end
+    def n.count; @count; end
+    def n.count=(v); @count=v; end
+    assert(!Other.const_defined?(:HOGE))
+    Other.const_set(n, 999)
+    assert_equal(1, n.count)
+    n.count = 0
+    assert_equal(999, Other.const_get(n))
+    assert_equal(1, n.count)
+    n.count = 0
+    assert_equal(true, Other.const_defined?(n))
+    assert_equal(1, n.count)
   end
 
   def test_constants
@@ -314,9 +334,6 @@ class TestModule < Test::Unit::TestCase
 
     a = Module.new
     Other.const_set :BUG6454, a
-
-    original = Other::BUG6454.inspect
-
     b = a.dup
     Other.const_set :BUG6454_dup, b
 
@@ -581,6 +598,8 @@ class TestModule < Test::Unit::TestCase
   def test_const_set_invalid_name
     c1 = Class.new
     assert_raise(NameError) { c1.const_set(:foo, :foo) }
+    assert_raise(NameError) { c1.const_set("bar", :foo) }
+    assert_raise(TypeError) { c1.const_set(1, :foo) }
   end
 
   def test_const_get_invalid_name
@@ -590,7 +609,7 @@ class TestModule < Test::Unit::TestCase
     assert_raise(TypeError, bug5084) { c1.const_get(1) }
     bug7574 = '[ruby-dev:46749]'
     e = assert_raise(NameError) { Object.const_get("String\0") }
-    assert_equal("wrong constant name \"String\\0\"", e.message, bug7574)
+    assert_equal("wrong constant name \"String\\u0000\"", e.message, bug7574)
   end
 
   def test_const_defined_invalid_name
@@ -600,7 +619,7 @@ class TestModule < Test::Unit::TestCase
     assert_raise(TypeError, bug5084) { c1.const_defined?(1) }
     bug7574 = '[ruby-dev:46749]'
     e = assert_raise(NameError) { Object.const_defined?("String\0") }
-    assert_equal("wrong constant name \"String\\0\"", e.message, bug7574)
+    assert_equal("wrong constant name \"String\\u0000\"", e.message, bug7574)
   end
 
   def test_const_get_no_inherited
@@ -663,14 +682,33 @@ class TestModule < Test::Unit::TestCase
     c.class_eval('@@foo = :foo')
     assert_equal(:foo, c.class_variable_get(:@@foo))
     assert_raise(NameError) { c.class_variable_get(:@@bar) } # c.f. instance_variable_get
+    assert_raise(NameError) { c.class_variable_get('@@') }
     assert_raise(NameError) { c.class_variable_get(:foo) }
+    assert_raise(NameError) { c.class_variable_get("bar") }
+    assert_raise(TypeError) { c.class_variable_get(1) }
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "@@foo"; end
+    def n.count; @count; end
+    assert_equal(:foo, c.class_variable_get(n))
+    assert_equal(1, n.count)
   end
 
   def test_class_variable_set
     c = Class.new
     c.class_variable_set(:@@foo, :foo)
     assert_equal(:foo, c.class_eval('@@foo'))
+    assert_raise(NameError) { c.class_variable_set('@@', 1) }
     assert_raise(NameError) { c.class_variable_set(:foo, 1) }
+    assert_raise(NameError) { c.class_variable_set("bar", 1) }
+    assert_raise(TypeError) { c.class_variable_set(1, 1) }
+
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "@@foo"; end
+    def n.count; @count; end
+    c.class_variable_set(n, :bar)
+    assert_equal(:bar, c.class_eval('@@foo'))
+    assert_equal(1, n.count)
   end
 
   def test_class_variable_defined
@@ -679,6 +717,13 @@ class TestModule < Test::Unit::TestCase
     assert_equal(true, c.class_variable_defined?(:@@foo))
     assert_equal(false, c.class_variable_defined?(:@@bar))
     assert_raise(NameError) { c.class_variable_defined?(:foo) }
+    assert_raise(NameError) { c.class_variable_defined?("bar") }
+    assert_raise(TypeError) { c.class_variable_defined?(1) }
+    n = Object.new
+    def n.to_str; @count = defined?(@count) ? @count + 1 : 1; "@@foo"; end
+    def n.count; @count; end
+    assert_equal(true, c.class_variable_defined?(n))
+    assert_equal(1, n.count)
   end
 
   def test_remove_class_variable
@@ -1067,23 +1112,21 @@ class TestModule < Test::Unit::TestCase
     assert_match(/:#{line}: warning: method redefined; discarding old foo/, stderr)
     assert_match(/:#{line-1}: warning: previous definition of foo/, stderr, feature2155)
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       Module.new do
         def foo; end
         alias bar foo
         def foo; end
       end
     end
-    assert_equal("", stderr)
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       Module.new do
         def foo; end
         alias bar foo
         alias bar foo
       end
     end
-    assert_equal("", stderr)
 
     line = __LINE__+4
     stderr = EnvUtil.verbose_warning do
@@ -1095,31 +1138,28 @@ class TestModule < Test::Unit::TestCase
     assert_match(/:#{line}: warning: method redefined; discarding old foo/, stderr)
     assert_match(/:#{line-1}: warning: previous definition of foo/, stderr, feature2155)
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       Module.new do
         define_method(:foo) do end
         alias bar foo
         alias bar foo
       end
     end
-    assert_equal("", stderr)
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning('', '[ruby-dev:39397]') do
       Module.new do
         module_function
         def foo; end
         module_function :foo
       end
     end
-    assert_equal("", stderr, '[ruby-dev:39397]')
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       Module.new do
         def foo; end
         undef foo
       end
     end
-    assert_equal("", stderr)
   end
 
   def test_protected_singleton_method
@@ -1368,6 +1408,13 @@ class TestModule < Test::Unit::TestCase
     c = labeled_class("c") {prepend b}
     assert_operator(c, :<, b, bug6654)
     assert_operator(c, :<, a, bug6654)
+    bug8357 = '[ruby-core:54736] [Bug #8357]'
+    b = labeled_module("b") {prepend a}
+    c = labeled_class("c") {include b}
+    assert_operator(c, :<, b, bug8357)
+    assert_operator(c, :<, a, bug8357)
+    bug8357 = '[ruby-core:54742] [Bug #8357]'
+    assert_kind_of(b, c.new, bug8357)
   end
 
   def test_prepend_instance_methods
@@ -1447,14 +1494,14 @@ class TestModule < Test::Unit::TestCase
 
   def labeled_module(name, &block)
     Module.new do
-      singleton_class.class_eval {define_method(:to_s) {name}}
+      singleton_class.class_eval {define_method(:to_s) {name}; alias inspect to_s}
       class_eval(&block) if block
     end
   end
 
   def labeled_class(name, superclass = Object, &block)
     Class.new(superclass) do
-      singleton_class.class_eval {define_method(:to_s) {name}}
+      singleton_class.class_eval {define_method(:to_s) {name}; alias inspect to_s}
       class_eval(&block) if block
     end
   end
@@ -1497,8 +1544,8 @@ class TestModule < Test::Unit::TestCase
       protected :foo
     end
     a = c.new
-    assert_respond_to a, [:foo, true]
-    assert_nothing_raised(NoMethodError) {a.send :foo}
+    assert_respond_to a, [:foo, true], bug8005
+    assert_nothing_raised(NoMethodError, bug8005) {a.send :foo}
   end
 
   def test_class_variables
@@ -1592,55 +1639,47 @@ class TestModule < Test::Unit::TestCase
 
   def test_uninitialized_instance_variable
     a = AttrTest.new
-    stderr = EnvUtil.verbose_warning do
+    assert_warning(/instance variable @ivar not initialized/) do
       assert_nil(a.ivar)
     end
-    assert_match(/instance variable @ivar not initialized/, stderr)
     a.instance_variable_set(:@ivar, 42)
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_equal(42, a.ivar)
     end
-    assert_equal("", stderr)
   end
 
   def test_uninitialized_attr
     a = AttrTest.new
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_nil(a.iattr)
     end
-    assert_equal("", stderr)
     a.iattr = 42
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_equal(42, a.iattr)
     end
-    assert_equal("", stderr)
   end
 
   def test_uninitialized_attr_class
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_nil(AttrTest.cattr)
     end
-    assert_equal("", stderr)
     AttrTest.cattr = 42
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_equal(42, AttrTest.cattr)
     end
-    assert_equal("", stderr)
   end
 
   def test_uninitialized_attr_non_object
     a = Class.new(Array) do
       attr_accessor :iattr
     end.new
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_nil(a.iattr)
     end
-    assert_equal("", stderr)
     a.iattr = 42
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       assert_equal(42, a.iattr)
     end
-    assert_equal("", stderr)
   end
 
   def test_remove_const
@@ -1687,6 +1726,13 @@ class TestModule < Test::Unit::TestCase
     obj = Object.new
     obj.singleton_class.send :prepend, mod
     assert_equal [mod, obj.singleton_class, Object], obj.singleton_class.ancestors.first(3)
+  end
+
+  def test_visibility_by_public_class_method
+    bug8284 = '[ruby-core:54404] [Bug #8284]'
+    assert_raise(NoMethodError) {Object.define_method}
+    Module.new.public_class_method(:define_method)
+    assert_raise(NoMethodError, bug8284) {Object.define_method}
   end
 
   private

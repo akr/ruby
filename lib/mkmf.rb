@@ -310,6 +310,10 @@ module MakeMakefile
       @log.sync = true
     end
 
+    def self::log_opened?
+      @log and not @log.closed?
+    end
+
     def self::open
       log_open
       $stderr.reopen(@log)
@@ -739,15 +743,15 @@ int main() {printf("%"PRI_CONFTEST_PREFIX"#{neg ? 'd' : 'u'}\\n", conftest_const
 #{headers}
 /*top*/
 extern int t(void);
+#{MAIN_DOES_NOTHING 't'}
 int t(void) { #{decltype["volatile p"]}; p = (#{decltype[]})#{func}; return 0; }
-#{MAIN_DOES_NOTHING "t"}
 SRC
     call && try_link(<<"SRC", opt, &b)
 #{headers}
 /*top*/
 extern int t(void);
+#{MAIN_DOES_NOTHING 't'}
 int t(void) { #{call}; return 0; }
-#{MAIN_DOES_NOTHING "t"}
 SRC
   end
 
@@ -758,8 +762,8 @@ SRC
 #{headers}
 /*top*/
 extern int t(void);
+#{MAIN_DOES_NOTHING 't'}
 int t(void) { const volatile void *volatile p; p = &(&#{var})[0]; return 0; }
-#{MAIN_DOES_NOTHING "t"}
 SRC
   end
 
@@ -1143,7 +1147,7 @@ SRC
 #{cpp_include(headers)}
 /*top*/
 int s = (char *)&((#{type}*)0)->#{member} - (char *)0;
-#{MAIN_DOES_NOTHING "s"}
+#{MAIN_DOES_NOTHING}
 SRC
         $defs.push(format("-DHAVE_%s_%s", type.tr_cpp, member.tr_cpp))
         $defs.push(format("-DHAVE_ST_%s", member.tr_cpp)) # backward compatibility
@@ -1397,8 +1401,8 @@ SRC
 /*top*/
 volatile #{type} conftestval;
 extern int t(void);
+#{MAIN_DOES_NOTHING 't'}
 int t(void) {return (int)(1-*(conftestval#{member ? ".#{member}" : ""}));}
-#{MAIN_DOES_NOTHING "t"}
 SRC
   end
 
@@ -1410,8 +1414,8 @@ SRC
 /*top*/
 volatile #{type} conftestval;
 extern int t(void);
+#{MAIN_DOES_NOTHING 't'}
 int t(void) {return (int)(1-(conftestval#{member ? ".#{member}" : ""}));}
-#{MAIN_DOES_NOTHING "t"}
 SRC
   end
 
@@ -1718,7 +1722,7 @@ SRC
   #
   # The actual command name can be overridden by
   # <code>--with-pkg-config</code> command line option.
-  def pkg_config(pkg)
+  def pkg_config(pkg, option=nil)
     if pkgconfig = with_config("#{pkg}-config") and find_executable0(pkgconfig)
       # iff package specific config command is given
       get = proc {|opt| `#{pkgconfig} --#{opt}`.strip}
@@ -1732,7 +1736,9 @@ SRC
       # default to package specific config command, as a last resort.
       get = proc {|opt| `#{pkgconfig} --#{opt}`.strip}
     end
-    if get and try_ldflags(ldflags = get['libs'])
+    if get and option
+      get[option]
+    elsif get and try_ldflags(ldflags = get['libs'])
       cflags = get['cflags']
       libs = get['libs-only-l']
       ldflags = (Shellwords.shellwords(ldflags) - Shellwords.shellwords(libs)).quote.join(" ")
@@ -1840,7 +1846,15 @@ VPATH = #{vpath.join(CONFIG['PATH_SEPARATOR'])}
     end
     possible_command = (proc {|s| s if /top_srcdir/ !~ s} unless $extmk)
     extconf_h = $extconf_h ? "-DRUBY_EXTCONF_H=\\\"$(RUBY_EXTCONF_H)\\\" " : $defs.join(" ") << " "
-    headers = %w[$(hdrdir)/ruby.h $(hdrdir)/ruby/defines.h]
+    headers = %w[
+      $(hdrdir)/ruby.h
+      $(hdrdir)/ruby/ruby.h
+      $(hdrdir)/ruby/defines.h
+      $(hdrdir)/ruby/missing.h
+      $(hdrdir)/ruby/intern.h
+      $(hdrdir)/ruby/st.h
+      $(hdrdir)/ruby/subst.h
+    ]
     if RULE_SUBST
       headers.each {|h| h.sub!(/.*/, &RULE_SUBST.method(:%))}
     end
@@ -1863,11 +1877,12 @@ cflags   = #{CONFIG['cflags']}
 optflags = #{CONFIG['optflags']}
 debugflags = #{CONFIG['debugflags']}
 warnflags = #{$warnflags}
-CFLAGS   = #{$static ? '' : CONFIG['CCDLFLAGS']} #$CFLAGS $(ARCH_FLAG)
+CCDLFLAGS = #{$static ? '' : CONFIG['CCDLFLAGS']}
+CFLAGS   = $(CCDLFLAGS) #$CFLAGS $(ARCH_FLAG)
 INCFLAGS = -I. #$INCFLAGS
 DEFS     = #{CONFIG['DEFS']}
 CPPFLAGS = #{extconf_h}#{$CPPFLAGS}
-CXXFLAGS = $(CFLAGS) #{CONFIG['CXXFLAGS']}
+CXXFLAGS = $(CCDLFLAGS) #{CONFIG['CXXFLAGS']} $(ARCH_FLAG)
 ldflags  = #{$LDFLAGS}
 dldflags = #{$DLDFLAGS} #{CONFIG['EXTDLDFLAGS']}
 ARCH_FLAG = #{$ARCH_FLAG}
@@ -1915,9 +1930,16 @@ preload = #{defined?($preload) && $preload ? $preload.join(' ') : ''}
     mk
   end
 
-  def timestamp_file(name)
+  def timestamp_file(name, target_prefix = nil)
+    if target_prefix
+      pat = []
+      install_dirs.each do |n, d|
+        pat << n if /\$\(target_prefix\)\z/ =~ d
+      end
+      name = name.gsub(/\$\((#{pat.join("|")})\)/) {$&+target_prefix}
+    end
     name = name.gsub(/(\$[({]|[})])|(\/+)|[^-.\w]+/) {$1 ? "" : $2 ? ".-." : "_"}
-    "./.#{name}.time"
+    "$(TIMESTAMP_DIR)/.#{name}.time"
   end
   # :startdoc:
 
@@ -1981,6 +2003,7 @@ RULES
     end
     depend.each_line do |line|
       line.gsub!(/\.o\b/, ".#{$OBJEXT}")
+      line.gsub!(/\{\$\(VPATH\)\}/, "") unless $nmake
       line.gsub!(/\$\((?:hdr|top)dir\)\/config.h/, $config_h)
       line.gsub!(%r"\$\(hdrdir\)/(?!ruby(?![^:;/\s]))(?=[-\w]+\.h)", '\&ruby/')
       if $nmake && /\A\s*\$\(RM|COPY\)/ =~ line
@@ -2169,6 +2192,7 @@ DLLIB = #{dllib}
 EXTSTATIC = #{$static || ""}
 STATIC_LIB = #{staticlib unless $static.nil?}
 #{!$extout && defined?($installed_list) ? "INSTALLED_LIST = #{$installed_list}\n" : ""}
+TIMESTAMP_DIR = #{$extout ? '$(extout)/.timestamp' : '.'}
 " #"
     # TODO: fixme
     install_dirs.each {|d| mfile.print("%-14s= %s\n" % d) if /^[[:upper:]]/ =~ d[0]}
@@ -2211,7 +2235,7 @@ static: $(STATIC_LIB)#{$extout ? " install-rb" : ""}
         mfile.print "\t-$(Q)$(RM) #{fseprepl[dest]}\n"
         mfile.print "\t-$(Q)$(RMDIRS) #{fseprepl[dir]}#{$ignore_error}\n"
       else
-        mfile.print "#{f} #{timestamp_file(dir)}\n"
+        mfile.print "#{f} #{timestamp_file(dir, target_prefix)}\n"
         mfile.print "\t$(INSTALL_PROG) #{fseprepl[f]} #{dir}\n"
         if defined?($installed_list)
           mfile.print "\t@echo #{dir}/#{File.basename(f)}>>$(INSTALLED_LIST)\n"
@@ -2231,12 +2255,12 @@ static: $(STATIC_LIB)#{$extout ? " install-rb" : ""}
       for dir, *files in files
         unless dirs.include?(dir)
           dirs << dir
-          mfile.print "pre-install-rb#{sfx}: #{timestamp_file(dir)}\n"
+          mfile.print "pre-install-rb#{sfx}: #{timestamp_file(dir, target_prefix)}\n"
         end
         for f in files
           dest = "#{dir}/#{File.basename(f)}"
           mfile.print("install-rb#{sfx}: #{dest}\n")
-          mfile.print("#{dest}: #{f} #{timestamp_file(dir)}\n")
+          mfile.print("#{dest}: #{f} #{timestamp_file(dir, target_prefix)}\n")
           mfile.print("\t$(Q) $(#{$extout ? 'COPY' : 'INSTALL_DATA'}) #{f} $(@D#{sep})\n")
           if defined?($installed_list) and !$extout
             mfile.print("\t@echo #{dest}>>$(INSTALLED_LIST)\n")
@@ -2261,8 +2285,8 @@ static: $(STATIC_LIB)#{$extout ? " install-rb" : ""}
     end
     dirs.unshift(sodir) if target and !dirs.include?(sodir)
     dirs.each do |d|
-      t = timestamp_file(d)
-      mfile.print "#{t}:\n\t$(Q) $(MAKEDIRS) #{d}\n\t$(Q) $(TOUCH) $@\n"
+      t = timestamp_file(d, target_prefix)
+      mfile.print "#{t}:\n\t$(Q) $(MAKEDIRS) $(@D) #{d}\n\t$(Q) $(TOUCH) $@\n"
     end
 
     mfile.print <<-SITEINSTALL
@@ -2297,7 +2321,7 @@ site-install-rb: install-rb
     mfile.print "$(DLLIB): "
     mfile.print "$(DEFFILE) " if makedef
     mfile.print "$(OBJS) Makefile"
-    mfile.print " #{timestamp_file('$(RUBYARCHDIR)')}" if $extout
+    mfile.print " #{timestamp_file('$(RUBYARCHDIR)', target_prefix)}" if $extout
     mfile.print "\n"
     mfile.print "\t$(ECHO) linking shared-object #{target_prefix.sub(/\A\/(.*)/, '\1/')}$(DLLIB)\n"
     mfile.print "\t-$(Q)$(RM) $(@#{sep})\n"
@@ -2421,7 +2445,14 @@ MESSAGE
 
   def MAIN_DOES_NOTHING(*refs)
     src = MAIN_DOES_NOTHING
-    src = src.sub(/\{/) {$&+refs.map {|n|"(void)#{n}; "}.join("")}
+    unless refs.empty?
+      src = src.sub(/\{/) do
+        $& +
+          "\n  if (argc > 1000000) {\n" +
+          refs.map {|n|"    printf(\"%p\", &#{n});\n"}.join("") +
+          "  }\n"
+      end
+    end
     src
   end
 
@@ -2532,7 +2563,7 @@ MESSAGE
   ##
   # A C main function which does no work
 
-  MAIN_DOES_NOTHING = config_string('MAIN_DOES_NOTHING') || 'int main(void) {return 0;}'
+  MAIN_DOES_NOTHING = config_string('MAIN_DOES_NOTHING') || "int main(int argc, char **argv)\n{\n  return 0;\n}"
   UNIVERSAL_INTS = config_string('UNIVERSAL_INTS') {|s| Shellwords.shellwords(s)} ||
     %w[int short long long\ long]
 

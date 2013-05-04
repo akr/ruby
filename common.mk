@@ -473,13 +473,14 @@ distclean-platform: clean-platform
 realclean:: realclean-ext realclean-local realclean-enc realclean-golf realclean-extout
 realclean-local:: distclean-local
 	$(Q)$(RM) parse.c parse.h lex.c newline.c miniprelude.c revision.h
-realclean-ext::
+realclean-ext:: PHONY
 realclean-golf: distclean-golf
 realclean-capi: PHONY
 realclean-extout: distclean-extout
 
 clean-ext distclean-ext realclean-ext::
 	$(Q)$(RM) $(EXTS_MK)
+	$(Q)$(RM) $(EXTOUT)/.timestamp/.*.time
 
 clean-enc distclean-enc realclean-enc: PHONY
 
@@ -589,31 +590,6 @@ PHONY:
 	$(Q)sed -e "/^#line.*y\.tab\.h/d;/^#line.*parse.*\.y/d" y.tab.h > $(@:.c=.h)
 	$(Q)$(RM) y.tab.c y.tab.h
 
-acosh.$(OBJEXT): {$(VPATH)}acosh.c
-alloca.$(OBJEXT): {$(VPATH)}alloca.c {$(VPATH)}config.h
-crypt.$(OBJEXT): {$(VPATH)}crypt.c
-dup2.$(OBJEXT): {$(VPATH)}dup2.c
-erf.$(OBJEXT): {$(VPATH)}erf.c
-finite.$(OBJEXT): {$(VPATH)}finite.c
-flock.$(OBJEXT): {$(VPATH)}flock.c
-memcmp.$(OBJEXT): {$(VPATH)}memcmp.c
-memmove.$(OBJEXT): {$(VPATH)}memmove.c
-mkdir.$(OBJEXT): {$(VPATH)}mkdir.c
-setproctitle.$(OBJEXT): {$(VPATH)}setproctitle.c {$(VPATH)}util.h $(RUBY_H_INCLUDES)
-strchr.$(OBJEXT): {$(VPATH)}strchr.c
-strdup.$(OBJEXT): {$(VPATH)}strdup.c
-strerror.$(OBJEXT): {$(VPATH)}strerror.c
-strlcat.$(OBJEXT): {$(VPATH)}strlcat.c
-strlcpy.$(OBJEXT): {$(VPATH)}strlcpy.c
-strstr.$(OBJEXT): {$(VPATH)}strstr.c
-strtod.$(OBJEXT): {$(VPATH)}strtod.c
-strtol.$(OBJEXT): {$(VPATH)}strtol.c
-nt.$(OBJEXT): {$(VPATH)}nt.c
-os2.$(OBJEXT): {$(VPATH)}os2.c
-dl_os2.$(OBJEXT): {$(VPATH)}dl_os2.c
-ia64.$(OBJEXT): {$(VPATH)}ia64.s
-	$(CC) $(CFLAGS) -c $<
-
 $(PLATFORM_D):
 	$(Q) $(MAKEDIRS) $(PLATFORM_DIR)
 	@exit > $@
@@ -629,16 +605,45 @@ VM_CORE_H_INCLUDES = {$(VPATH)}vm_core.h {$(VPATH)}thread_$(THREAD_MODEL).h \
 		     {$(VPATH)}node.h {$(VPATH)}method.h {$(VPATH)}ruby_atomic.h \
 	             {$(VPATH)}vm_debug.h {$(VPATH)}id.h
 
+###
+
+acosh.$(OBJEXT): {$(VPATH)}acosh.c
+alloca.$(OBJEXT): {$(VPATH)}alloca.c {$(VPATH)}config.h
+crypt.$(OBJEXT): {$(VPATH)}crypt.c
+dup2.$(OBJEXT): {$(VPATH)}dup2.c
+erf.$(OBJEXT): {$(VPATH)}erf.c
+finite.$(OBJEXT): {$(VPATH)}finite.c
+flock.$(OBJEXT): {$(VPATH)}flock.c
+memcmp.$(OBJEXT): {$(VPATH)}memcmp.c
+memmove.$(OBJEXT): {$(VPATH)}memmove.c
+mkdir.$(OBJEXT): {$(VPATH)}mkdir.c
+setproctitle.$(OBJEXT): {$(VPATH)}setproctitle.c {$(VPATH)}util.h $(RUBY_H_INCLUDES) $(hdrdir)/ruby.h
+strchr.$(OBJEXT): {$(VPATH)}strchr.c
+strdup.$(OBJEXT): {$(VPATH)}strdup.c
+strerror.$(OBJEXT): {$(VPATH)}strerror.c
+strlcat.$(OBJEXT): {$(VPATH)}strlcat.c
+strlcpy.$(OBJEXT): {$(VPATH)}strlcpy.c
+strstr.$(OBJEXT): {$(VPATH)}strstr.c
+strtod.$(OBJEXT): {$(VPATH)}strtod.c
+strtol.$(OBJEXT): {$(VPATH)}strtol.c
+nt.$(OBJEXT): {$(VPATH)}nt.c
+os2.$(OBJEXT): {$(VPATH)}os2.c
+dl_os2.$(OBJEXT): {$(VPATH)}dl_os2.c
+ia64.$(OBJEXT): {$(VPATH)}ia64.s
+	$(CC) $(CFLAGS) -c $<
+
+###
+
 addr2line.$(OBJEXT): {$(VPATH)}addr2line.c {$(VPATH)}addr2line.h {$(VPATH)}config.h
 array.$(OBJEXT): {$(VPATH)}array.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
-  $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}id.h
+  $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}id.h {$(VPATH)}vm_opts.h
 bignum.$(OBJEXT): {$(VPATH)}bignum.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
   {$(VPATH)}thread.h {$(VPATH)}internal.h
 class.$(OBJEXT): {$(VPATH)}class.c $(RUBY_H_INCLUDES) \
-  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}constant.h
+  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}constant.h {$(VPATH)}vm_opts.h
 compar.$(OBJEXT): {$(VPATH)}compar.c $(RUBY_H_INCLUDES)
 complex.$(OBJEXT): {$(VPATH)}complex.c $(RUBY_H_INCLUDES) \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h $(hdrdir)/ruby.h
 dir.$(OBJEXT): {$(VPATH)}dir.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
   $(ENCODING_H_INCLUDES) \
   {$(VPATH)}internal.h
@@ -653,19 +658,19 @@ encoding.$(OBJEXT): {$(VPATH)}encoding.c $(RUBY_H_INCLUDES) \
   $(ENCODING_H_INCLUDES) {$(VPATH)}regenc.h {$(VPATH)}util.h \
   {$(VPATH)}internal.h
 enum.$(OBJEXT): {$(VPATH)}enum.c $(RUBY_H_INCLUDES) {$(VPATH)}node.h \
-  {$(VPATH)}util.h {$(VPATH)}id.h
+  {$(VPATH)}util.h {$(VPATH)}id.h {$(VPATH)}internal.h
 enumerator.$(OBJEXT): {$(VPATH)}enumerator.c $(RUBY_H_INCLUDES) \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h {$(VPATH)}node.h
 error.$(OBJEXT): {$(VPATH)}error.c {$(VPATH)}known_errors.inc \
   $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES) $(ENCODING_H_INCLUDES) \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 eval.$(OBJEXT): {$(VPATH)}eval.c {$(VPATH)}eval_intern.h {$(VPATH)}vm.h \
   $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES) {$(VPATH)}eval_error.c \
   {$(VPATH)}eval_jump.c {$(VPATH)}gc.h {$(VPATH)}iseq.h \
-  $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES)
+  $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}vm_opts.h {$(VPATH)}probes_helper.h
 load.$(OBJEXT): {$(VPATH)}load.c {$(VPATH)}eval_intern.h \
   {$(VPATH)}util.h $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES) \
-  {$(VPATH)}dln.h {$(VPATH)}internal.h $(PROBES_H_INCLUDES)
+  {$(VPATH)}dln.h {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}vm_opts.h
 file.$(OBJEXT): {$(VPATH)}file.c $(RUBY_H_INCLUDES) {$(VPATH)}io.h \
   $(ENCODING_H_INCLUDES) {$(VPATH)}util.h {$(VPATH)}dln.h \
   {$(VPATH)}internal.h
@@ -673,44 +678,45 @@ gc.$(OBJEXT): {$(VPATH)}gc.c $(RUBY_H_INCLUDES) {$(VPATH)}re.h \
   {$(VPATH)}regex.h $(ENCODING_H_INCLUDES) $(VM_CORE_H_INCLUDES) \
   {$(VPATH)}gc.h {$(VPATH)}io.h {$(VPATH)}eval_intern.h {$(VPATH)}util.h \
   {$(VPATH)}internal.h {$(VPATH)}constant.h \
-  {$(VPATH)}thread.h $(PROBES_H_INCLUDES)
+  {$(VPATH)}thread.h $(PROBES_H_INCLUDES) {$(VPATH)}vm_opts.h
 hash.$(OBJEXT): {$(VPATH)}hash.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
-  $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES)
+  $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}vm_opts.h
 inits.$(OBJEXT): {$(VPATH)}inits.c $(RUBY_H_INCLUDES) \
   {$(VPATH)}internal.h
 io.$(OBJEXT): {$(VPATH)}io.c $(RUBY_H_INCLUDES) {$(VPATH)}io.h \
   {$(VPATH)}util.h $(ENCODING_H_INCLUDES) {$(VPATH)}dln.h \
-  {$(VPATH)}internal.h {$(VPATH)}thread.h {$(VPATH)}id.h
-main.$(OBJEXT): {$(VPATH)}main.c $(RUBY_H_INCLUDES) {$(VPATH)}node.h {$(VPATH)}vm_debug.h
+  {$(VPATH)}internal.h {$(VPATH)}thread.h {$(VPATH)}id.h {$(VPATH)}ruby_atomic.h
+main.$(OBJEXT): {$(VPATH)}main.c $(RUBY_H_INCLUDES) {$(VPATH)}node.h {$(VPATH)}vm_debug.h {$(VPATH)}vm_opts.h $(hdrdir)/ruby.h
 marshal.$(OBJEXT): {$(VPATH)}marshal.c $(RUBY_H_INCLUDES) {$(VPATH)}io.h \
   $(ENCODING_H_INCLUDES) {$(VPATH)}util.h {$(VPATH)}internal.h
 math.$(OBJEXT): {$(VPATH)}math.c $(RUBY_H_INCLUDES) \
   {$(VPATH)}internal.h
 node.$(OBJEXT): {$(VPATH)}node.c $(RUBY_H_INCLUDES) \
-  $(VM_CORE_H_INCLUDES)
+  $(VM_CORE_H_INCLUDES) {$(VPATH)}vm_opts.h
 numeric.$(OBJEXT): {$(VPATH)}numeric.c $(RUBY_H_INCLUDES) \
   {$(VPATH)}util.h $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}id.h
 object.$(OBJEXT): {$(VPATH)}object.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
-  {$(VPATH)}internal.h {$(VPATH)}constant.h $(ENCODING_H_INCLUDES) $(PROBES_H_INCLUDES)
+  {$(VPATH)}internal.h {$(VPATH)}constant.h $(ENCODING_H_INCLUDES) $(PROBES_H_INCLUDES) \
+  {$(VPATH)}vm_opts.h {$(VPATH)}id.h
 pack.$(OBJEXT): {$(VPATH)}pack.c $(RUBY_H_INCLUDES) {$(VPATH)}encoding.h \
-  {$(VPATH)}oniguruma.h
+  {$(VPATH)}oniguruma.h {$(VPATH)}internal.h
 parse.$(OBJEXT): {$(VPATH)}parse.c $(RUBY_H_INCLUDES) {$(VPATH)}node.h \
   $(ENCODING_H_INCLUDES) {$(VPATH)}id.h {$(VPATH)}regenc.h \
   {$(VPATH)}regex.h {$(VPATH)}util.h {$(VPATH)}lex.c \
   {$(VPATH)}defs/keywords {$(VPATH)}id.c {$(VPATH)}parse.y \
-  {$(VPATH)}parse.h {$(VPATH)}internal.h $(PROBES_H_INCLUDES)
+  {$(VPATH)}parse.h {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}vm_opts.h
 proc.$(OBJEXT): {$(VPATH)}proc.c {$(VPATH)}eval_intern.h \
   $(RUBY_H_INCLUDES) {$(VPATH)}gc.h $(VM_CORE_H_INCLUDES) \
-  {$(VPATH)}internal.h {$(VPATH)}iseq.h
+  {$(VPATH)}internal.h {$(VPATH)}iseq.h {$(VPATH)}vm_opts.h
 process.$(OBJEXT): {$(VPATH)}process.c $(RUBY_H_INCLUDES) \
   {$(VPATH)}util.h {$(VPATH)}io.h $(ENCODING_H_INCLUDES) {$(VPATH)}dln.h \
   $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h \
-  {$(VPATH)}thread.h
+  {$(VPATH)}thread.h {$(VPATH)}vm_opts.h
 random.$(OBJEXT): {$(VPATH)}random.c $(RUBY_H_INCLUDES) \
   {$(VPATH)}siphash.c {$(VPATH)}siphash.h
 range.$(OBJEXT): {$(VPATH)}range.c $(RUBY_H_INCLUDES) \
   $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}id.h
-rational.$(OBJEXT): {$(VPATH)}rational.c $(RUBY_H_INCLUDES) {$(VPATH)}internal.h
+rational.$(OBJEXT): {$(VPATH)}rational.c $(RUBY_H_INCLUDES) {$(VPATH)}internal.h $(hdrdir)/ruby.h
 re.$(OBJEXT): {$(VPATH)}re.c $(RUBY_H_INCLUDES) {$(VPATH)}re.h \
   {$(VPATH)}regex.h $(ENCODING_H_INCLUDES) {$(VPATH)}util.h \
   {$(VPATH)}regint.h {$(VPATH)}regenc.h {$(VPATH)}internal.h
@@ -730,36 +736,36 @@ regsyntax.$(OBJEXT): {$(VPATH)}regsyntax.c {$(VPATH)}regint.h \
   {$(VPATH)}regenc.h {$(VPATH)}oniguruma.h $(RUBY_H_INCLUDES)
 ruby.$(OBJEXT): {$(VPATH)}ruby.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
   $(ENCODING_H_INCLUDES) {$(VPATH)}eval_intern.h $(VM_CORE_H_INCLUDES) \
-  {$(VPATH)}dln.h {$(VPATH)}internal.h
-safe.$(OBJEXT): {$(VPATH)}safe.c $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES)
+  {$(VPATH)}dln.h {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
+safe.$(OBJEXT): {$(VPATH)}safe.c $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES) {$(VPATH)}vm_opts.h
 signal.$(OBJEXT): {$(VPATH)}signal.c $(RUBY_H_INCLUDES) \
-  $(VM_CORE_H_INCLUDES)
+  $(VM_CORE_H_INCLUDES) {$(VPATH)}vm_opts.h {$(VPATH)}internal.h {$(VPATH)}ruby_atomic.h {$(VPATH)}eval_intern.h
 sprintf.$(OBJEXT): {$(VPATH)}sprintf.c $(RUBY_H_INCLUDES) {$(VPATH)}re.h \
-  {$(VPATH)}regex.h {$(VPATH)}vsnprintf.c $(ENCODING_H_INCLUDES)
+  {$(VPATH)}regex.h {$(VPATH)}vsnprintf.c $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h
 st.$(OBJEXT): {$(VPATH)}st.c $(RUBY_H_INCLUDES)
 strftime.$(OBJEXT): {$(VPATH)}strftime.c $(RUBY_H_INCLUDES) \
   {$(VPATH)}timev.h $(ENCODING_H_INCLUDES)
 string.$(OBJEXT): {$(VPATH)}string.c $(RUBY_H_INCLUDES) {$(VPATH)}re.h \
-  {$(VPATH)}regex.h $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES)
+  {$(VPATH)}regex.h $(ENCODING_H_INCLUDES) {$(VPATH)}internal.h $(PROBES_H_INCLUDES) {$(VPATH)}vm_opts.h {$(VPATH)}node.h {$(VPATH)}ruby_atomic.h {$(VPATH)}vm_core.h {$(VPATH)}vm_debug.h {$(VPATH)}id.h {$(VPATH)}method.h {$(VPATH)}thread_$(THREAD_MODEL).h
 struct.$(OBJEXT): {$(VPATH)}struct.c $(RUBY_H_INCLUDES) {$(VPATH)}internal.h
 thread.$(OBJEXT): {$(VPATH)}thread.c {$(VPATH)}eval_intern.h \
   $(RUBY_H_INCLUDES) {$(VPATH)}gc.h $(VM_CORE_H_INCLUDES) \
   {$(VPATH)}thread_$(THREAD_MODEL).c $(ENCODING_H_INCLUDES) \
-  {$(VPATH)}internal.h {$(VPATH)}io.h {$(VPATH)}thread.h
+  {$(VPATH)}internal.h {$(VPATH)}io.h {$(VPATH)}thread.h {$(VPATH)}timev.h {$(VPATH)}vm_opts.h
 transcode.$(OBJEXT): {$(VPATH)}transcode.c $(RUBY_H_INCLUDES) \
   $(ENCODING_H_INCLUDES) {$(VPATH)}transcode_data.h {$(VPATH)}internal.h
 cont.$(OBJEXT): {$(VPATH)}cont.c $(RUBY_H_INCLUDES) \
   $(VM_CORE_H_INCLUDES) {$(VPATH)}gc.h {$(VPATH)}eval_intern.h \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 time.$(OBJEXT): {$(VPATH)}time.c $(RUBY_H_INCLUDES) \
   $(ENCODING_H_INCLUDES) {$(VPATH)}timev.h {$(VPATH)}internal.h
 util.$(OBJEXT): {$(VPATH)}util.c $(RUBY_H_INCLUDES) {$(VPATH)}util.h \
   {$(VPATH)}internal.h
 variable.$(OBJEXT): {$(VPATH)}variable.c $(RUBY_H_INCLUDES) \
-  {$(VPATH)}node.h {$(VPATH)}util.h {$(VPATH)}encoding.h \
+  {$(VPATH)}node.h {$(VPATH)}util.h {$(VPATH)}encoding.h {$(VPATH)}id.h \
   {$(VPATH)}oniguruma.h {$(VPATH)}internal.h {$(VPATH)}constant.h
 version.$(OBJEXT): {$(VPATH)}version.c $(RUBY_H_INCLUDES) \
-  {$(VPATH)}version.h $(srcdir)/version.h $(srcdir)/revision.h {$(VPATH)}config.h \
+  $(srcdir)/include/ruby/version.h $(srcdir)/version.h $(srcdir)/revision.h {$(VPATH)}config.h \
   verconf.h
 dmyversion.$(OBJEXT): {$(VPATH)}dmyversion.c version.$(OBJEXT)
 
@@ -767,10 +773,10 @@ compile.$(OBJEXT): {$(VPATH)}compile.c {$(VPATH)}iseq.h \
   $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES) {$(VPATH)}insns.inc \
   {$(VPATH)}insns_info.inc {$(VPATH)}optinsn.inc \
   {$(VPATH)}optunifs.inc {$(VPATH)}opt_sc.inc {$(VPATH)}insns.inc \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 iseq.$(OBJEXT): {$(VPATH)}iseq.c {$(VPATH)}gc.h {$(VPATH)}iseq.h \
   $(RUBY_H_INCLUDES) $(VM_CORE_H_INCLUDES) {$(VPATH)}insns.inc \
-  {$(VPATH)}insns_info.inc {$(VPATH)}node_name.inc {$(VPATH)}internal.h
+  {$(VPATH)}insns_info.inc {$(VPATH)}node_name.inc {$(VPATH)}internal.h {$(VPATH)}vm_opts.h {$(VPATH)}ruby_atomic.h {$(VPATH)}eval_intern.h
 vm.$(OBJEXT): {$(VPATH)}vm.c {$(VPATH)}gc.h {$(VPATH)}iseq.h \
   {$(VPATH)}eval_intern.h $(RUBY_H_INCLUDES) $(ENCODING_H_INCLUDES) \
   $(VM_CORE_H_INCLUDES) {$(VPATH)}vm_method.c {$(VPATH)}vm_eval.c \
@@ -778,28 +784,28 @@ vm.$(OBJEXT): {$(VPATH)}vm.c {$(VPATH)}gc.h {$(VPATH)}iseq.h \
   {$(VPATH)}vm_exec.h {$(VPATH)}insns.def {$(VPATH)}vmtc.inc \
   {$(VPATH)}vm.inc {$(VPATH)}insns.inc \
   {$(VPATH)}internal.h {$(VPATH)}vm.h {$(VPATH)}constant.h \
-  $(PROBES_H_INCLUDES) {$(VPATH)}probes_helper.h
+  $(PROBES_H_INCLUDES) {$(VPATH)}probes_helper.h {$(VPATH)}vm_opts.h
 vm_dump.$(OBJEXT): {$(VPATH)}vm_dump.c $(RUBY_H_INCLUDES) \
   $(VM_CORE_H_INCLUDES) {$(VPATH)}addr2line.h \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 debug.$(OBJEXT): {$(VPATH)}debug.c $(RUBY_H_INCLUDES) \
   $(ENCODING_H_INCLUDES) $(VM_CORE_H_INCLUDES) {$(VPATH)}eval_intern.h \
-  {$(VPATH)}util.h
+  {$(VPATH)}util.h {$(VPATH)}vm_opts.h
 id.$(OBJEXT): {$(VPATH)}id.c $(RUBY_H_INCLUDES) {$(VPATH)}id.h {$(VPATH)}vm_opts.h
 vm_backtrace.$(OBJEXT): {$(VPATH)}vm_backtrace.c \
   $(VM_CORE_H_INCLUDES) $(RUBY_H_INCLUDES) $(ENCODING_H_INCLUDES) \
-  {$(VPATH)}internal.h {$(VPATH)}iseq.h {$(VPATH)}debug.h
+  {$(VPATH)}internal.h {$(VPATH)}iseq.h {$(VPATH)}debug.h {$(VPATH)}vm_opts.h {$(VPATH)}ruby_atomic.h {$(VPATH)}eval_intern.h
 vm_trace.$(OBJEXT): {$(VPATH)}vm_trace.c $(ENCODING_H_INCLUDES) \
   $(VM_CORE_H_INCLUDES) $(RUBY_H_INCLUDES) {$(VPATH)}debug.h \
-  {$(VPATH)}internal.h
+  {$(VPATH)}internal.h {$(VPATH)}vm_opts.h {$(VPATH)}ruby_atomic.h {$(VPATH)}eval_intern.h
 miniprelude.$(OBJEXT): {$(VPATH)}miniprelude.c $(RUBY_H_INCLUDES) \
-  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h
+  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 prelude.$(OBJEXT): {$(VPATH)}prelude.c $(RUBY_H_INCLUDES) \
-  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h
+  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 golf_prelude.$(OBJEXT): {$(VPATH)}golf_prelude.c $(RUBY_H_INCLUDES) \
-  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h
+  $(VM_CORE_H_INCLUDES) {$(VPATH)}internal.h {$(VPATH)}vm_opts.h
 goruby.$(OBJEXT): {$(VPATH)}goruby.c {$(VPATH)}main.c $(RUBY_H_INCLUDES) \
-  {$(VPATH)}vm_debug.h {$(VPATH)}node.h
+  {$(VPATH)}vm_debug.h {$(VPATH)}node.h $(hdrdir)/ruby.h
 
 ascii.$(OBJEXT): {$(VPATH)}ascii.c {$(VPATH)}regenc.h {$(VPATH)}config.h \
   {$(VPATH)}oniguruma.h {$(VPATH)}missing.h $(RUBY_H_INCLUDES)
@@ -877,12 +883,12 @@ insns: $(INSNS)
 id.h: $(srcdir)/tool/generic_erb.rb $(srcdir)/template/id.h.tmpl $(srcdir)/defs/id.def
 	$(ECHO) generating $@
 	$(Q) $(BASERUBY) $(srcdir)/tool/generic_erb.rb --output=$@ \
-		$(srcdir)/template/$@.tmpl
+		$(srcdir)/template/id.h.tmpl
 
 id.c: $(srcdir)/tool/generic_erb.rb $(srcdir)/template/id.c.tmpl $(srcdir)/defs/id.def
 	$(ECHO) generating $@
 	$(Q) $(BASERUBY) $(srcdir)/tool/generic_erb.rb --output=$@ \
-		$(srcdir)/template/$@.tmpl
+		$(srcdir)/template/id.c.tmpl
 
 node_name.inc: {$(VPATH)}node.h
 	$(ECHO) generating $@
@@ -934,10 +940,10 @@ $(REVISION_H): $(srcdir)/version.h $(srcdir)/ChangeLog $(srcdir)/tool/file2lastr
 	-$(Q) $(BASERUBY) $(srcdir)/tool/file2lastrev.rb --revision.h "$(srcdir)" > revision.tmp
 	$(Q)$(IFCHANGE) "--timestamp=$@" "$(srcdir)/revision.h" revision.tmp
 
-$(srcdir)/ext/ripper/ripper.c: parse.y
+$(srcdir)/ext/ripper/ripper.c: parse.y id.h
 	$(ECHO) generating $@
 	$(Q) $(CHDIR) $(@D) && $(exec) $(MAKE) -f depend $(MFLAGS) \
-		Q=$(Q) ECHO=$(ECHO) top_srcdir=../.. srcdir=. VPATH=../.. RUBY="$(BASERUBY)"
+		Q=$(Q) ECHO=$(ECHO) top_srcdir=../.. srcdir=. VPATH=../.. RUBY="$(BASERUBY)" PATH_SEPARATOR="$(PATH_SEPARATOR)"
 
 $(srcdir)/ext/json/parser/parser.c: $(srcdir)/ext/json/parser/parser.rl
 	$(ECHO) generating $@
@@ -1020,6 +1026,8 @@ change: PHONY
 
 love: sudo-precheck up all test install test-all
 	@echo love is all you need
+
+yes-test-all: sudo-precheck
 
 sudo-precheck:
 	@$(SUDO) echo > $(NULL)

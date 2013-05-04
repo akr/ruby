@@ -18,6 +18,7 @@
 #include "node.h"
 #include "constant.h"
 #include "internal.h"
+#include "id.h"
 
 st_table *rb_global_tbl;
 st_table *rb_class_tbl;
@@ -907,7 +908,7 @@ rb_generic_ivar_table(VALUE obj)
 }
 
 static VALUE
-generic_ivar_get(VALUE obj, ID id, int warn)
+generic_ivar_get(VALUE obj, ID id, VALUE undef)
 {
     st_data_t tbl, val;
 
@@ -918,10 +919,7 @@ generic_ivar_get(VALUE obj, ID id, int warn)
 	    }
 	}
     }
-    if (warn) {
-	rb_warning("instance variable %"PRIsVALUE" not initialized", QUOTE_ID(id));
-    }
-    return Qnil;
+    return undef;
 }
 
 static void
@@ -1070,7 +1068,7 @@ rb_copy_generic_ivar(VALUE clone, VALUE obj)
 }
 
 static VALUE
-ivar_get(VALUE obj, ID id, int warn)
+rb_ivar_lookup(VALUE obj, ID id, VALUE undef)
 {
     VALUE val, *ptr;
     struct st_table *iv_index_tbl;
@@ -1098,25 +1096,28 @@ ivar_get(VALUE obj, ID id, int warn)
       default:
       generic:
 	if (FL_TEST(obj, FL_EXIVAR) || rb_special_const_p(obj))
-	    return generic_ivar_get(obj, id, warn);
+	    return generic_ivar_get(obj, id, undef);
 	break;
     }
-    if (warn) {
-	rb_warning("instance variable %"PRIsVALUE" not initialized", QUOTE_ID(id));
-    }
-    return Qnil;
+    return undef;
 }
 
 VALUE
 rb_ivar_get(VALUE obj, ID id)
 {
-    return ivar_get(obj, id, TRUE);
+    VALUE iv = rb_ivar_lookup(obj, id, Qundef);
+
+    if (iv == Qundef) {
+	rb_warning("instance variable %"PRIsVALUE" not initialized", QUOTE_ID(id));
+	iv = Qnil;
+    }
+    return iv;
 }
 
 VALUE
 rb_attr_get(VALUE obj, ID id)
 {
-    return ivar_get(obj, id, FALSE);
+    return rb_ivar_lookup(obj, id, Qnil);
 }
 
 VALUE
@@ -2300,7 +2301,7 @@ static VALUE
 cvar_front_klass(VALUE klass)
 {
     if (FL_TEST(klass, FL_SINGLETON)) {
-	VALUE obj = rb_iv_get(klass, "__attached__");
+	VALUE obj = rb_ivar_get(klass, id__attached__);
 	if (RB_TYPE_P(obj, T_MODULE) || RB_TYPE_P(obj, T_CLASS)) {
 	    return obj;
 	}

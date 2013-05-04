@@ -238,7 +238,9 @@ class TestMethod < Test::Unit::TestCase
     assert_raise(TypeError) do
       Class.new.class_eval { define_method(:bar, o.method(:bar)) }
     end
+  end
 
+  def test_define_singleton_method
     o = Object.new
     def o.foo(c)
       c.class_eval { define_method(:foo) }
@@ -258,12 +260,46 @@ class TestMethod < Test::Unit::TestCase
     assert_raise(TypeError) do
       Module.new.module_eval {define_method(:foo, Base.instance_method(:foo))}
     end
+  end
 
+  def test_define_method_transplating
     feature4254 = '[ruby-core:34267]'
     m = Module.new {define_method(:meth, M.instance_method(:meth))}
     assert_equal(:meth, Object.new.extend(m).meth, feature4254)
     c = Class.new {define_method(:meth, M.instance_method(:meth))}
     assert_equal(:meth, c.new.meth, feature4254)
+  end
+
+  def test_define_method_visibility
+    c = Class.new do
+      public
+      define_method(:foo) {:foo}
+      protected
+      define_method(:bar) {:bar}
+      private
+      define_method(:baz) {:baz}
+    end
+
+    assert_equal(true, c.public_method_defined?(:foo))
+    assert_equal(false, c.public_method_defined?(:bar))
+    assert_equal(false, c.public_method_defined?(:baz))
+
+    assert_equal(false, c.protected_method_defined?(:foo))
+    assert_equal(true, c.protected_method_defined?(:bar))
+    assert_equal(false, c.protected_method_defined?(:baz))
+
+    assert_equal(false, c.private_method_defined?(:foo))
+    assert_equal(false, c.private_method_defined?(:bar))
+    assert_equal(true, c.private_method_defined?(:baz))
+
+    m = Module.new do
+      module_function
+      define_method(:foo) {:foo}
+    end
+    assert_equal(true, m.respond_to?(:foo))
+    assert_equal(false, m.public_method_defined?(:foo))
+    assert_equal(false, m.protected_method_defined?(:foo))
+    assert_equal(true, m.private_method_defined?(:foo))
   end
 
   def test_super_in_proc_from_define_method

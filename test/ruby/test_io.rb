@@ -1514,6 +1514,26 @@ class TestIO < Test::Unit::TestCase
     }
   end
 
+  def test_seek_symwhence
+    make_tempfile {|t|
+      open(t.path) { |f|
+        f.seek(9, :SET)
+        assert_equal("az\n", f.read)
+      }
+
+      open(t.path) { |f|
+        f.seek(-4, :END)
+        assert_equal("baz\n", f.read)
+      }
+
+      open(t.path) { |f|
+        assert_equal("foo\n", f.gets)
+        f.seek(2, :CUR)
+        assert_equal("r\nbaz\n", f.read)
+      }
+    }
+  end
+
   def test_sysseek
     make_tempfile {|t|
       open(t.path) do |f|
@@ -2184,7 +2204,7 @@ End
     return if /x86_64-linux/ !~ RUBY_PLATFORM # A binary form of struct flock depend on platform
 
     pad=0
-    Tempfile.open(self.class.name) do |f|
+    Tempfile.create(self.class.name) do |f|
       r, w = IO.pipe
       pid = fork do
         r.close
@@ -2210,7 +2230,6 @@ End
 
       Process.kill :TERM, pid
       Process.waitpid2(pid)
-      f.close(true)
     end
   end
 
@@ -2220,7 +2239,7 @@ End
     start = 12
     len = 34
     sysid = 0
-    Tempfile.open(self.class.name) do |f|
+    Tempfile.create(self.class.name) do |f|
       r, w = IO.pipe
       pid = fork do
         r.close
@@ -2250,14 +2269,13 @@ End
   end
 
   def test_fcntl_dupfd
-    Tempfile.open(self.class.name) do |f|
+    Tempfile.create(self.class.name) do |f|
       fd = f.fcntl(Fcntl::F_DUPFD, 63)
       begin
         assert_operator(fd, :>=, 63)
       ensure
         IO.for_fd(fd).close
       end
-      f.unlink
     end
   end
 
@@ -2376,40 +2394,39 @@ End
   end
 
   def test_race_between_read
-    file = Tempfile.new("test")
-    path = file.path
-    file.close
-    write_file = File.open(path, "wt")
-    read_file = File.open(path, "rt")
+    Tempfile.create("test") {|file|
+      begin
+        path = file.path
+        file.close
+        write_file = File.open(path, "wt")
+        read_file = File.open(path, "rt")
 
-    threads = []
-    10.times do |i|
-      threads << Thread.new {write_file.print(i)}
-      threads << Thread.new {read_file.read}
-    end
-    threads.each {|t| t.join}
-    assert(true, "[ruby-core:37197]")
-  ensure
-    read_file.close
-    write_file.close
-    file.close!
+        threads = []
+        10.times do |i|
+          threads << Thread.new {write_file.print(i)}
+          threads << Thread.new {read_file.read}
+        end
+        threads.each {|t| t.join}
+        assert(true, "[ruby-core:37197]")
+      ensure
+        read_file.close
+        write_file.close
+      end
+    }
   end
 
   def test_warn
-    stderr = EnvUtil.verbose_warning do
+    assert_warning "warning\n" do
       warn "warning"
     end
-    assert_equal("warning\n", stderr)
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning '' do
       warn
     end
-    assert_equal("", stderr)
 
-    stderr = EnvUtil.verbose_warning do
+    assert_warning "[Feature #5029]\n[ruby-core:38070]\n" do
       warn "[Feature #5029]", "[ruby-core:38070]"
     end
-    assert_equal("[Feature #5029]\n[ruby-core:38070]\n", stderr)
   end
 
   def test_cloexec

@@ -10,6 +10,76 @@
 
 #include "rubysocket.h"
 
+static VALUE sock_s_unpack_sockaddr_in(VALUE, VALUE);
+
+void
+rsock_sys_fail_host_port(const char *mesg, VALUE host, VALUE port)
+{
+    VALUE message;
+
+    port = rb_String(port);
+
+    message = rb_sprintf("%s for \"%s\" port %s",
+	    mesg, StringValueCStr(host), StringValueCStr(port));
+
+    rb_sys_fail_str(message);
+}
+
+void
+rsock_sys_fail_path(const char *mesg, VALUE path)
+{
+    VALUE message;
+    if (RB_TYPE_P(path, T_STRING)) {
+        if (memchr(RSTRING_PTR(path), '\0', RSTRING_LEN(path))) {
+            path = rb_str_inspect(path);
+            message = rb_sprintf("%s for %s", mesg,
+                    StringValueCStr(path));
+        }
+        else {
+            message = rb_sprintf("%s for \"%s\"", mesg,
+                    StringValueCStr(path));
+        }
+        rb_sys_fail_str(message);
+    }
+    else {
+        rb_sys_fail(mesg);
+    }
+}
+
+void
+rsock_sys_fail_sockaddr(const char *mesg, struct sockaddr *addr, socklen_t len)
+{
+    VALUE rai;
+
+    rai = rsock_addrinfo_new(addr, len, PF_UNSPEC, 0, 0, Qnil, Qnil);
+
+    rsock_sys_fail_raddrinfo(mesg, rai);
+}
+
+void
+rsock_sys_fail_raddrinfo(const char *mesg, VALUE rai)
+{
+    VALUE str, message;
+
+    str = rsock_addrinfo_inspect_sockaddr(rai);
+    message = rb_sprintf("%s for %s", mesg, StringValueCStr(str));
+
+    rb_sys_fail_str(message);
+}
+
+void
+rsock_sys_fail_raddrinfo_or_sockaddr(const char *mesg, VALUE addr, VALUE rai)
+{
+    if (NIL_P(rai)) {
+        StringValue(addr);
+        rsock_sys_fail_sockaddr(mesg,
+            (struct sockaddr *)RSTRING_PTR(addr),
+            (socklen_t)RSTRING_LEN(addr)); /* overflow should be checked already */
+    }
+    else
+        rsock_sys_fail_raddrinfo(mesg, rai);
+}
+
 static void
 setup_domain_and_type(VALUE domain, int *dv, VALUE type, int *tv)
 {
@@ -304,16 +374,17 @@ rsock_sock_s_socketpair(int argc, VALUE *argv, VALUE klass)
 static VALUE
 sock_connect(VALUE sock, VALUE addr)
 {
+    VALUE rai;
     rb_io_t *fptr;
     int fd, n;
 
-    SockAddrStringValue(addr);
+    SockAddrStringValueWithAddrinfo(addr, rai);
     addr = rb_str_new4(addr);
     GetOpenFile(sock, fptr);
     fd = fptr->fd;
-    n = rsock_connect(fd, (struct sockaddr*)RSTRING_PTR(addr), RSTRING_LENINT(addr), 0);
+    n = rsock_connect(fd, (struct sockaddr*)RSTRING_PTR(addr), RSTRING_SOCKLEN(addr), 0);
     if (n < 0) {
-	rb_sys_fail("connect(2)");
+	rsock_sys_fail_raddrinfo_or_sockaddr("connect(2)", addr, rai);
     }
 
     return INT2FIX(n);
@@ -364,18 +435,19 @@ sock_connect(VALUE sock, VALUE addr)
 static VALUE
 sock_connect_nonblock(VALUE sock, VALUE addr)
 {
+    VALUE rai;
     rb_io_t *fptr;
     int n;
 
-    SockAddrStringValue(addr);
+    SockAddrStringValueWithAddrinfo(addr, rai);
     addr = rb_str_new4(addr);
     GetOpenFile(sock, fptr);
     rb_io_set_nonblock(fptr);
-    n = connect(fptr->fd, (struct sockaddr*)RSTRING_PTR(addr), RSTRING_LENINT(addr));
+    n = connect(fptr->fd, (struct sockaddr*)RSTRING_PTR(addr), RSTRING_SOCKLEN(addr));
     if (n < 0) {
         if (errno == EINPROGRESS)
-            rb_mod_sys_fail(rb_mWaitWritable, "connect(2) would block");
-	rb_sys_fail("connect(2)");
+            rb_readwrite_sys_fail(RB_IO_WAIT_WRITABLE, "connect(2) would block");
+	rsock_sys_fail_raddrinfo_or_sockaddr("connect(2)", addr, rai);
     }
 
     return INT2FIX(n);
@@ -470,12 +542,13 @@ sock_connect_nonblock(VALUE sock, VALUE addr)
 static VALUE
 sock_bind(VALUE sock, VALUE addr)
 {
+    VALUE rai;
     rb_io_t *fptr;
 
-    SockAddrStringValue(addr);
+    SockAddrStringValueWithAddrinfo(addr, rai);
     GetOpenFile(sock, fptr);
-    if (bind(fptr->fd, (struct sockaddr*)RSTRING_PTR(addr), RSTRING_LENINT(addr)) < 0)
-	rb_sys_fail("bind(2)");
+    if (bind(fptr->fd, (struct sockaddr*)RSTRING_PTR(addr), RSTRING_SOCKLEN(addr)) < 0)
+	rsock_sys_fail_raddrinfo_or_sockaddr("bind(2)", addr, rai);
 
     return INT2FIX(0);
 }
@@ -910,7 +983,7 @@ sock_gethostname(VALUE obj)
 
     rb_secure(3);
     if (gethostname(buf, (int)sizeof buf - 1) < 0)
-	rb_sys_fail("gethostname");
+	rb_sys_fail("gethostname(3)");
 
     buf[sizeof buf - 1] = '\0';
     return rb_str_new2(buf);
@@ -1024,7 +1097,7 @@ sock_s_gethostbyaddr(int argc, VALUE *argv)
 	t = AF_INET6;
     }
 #endif
-    h = gethostbyaddr(RSTRING_PTR(addr), RSTRING_LENINT(addr), t);
+    h = gethostbyaddr(RSTRING_PTR(addr), RSTRING_SOCKLEN(addr), t);
     if (h == NULL) {
 #ifdef HAVE_HSTRERROR
 	extern int h_errno;
@@ -1247,7 +1320,7 @@ sock_s_getnameinfo(int argc, VALUE *argv)
 	    rb_raise(rb_eTypeError, "sockaddr size differs - should not happen");
 	}
 	sap = &ss.addr;
-        salen = RSTRING_LENINT(sa);
+        salen = RSTRING_SOCKLEN(sa);
 	goto call_nameinfo;
     }
     tmp = rb_check_array_type(sa);
@@ -1411,7 +1484,7 @@ sock_s_unpack_sockaddr_in(VALUE self, VALUE addr)
         rb_raise(rb_eArgError, "not an AF_INET sockaddr");
 #endif
     }
-    host = rsock_make_ipaddr((struct sockaddr*)sockaddr, RSTRING_LENINT(addr));
+    host = rsock_make_ipaddr((struct sockaddr*)sockaddr, RSTRING_SOCKLEN(addr));
     OBJ_INFECT(host, addr);
     return rb_assoc_new(INT2NUM(ntohs(sockaddr->sin_port)), host);
 }
@@ -1478,7 +1551,7 @@ sock_s_unpack_sockaddr_un(VALUE self, VALUE addr)
 	rb_raise(rb_eTypeError, "too long sockaddr_un - %ld longer than %d",
 		 RSTRING_LEN(addr), (int)sizeof(struct sockaddr_un));
     }
-    path = rsock_unixpath_str(sockaddr, RSTRING_LENINT(addr));
+    path = rsock_unixpath_str(sockaddr, RSTRING_SOCKLEN(addr));
     OBJ_INFECT(path, addr);
     return path;
 }
@@ -1625,7 +1698,7 @@ socket_s_ip_address_list(VALUE self)
 
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1)
-        rb_sys_fail("socket");
+        rb_sys_fail("socket(2)");
 
     memset(&ln, 0, sizeof(ln));
     ln.lifn_family = AF_UNSPEC;
@@ -1695,7 +1768,7 @@ socket_s_ip_address_list(VALUE self)
 
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1)
-        rb_sys_fail("socket");
+        rb_sys_fail("socket(2)");
 
     bufsize = sizeof(initbuf);
     buf = initbuf;

@@ -29,6 +29,9 @@ VALUE eSSLError;
 VALUE cSSLContext;
 VALUE cSSLSocket;
 
+static VALUE eSSLErrorWaitReadable;
+static VALUE eSSLErrorWaitWritable;
+
 #define ossl_sslctx_set_cert(o,v)        	rb_iv_set((o),"@cert",(v))
 #define ossl_sslctx_set_key(o,v)         	rb_iv_set((o),"@key",(v))
 #define ossl_sslctx_set_client_ca(o,v)   	rb_iv_set((o),"@client_ca",(v))
@@ -1116,7 +1119,6 @@ ossl_ssl_shutdown(SSL *ssl)
 static void
 ossl_ssl_free(SSL *ssl)
 {
-    ossl_ssl_shutdown(ssl);
     SSL_free(ssl);
 }
 
@@ -1230,8 +1232,7 @@ static void
 write_would_block(int nonblock)
 {
     if (nonblock) {
-        VALUE exc = ossl_exc_new(eSSLError, "write would block");
-        rb_extend_object(exc, rb_mWaitWritable);
+        VALUE exc = ossl_exc_new(eSSLErrorWaitWritable, "write would block");
         rb_exc_raise(exc);
     }
 }
@@ -1240,8 +1241,7 @@ static void
 read_would_block(int nonblock)
 {
     if (nonblock) {
-        VALUE exc = ossl_exc_new(eSSLError, "read would block");
-        rb_extend_object(exc, rb_mWaitReadable);
+        VALUE exc = ossl_exc_new(eSSLErrorWaitReadable, "read would block");
         rb_exc_raise(exc);
     }
 }
@@ -1537,9 +1537,16 @@ ossl_ssl_close(VALUE self)
 
     ossl_ssl_data_get_struct(self, ssl);
 
-    ossl_ssl_shutdown(ssl);
-    if (RTEST(ossl_ssl_get_sync_close(self)))
-	rb_funcall(ossl_ssl_get_io(self), rb_intern("close"), 0);
+    if (ssl) {
+	VALUE io = ossl_ssl_get_io(self);
+	if (!RTEST(rb_funcall(io, rb_intern("closed?"), 0))) {
+	    ossl_ssl_shutdown(ssl);
+	    SSL_free(ssl);
+	    DATA_PTR(self) = NULL;
+	    if (RTEST(ossl_ssl_get_sync_close(self)))
+		rb_funcall(io, rb_intern("close"), 0);
+	}
+    }
 
     return Qnil;
 }
@@ -1627,7 +1634,7 @@ ossl_ssl_get_peer_cert_chain(VALUE self)
 
 /*
 * call-seq:
-*    ssl.version => String
+*    ssl.ssl_version => String
 *
 * Returns a String representing the SSL/TLS version that was negotiated
 * for the connection, for example "TLSv1.2".
@@ -1846,6 +1853,10 @@ Init_ossl_ssl()
      * Generic error class raised by SSLSocket and SSLContext.
      */
     eSSLError = rb_define_class_under(mSSL, "SSLError", eOSSLError);
+    eSSLErrorWaitReadable = rb_define_class_under(mSSL, "SSLErrorWaitReadable", eSSLError);
+    rb_include_module(eSSLErrorWaitReadable, rb_mWaitReadable);
+    eSSLErrorWaitWritable = rb_define_class_under(mSSL, "SSLErrorWaitWritable", eSSLError);
+    rb_include_module(eSSLErrorWaitWritable, rb_mWaitWritable);
 
     Init_ossl_ssl_session();
 

@@ -12,9 +12,7 @@
 #ifndef RUBY_COMPILE_H
 #define RUBY_COMPILE_H
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility push(default)
-#endif
+RUBY_SYMBOL_EXPORT_BEGIN
 
 /* compile.c */
 VALUE rb_iseq_compile_node(VALUE self, NODE *node);
@@ -23,6 +21,7 @@ VALUE rb_iseq_build_from_ary(rb_iseq_t *iseq, VALUE locals, VALUE args,
 			     VALUE exception, VALUE body);
 
 /* iseq.c */
+void rb_iseq_add_mark_object(rb_iseq_t *iseq, VALUE obj);
 VALUE rb_iseq_load(VALUE data, VALUE parent, VALUE opt);
 VALUE rb_iseq_parameters(const rb_iseq_t *iseq, int is_proc);
 struct st_table *ruby_insn_make_insn_table(void);
@@ -132,8 +131,6 @@ VALUE rb_iseq_defined_string(enum defined_type type);
 
 #define DEFAULT_SPECIAL_VAR_COUNT 2
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility pop
-#endif
+RUBY_SYMBOL_EXPORT_END
 
 #endif /* RUBY_COMPILE_H */

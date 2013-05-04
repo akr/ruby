@@ -333,11 +333,10 @@ class TestMarshal < Test::Unit::TestCase
     assert_equal(c, Marshal.load(Marshal.dump(c)), bug2109)
 
     assert_nothing_raised(ArgumentError, '[ruby-dev:40386]') do
-      re = Tempfile.open("marshal_regexp") do |f|
+      re = Tempfile.create("marshal_regexp") do |f|
         f.binmode.write("\x04\bI/\x00\x00\x06:\rencoding\"\rUS-ASCII")
-        f.close
-        re2 = Marshal.load(f.open.binmode)
-        f.close(true)
+        f.rewind
+        re2 = Marshal.load(f)
         re2
       end
       assert_equal(//, re)
@@ -537,6 +536,68 @@ class TestMarshal < Test::Unit::TestCase
 
     assert_equal(obj, loaded, bug7627)
     assert_nil(loaded.foo, bug7627)
+  end
+
+  class LoadData
+    attr_reader :data
+    def initialize(data)
+      @data = data
+    end
+    alias marshal_dump data
+    alias marshal_load initialize
+  end
+
+  class Bug8276 < LoadData
+    def initialize(*)
+      super
+      freeze
+    end
+    alias marshal_load initialize
+  end
+
+  class FrozenData < LoadData
+    def marshal_load(data)
+      super
+      data.instance_variables.each do |iv|
+        instance_variable_set(iv, data.instance_variable_get(iv))
+      end
+      freeze
+    end
+  end
+
+  def test_marshal_dump_excess_encoding
+    bug8276 = '[ruby-core:54334] [Bug #8276]'
+    t = Bug8276.new(bug8276)
+    s = Marshal.dump(t)
+    assert_nothing_raised(RuntimeError, bug8276) {s = Marshal.load(s)}
+    assert_equal(t.data, s.data, bug8276)
+  end
+
+  def test_marshal_dump_ivar
+    s = "data with ivar"
+    s.instance_variable_set(:@t, 42)
+    t = Bug8276.new(s)
+    s = Marshal.dump(t)
+    assert_raise(RuntimeError) {Marshal.load(s)}
+  end
+
+  def test_marshal_load_ivar
+    s = "data with ivar"
+    s.instance_variable_set(:@t, 42)
+    hook = ->(v) {
+      if LoadData === v
+        assert_send([v, :instance_variable_defined?, :@t], v.class.name)
+        assert_equal(42, v.instance_variable_get(:@t), v.class.name)
+      end
+      v
+    }
+    [LoadData, FrozenData].each do |klass|
+      t = klass.new(s)
+      d = Marshal.dump(t)
+      v = assert_nothing_raised(RuntimeError) {break Marshal.load(d, hook)}
+      assert_send([v, :instance_variable_defined?, :@t], klass.name)
+      assert_equal(42, v.instance_variable_get(:@t), klass.name)
+    end
   end
 
   def test_class_ivar

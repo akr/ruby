@@ -369,6 +369,7 @@ static void fixpos(NODE*,NODE*);
 static int value_expr_gen(struct parser_params*,NODE*);
 static void void_expr_gen(struct parser_params*,NODE*);
 static NODE *remove_begin(NODE*);
+static NODE *remove_begin_all(NODE*);
 #define value_expr(node) value_expr_gen(parser, (node) = remove_begin(node))
 #define void_expr0(node) void_expr_gen(parser, (node))
 #define void_expr(node) void_expr0((node) = remove_begin(node))
@@ -437,6 +438,8 @@ static NODE *new_attr_op_assign_gen(struct parser_params *parser, NODE *lhs, ID 
 #define new_attr_op_assign(lhs, type, attr, op, rhs) new_attr_op_assign_gen(parser, (lhs), (attr), (op), (rhs))
 static NODE *new_const_op_assign_gen(struct parser_params *parser, NODE *lhs, ID op, NODE *rhs);
 #define new_const_op_assign(lhs, op, rhs) new_const_op_assign_gen(parser, (lhs), (op), (rhs))
+
+#define new_defined(expr) NEW_DEFINED(remove_begin_all(expr))
 
 static NODE *match_op_gen(struct parser_params*,NODE*,NODE*);
 #define match_op(node1,node2) match_op_gen(parser, (node1), (node2))
@@ -616,6 +619,8 @@ new_args_tail_gen(struct parser_params *parser, VALUE k, VALUE kr, VALUE b)
 }
 #define new_args_tail(k,kr,b) new_args_tail_gen(parser, (k),(kr),(b))
 
+#define new_defined(expr) dispatch1(defined, (expr))
+
 #define FIXME 0
 
 #endif /* RIPPER */
@@ -762,7 +767,7 @@ static void token_info_pop(struct parser_params*, const char *token);
 %type <node> args call_args opt_call_args
 %type <node> paren_args opt_paren_args args_tail opt_args_tail block_args_tail opt_block_args_tail
 %type <node> command_args aref_args opt_block_arg block_arg var_ref var_lhs
-%type <node> command_asgn mrhs superclass block_call block_command
+%type <node> command_asgn mrhs mrhs_arg superclass block_call block_command
 %type <node> f_block_optarg f_block_opt
 %type <node> f_arglist f_args f_arg f_arg_item f_optarg f_marg f_marg_list f_margs
 %type <node> assoc_list assocs assoc undef_list backref string_dvar for_var
@@ -1233,16 +1238,7 @@ stmt		: keyword_alias fitem {lex_state = EXPR_FNAME;} fitem
 			$$ = dispatch2(assign, $1, $3);
 		    %*/
 		    }
-		| mlhs '=' arg_value
-		    {
-		    /*%%%*/
-			$1->nd_value = $3;
-			$$ = $1;
-		    /*%
-			$$ = dispatch2(massign, $1, $3);
-		    %*/
-		    }
-		| mlhs '=' mrhs
+		| mlhs '=' mrhs_arg
 		    {
 		    /*%%%*/
 			$1->nd_value = $3;
@@ -2305,7 +2301,7 @@ arg		: lhs '=' arg
 		    {
 		    /*%%%*/
 			in_defined = 0;
-			$$ = NEW_DEFINED($4);
+			$$ = new_defined($4);
 		    /*%
 			in_defined = 0;
 			$$ = dispatch1(defined, $4);
@@ -2523,6 +2519,10 @@ args		: arg_value
 		    }
 		;
 
+mrhs_arg	: mrhs
+		| arg_value
+		;
+
 mrhs		: args ',' arg_value
 		    {
 		    /*%%%*/
@@ -2705,7 +2705,7 @@ primary		: literal
 		    {
 		    /*%%%*/
 			in_defined = 0;
-			$$ = NEW_DEFINED($5);
+			$$ = new_defined($5);
 		    /*%
 			in_defined = 0;
 			$$ = dispatch1(defined, $5);
@@ -5129,7 +5129,7 @@ ripper_dispatch_delayed_token(struct parser_params *parser, int t)
 #define parser_encoding_name()  (current_enc->name)
 #define parser_mbclen()  mbclen((lex_p-1),lex_pend,current_enc)
 #define parser_precise_mbclen()  rb_enc_precise_mbclen((lex_p-1),lex_pend,current_enc)
-#define is_identchar(p,e,enc) (rb_enc_isalnum(*(p),(enc)) || (*(p)) == '_' || !ISASCII(*(p)))
+#define is_identchar(p,e,enc) (rb_enc_isalnum((unsigned char)(*(p)),(enc)) || (*(p)) == '_' || !ISASCII(*(p)))
 #define parser_is_identchar() (!parser->eofp && is_identchar((lex_p-1),lex_pend,current_enc))
 
 #define parser_isascii() ISASCII(*(lex_p-1))
@@ -7829,9 +7829,7 @@ parser_yylex(struct parser_params *parser)
 	  case '\"':		/* $": already loaded files */
 	    tokadd('$');
 	    tokadd(c);
-	    tokfix();
-	    set_yylval_name(rb_intern(tok()));
-	    return tGVAR;
+	    goto gvar;
 
 	  case '-':
 	    tokadd('$');
@@ -7842,10 +7840,11 @@ parser_yylex(struct parser_params *parser)
 	    }
 	    else {
 		pushback(c);
+		pushback('-');
+		return '$';
 	    }
 	  gvar:
-	    tokfix();
-	    set_yylval_name(rb_intern(tok()));
+	    set_yylval_name(rb_intern3(tok(), tokidx, current_enc));
 	    return tGVAR;
 
 	  case '&':		/* $&: last match */
@@ -8926,6 +8925,16 @@ remove_begin(NODE *node)
     return node;
 }
 
+static NODE *
+remove_begin_all(NODE *node)
+{
+    NODE **n = &node, *n1 = node;
+    while (n1 && nd_type(n1) == NODE_BEGIN) {
+	*n = n1 = n1->nd_body;
+    }
+    return node;
+}
+
 static void
 reduce_nodes_gen(struct parser_params *parser, NODE **body)
 {
@@ -10000,8 +10009,8 @@ is_special_global_name(const char *m, const char *e, rb_encoding *enc)
 	++m;
 	break;
       case '-':
-	++m;
-	if (m < e && is_identchar(m, e, enc)) {
+	if (++m >= e) return 0;
+	if (is_identchar(m, e, enc)) {
 	    if (!ISASCII(*m)) mb = 1;
 	    m += rb_enc_mbclen(m, e, enc);
 	}
@@ -10180,18 +10189,23 @@ sym_check_asciionly(VALUE str)
  */
 static ID intern_str(VALUE str);
 
+static VALUE
+setup_fake_str(struct RString *fake_str, const char *name, long len)
+{
+    fake_str->basic.flags = T_STRING|RSTRING_NOEMBED;
+    fake_str->basic.klass = rb_cString;
+    fake_str->as.heap.len = len;
+    fake_str->as.heap.ptr = (char *)name;
+    fake_str->as.heap.aux.capa = len;
+    return (VALUE)fake_str;
+}
+
 ID
 rb_intern3(const char *name, long len, rb_encoding *enc)
 {
-    VALUE str;
     st_data_t data;
     struct RString fake_str;
-    fake_str.basic.flags = T_STRING|RSTRING_NOEMBED;
-    fake_str.basic.klass = rb_cString;
-    fake_str.as.heap.len = len;
-    fake_str.as.heap.ptr = (char *)name;
-    fake_str.as.heap.aux.capa = len;
-    str = (VALUE)&fake_str;
+    VALUE str = setup_fake_str(&fake_str, name, len);
     rb_enc_associate(str, enc);
     OBJ_FREEZE(str);
 
@@ -10514,13 +10528,8 @@ rb_check_id(volatile VALUE *namep)
 
     if (rb_is_attrset_name(name)) {
 	struct RString fake_str;
-	const VALUE localname = (VALUE)&fake_str;
 	/* make local name by chopping '=' */
-	fake_str.basic.flags = T_STRING|RSTRING_NOEMBED;
-	fake_str.basic.klass = rb_cString;
-	fake_str.as.heap.len = RSTRING_LEN(name) - 1;
-	fake_str.as.heap.ptr = RSTRING_PTR(name);
-	fake_str.as.heap.aux.capa = fake_str.as.heap.len;
+	const VALUE localname = setup_fake_str(&fake_str, RSTRING_PTR(name), RSTRING_LEN(name) - 1);
 	rb_enc_copy(localname, name);
 	OBJ_FREEZE(localname);
 
@@ -10538,12 +10547,7 @@ rb_check_id_cstr(const char *ptr, long len, rb_encoding *enc)
 {
     st_data_t id;
     struct RString fake_str;
-    const VALUE name = (VALUE)&fake_str;
-    fake_str.basic.flags = T_STRING|RSTRING_NOEMBED;
-    fake_str.basic.klass = rb_cString;
-    fake_str.as.heap.len = len;
-    fake_str.as.heap.ptr = (char *)ptr;
-    fake_str.as.heap.aux.capa = len;
+    const VALUE name = setup_fake_str(&fake_str, ptr, len);
     rb_enc_associate(name, enc);
 
     sym_check_asciionly(name);

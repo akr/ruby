@@ -808,14 +808,13 @@ class TestProcess < Test::Unit::TestCase
 
   def test_execopts_redirect_tempfile
     bug6269 = '[ruby-core:44181]'
-    Tempfile.open("execopts") do |tmp|
+    Tempfile.create("execopts") do |tmp|
       pid = assert_nothing_raised(ArgumentError, bug6269) do
         break spawn(RUBY, "-e", "print $$", out: tmp)
       end
       Process.wait(pid)
       tmp.rewind
       assert_equal(pid.to_s, tmp.read)
-      tmp.close(true)
     end
   end
 
@@ -1357,7 +1356,7 @@ class TestProcess < Test::Unit::TestCase
       }
       assert(status.success?, "[ruby-dev:38105]")
     }
-  end unless /mswin|bccwin|mingw/ =~ RUBY_PLATFORM
+  end
 
   def test_fallback_to_sh
     feature = '[ruby-core:32745]'

@@ -44,10 +44,10 @@ class TestArgf < Test::Unit::TestCase
     t
   end
 
-  def ruby(*args)
+  def ruby(*args, external_encoding: Encoding::UTF_8)
     args = ['-e', '$>.write($<.read)'] if args.empty?
     ruby = EnvUtil.rubybin
-    f = IO.popen([ruby] + args, 'r+')
+    f = IO.popen([ruby] + args, 'r+', external_encoding: external_encoding)
     yield(f)
   ensure
     f.close unless !f || f.closed?
@@ -247,8 +247,6 @@ class TestArgf < Test::Unit::TestCase
   end
 
   def test_inplace_stdin
-    t = make_tempfile
-
     assert_in_out_err(["-", "-"], <<-INPUT, [], /Can't do inplace edit for stdio; skipping/)
       ARGF.inplace_mode = '.bak'
       f = ARGF.dup
@@ -259,8 +257,6 @@ class TestArgf < Test::Unit::TestCase
   end
 
   def test_inplace_stdin2
-    t = make_tempfile
-
     assert_in_out_err(["-"], <<-INPUT, [], /Can't do inplace edit for stdio/)
       ARGF.inplace_mode = '.bak'
       while line = ARGF.gets
@@ -680,6 +676,49 @@ class TestArgf < Test::Unit::TestCase
       puts ARGF.read
     SRC
       assert_equal("1\n3\n4\n5\n6\n", f.read)
+    end
+  end
+
+  def test_skip_in_each_line
+    ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
+      ARGF.each_line {|l| print l; ARGF.skip}
+    SRC
+      assert_equal("1\n3\n5\n", f.read, '[ruby-list:49185]')
+    end
+    ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
+      ARGF.each_line {|l| ARGF.skip; puts [l, ARGF.gets].map {|s| s ? s.chomp : s.inspect}.join("+")}
+    SRC
+      assert_equal("1+3\n4+5\n6+nil\n", f.read, '[ruby-list:49185]')
+    end
+  end
+
+  def test_skip_in_each_byte
+    ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
+      ARGF.each_byte {|l| print l; ARGF.skip}
+    SRC
+      assert_equal("135".unpack("C*").join(""), f.read, '[ruby-list:49185]')
+    end
+  end
+
+  def test_skip_in_each_char
+    [[@t1, "\u{3042}"], [@t2, "\u{3044}"], [@t3, "\u{3046}"]].each do |f, s|
+      File.write(f.path, s, mode: "w:utf-8")
+    end
+    ruby('-Eutf-8', '-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
+      ARGF.each_char {|l| print l; ARGF.skip}
+    SRC
+      assert_equal("\u{3042 3044 3046}", f.read, '[ruby-list:49185]')
+    end
+  end
+
+  def test_skip_in_each_codepoint
+    [[@t1, "\u{3042}"], [@t2, "\u{3044}"], [@t3, "\u{3046}"]].each do |f, s|
+      File.write(f.path, s, mode: "w:utf-8")
+    end
+    ruby('-Eutf-8', '-Eutf-8', '-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
+      ARGF.each_codepoint {|l| printf "%x:", l; ARGF.skip}
+    SRC
+      assert_equal("3042:3044:3046:", f.read, '[ruby-list:49185]')
     end
   end
 

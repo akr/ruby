@@ -31,7 +31,7 @@ VALUE rb_cProc;
 static VALUE bmcall(VALUE, VALUE);
 static int method_arity(VALUE);
 static int method_min_max_arity(VALUE, int *max);
-static ID attached;
+#define attached id__attached__
 
 /* Proc */
 
@@ -481,6 +481,14 @@ rb_block_proc(void)
     return proc_new(rb_cProc, FALSE);
 }
 
+/*
+ * call-seq:
+ *   lambda { |...| block }  -> a_proc
+ *
+ * Equivalent to <code>Proc.new</code>, except the resulting Proc objects
+ * check the number of parameters passed when called.
+ */
+
 VALUE
 rb_block_lambda(void)
 {
@@ -491,20 +499,6 @@ VALUE
 rb_f_lambda(void)
 {
     rb_warn("rb_f_lambda() is deprecated; use rb_block_proc() instead");
-    return rb_block_lambda();
-}
-
-/*
- * call-seq:
- *   lambda { |...| block }  -> a_proc
- *
- * Equivalent to <code>Proc.new</code>, except the resulting Proc objects
- * check the number of parameters passed when called.
- */
-
-static VALUE
-proc_lambda(void)
-{
     return rb_block_lambda();
 }
 
@@ -952,7 +946,7 @@ mnew(VALUE klass, VALUE obj, ID id, VALUE mclass, int scope)
   again:
     me = rb_method_entry_without_refinements(klass, id, &defined_class);
     if (UNDEFINED_METHOD_ENTRY_P(me)) {
-	ID rmiss = rb_intern("respond_to_missing?");
+	ID rmiss = idRespond_to_missing;
 	VALUE sym = ID2SYM(id);
 
 	if (obj != Qundef && !rb_method_basic_definition_p(klass, rmiss)) {
@@ -1052,6 +1046,7 @@ mnew(VALUE klass, VALUE obj, ID id, VALUE mclass, int scope)
 
 /*
  * call-seq:
+ *   meth.eql?(other_meth)  -> true or false
  *   meth == other_meth  -> true or false
  *
  * Two method objects are equal if they are bound to the same
@@ -1377,7 +1372,7 @@ rb_mod_define_method(int argc, VALUE *argv, VALUE mod)
 {
     ID id;
     VALUE body;
-    int noex = NOEX_PUBLIC;
+    int noex = (int)rb_vm_cref()->nd_visi;
 
     if (argc == 1) {
 	id = rb_to_id(argv[0]);
@@ -1410,6 +1405,9 @@ rb_mod_define_method(int argc, VALUE *argv, VALUE mod)
 	    }
 	}
 	rb_method_entry_set(mod, id, method->me, noex);
+	if (noex == NOEX_MODFUNC) {
+	    rb_method_entry_set(rb_singleton_class(mod), id, method->me, NOEX_PUBLIC);
+	}
     }
     else if (rb_obj_is_proc(body)) {
 	rb_proc_t *proc;
@@ -1423,6 +1421,9 @@ rb_mod_define_method(int argc, VALUE *argv, VALUE mod)
 	    proc->block.klass = mod;
 	}
 	rb_add_method(mod, id, VM_METHOD_TYPE_BMETHOD, (void *)body, noex);
+	if (noex == NOEX_MODFUNC) {
+	    rb_add_method(rb_singleton_class(mod), id, VM_METHOD_TYPE_BMETHOD, (void *)body, NOEX_PUBLIC);
+	}
     }
     else {
 	/* type error */
@@ -1999,13 +2000,13 @@ method_inspect(VALUE method)
 static VALUE
 mproc(VALUE method)
 {
-    return rb_funcall(Qnil, rb_intern("proc"), 0);
+    return rb_funcall2(rb_mRubyVMFrozenCore, idProc, 0, 0);
 }
 
 static VALUE
 mlambda(VALUE method)
 {
-    return rb_funcall(Qnil, rb_intern("lambda"), 0);
+    return rb_funcall(rb_mRubyVMFrozenCore, idLambda, 0, 0);
 }
 
 static VALUE
@@ -2346,7 +2347,7 @@ Init_Proc(void)
 
     /* utility functions */
     rb_define_global_function("proc", rb_block_proc, 0);
-    rb_define_global_function("lambda", proc_lambda, 0);
+    rb_define_global_function("lambda", rb_block_lambda, 0);
 
     /* Method */
     rb_cMethod = rb_define_class("Method", rb_cObject);
@@ -2447,6 +2448,5 @@ Init_Binding(void)
     rb_define_method(rb_cBinding, "dup", binding_dup, 0);
     rb_define_method(rb_cBinding, "eval", bind_eval, -1);
     rb_define_global_function("binding", rb_f_binding, 0);
-    attached = rb_intern("__attached__");
 }
 

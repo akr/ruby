@@ -3908,7 +3908,43 @@ poll_child_status(struct ChildRecord *child, int *stat_loc)
         }
 	pid = child->pid;
 	CloseChildHandle(child);
-	if (stat_loc) *stat_loc = exitcode << 8;
+	if (stat_loc) {
+	    *stat_loc = exitcode << 8;
+	    if (exitcode & 0xC0000000) {
+		static const struct {
+		    DWORD status;
+		    int sig;
+		} table[] = {
+		    {STATUS_ACCESS_VIOLATION,        SIGSEGV},
+		    {STATUS_ILLEGAL_INSTRUCTION,     SIGILL},
+		    {STATUS_PRIVILEGED_INSTRUCTION,  SIGILL},
+		    {STATUS_FLOAT_DENORMAL_OPERAND,  SIGFPE},
+		    {STATUS_FLOAT_DIVIDE_BY_ZERO,    SIGFPE},
+		    {STATUS_FLOAT_INEXACT_RESULT,    SIGFPE},
+		    {STATUS_FLOAT_INVALID_OPERATION, SIGFPE},
+		    {STATUS_FLOAT_OVERFLOW,          SIGFPE},
+		    {STATUS_FLOAT_STACK_CHECK,       SIGFPE},
+		    {STATUS_FLOAT_UNDERFLOW,         SIGFPE},
+#ifdef STATUS_FLOAT_MULTIPLE_FAULTS
+		    {STATUS_FLOAT_MULTIPLE_FAULTS,   SIGFPE},
+#endif
+#ifdef STATUS_FLOAT_MULTIPLE_TRAPS
+		    {STATUS_FLOAT_MULTIPLE_TRAPS,    SIGFPE},
+#endif
+		    {STATUS_CONTROL_C_EXIT,          SIGINT},
+		};
+		int i;
+		for (i = 0; i < (int)numberof(table); i++) {
+		    if (table[i].status == exitcode) {
+			*stat_loc |= table[i].sig;
+			break;
+		    }
+		}
+		// if unknown status, assume SEGV
+		if (i >= (int)numberof(table))
+		    *stat_loc |= SIGSEGV;
+	    }
+	}
 	return pid;
     }
     return 0;
@@ -4344,17 +4380,8 @@ wrename(const WCHAR *oldpath, const WCHAR *newpath)
 	if (newatts != -1 && newatts & FILE_ATTRIBUTE_READONLY)
 	    SetFileAttributesW(newpath, newatts & ~ FILE_ATTRIBUTE_READONLY);
 
-	if (!MoveFileW(oldpath, newpath))
+	if (!MoveFileExW(oldpath, newpath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED))
 	    res = -1;
-
-	if (res) {
-	    switch (GetLastError()) {
-	      case ERROR_ALREADY_EXISTS:
-	      case ERROR_FILE_EXISTS:
-		if (MoveFileExW(oldpath, newpath, MOVEFILE_REPLACE_EXISTING))
-		    res = 0;
-	    }
-	}
 
 	if (res)
 	    errno = map_errno(GetLastError());
@@ -5629,6 +5656,7 @@ constat_attr(int count, const int *seq, WORD attr, WORD default_attr)
 
 	  case 40:
 	    attr &= ~(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED);
+	    break;
 	  case 41:
 	    attr = attr & ~(BACKGROUND_BLUE | BACKGROUND_GREEN) | BACKGROUND_RED;
 	    break;
@@ -5795,9 +5823,19 @@ constat_parse(HANDLE h, struct constat *s, const WCHAR **ptrp, long *lenp)
 	WCHAR wc = *ptr++;
 	if (wc == 0x1b) {
 	    rest = *lenp - len - 1;
+	    if (s->vt100.state == constat_esc) {
+		rest++;		/* reuse this ESC */
+	    }
+	    s->vt100.state = constat_init;
+	    if (len > 0 && *ptr != L'[') continue;
 	    s->vt100.state = constat_esc;
 	}
-	else if (s->vt100.state == constat_esc && wc == L'[') {
+	else if (s->vt100.state == constat_esc) {
+	    if (wc != L'[') {
+		/* TODO: supply dropped ESC at beginning */
+		s->vt100.state = constat_init;
+		continue;
+	    }
 	    rest = *lenp - len - 1;
 	    if (rest > 0) --rest;
 	    s->vt100.state = constat_seq;

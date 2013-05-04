@@ -108,12 +108,11 @@ class TestException < Test::Unit::TestCase
 
   def test_catch_throw_in_require
     bug7185 = '[ruby-dev:46234]'
-    t = Tempfile.open(["dep", ".rb"])
-    t.puts("throw :extdep, 42")
-    t.close
-    assert_equal(42, catch(:extdep) {require t.path}, bug7185)
-  ensure
-    t.close! if t
+    Tempfile.create(["dep", ".rb"]) {|t|
+      t.puts("throw :extdep, 42")
+      t.close
+      assert_equal(42, catch(:extdep) {require t.path}, bug7185)
+    }
   end
 
   def test_else_no_exception
@@ -276,7 +275,7 @@ class TestException < Test::Unit::TestCase
   end
 
   def test_thread_signal_location
-    _, stderr, _ = EnvUtil.invoke_ruby("-d", <<-RUBY, false, true)
+    _, stderr, _ = EnvUtil.invoke_ruby("--disable-gems -d", <<-RUBY, false, true)
 Thread.start do
   begin
     Process.kill(:INT, $$)
@@ -398,9 +397,7 @@ end.join
 
   def test_exception_in_name_error_to_str
     bug5575 = '[ruby-core:41612]'
-    t = nil
-    Tempfile.open(["test_exception_in_name_error_to_str", ".rb"]) do |f|
-      t = f
+    Tempfile.create(["test_exception_in_name_error_to_str", ".rb"]) do |t|
       t.puts <<-EOC
       begin
         BasicObject.new.inspect
@@ -408,12 +405,11 @@ end.join
         $!.inspect
       end
     EOC
+      t.close
+      assert_nothing_raised(NameError, bug5575) do
+        load(t.path)
+      end
     end
-    assert_nothing_raised(NameError, bug5575) do
-      load(t.path)
-    end
-  ensure
-    t.close(true) if t
   end
 
   def test_equal
@@ -424,21 +420,18 @@ end.join
 
   def test_exception_in_exception_equal
     bug5865 = '[ruby-core:41979]'
-    t = nil
-    Tempfile.open(["test_exception_in_exception_equal", ".rb"]) do |f|
-      t = f
+    Tempfile.create(["test_exception_in_exception_equal", ".rb"]) do |t|
       t.puts <<-EOC
       o = Object.new
       def o.exception(arg)
       end
       _ = RuntimeError.new("a") == o
-    EOC
+      EOC
+      t.close
+      assert_nothing_raised(ArgumentError, bug5865) do
+        load(t.path)
+      end
     end
-    assert_nothing_raised(ArgumentError, bug5865) do
-      load(t.path)
-    end
-  ensure
-    t.close(true) if t
   end
 
   Bug4438 = '[ruby-core:35364]'

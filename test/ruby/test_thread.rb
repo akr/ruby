@@ -120,6 +120,11 @@ class TestThread < Test::Unit::TestCase
     assert_equal(max * max * max, r)
   end
 
+  def test_mutex_synchronize_yields_no_block_params
+    bug8097 = '[ruby-core:53424] [Bug #8097]'
+    assert_empty(Mutex.new.synchronize {|*params| break params}, bug8097)
+  end
+
   def test_local_barrier
     dir = File.dirname(__FILE__)
     lbtest = File.join(dir, "lbtest.rb")
@@ -738,12 +743,9 @@ _eom
     end
     t1 = Time.now.to_f
     assert_equal(pid, s.pid, bug5757)
-    unless /mswin|mingw/ =~ RUBY_PLATFORM
-      # status of signal is not supported on Windows
-      assert_equal([false, true, false, Signal.list["INT"]],
-                   [s.exited?, s.signaled?, s.stopped?, s.termsig],
-                   "[s.exited?, s.signaled?, s.stopped?, s.termsig]")
-    end
+    assert_equal([false, true, false, Signal.list["INT"]],
+                 [s.exited?, s.signaled?, s.stopped?, s.termsig],
+                 "[s.exited?, s.signaled?, s.stopped?, s.termsig]")
     assert_in_delta(t1 - t0, 1, 1, bug5757)
   end
 

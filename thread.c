@@ -46,7 +46,7 @@
  * FD_SET, FD_CLR and FD_ISSET have a small sanity check when using glibc
  * 2.15 or later and set _FORTIFY_SOURCE > 0.
  * However, the implementation is wrong. Even though Linux's select(2)
- * support large fd size (>FD_SETSIZE), it wrongly assume fd is always
+ * supports large fd size (>FD_SETSIZE), it wrongly assumes fd is always
  * less than FD_SETSIZE (i.e. 1024). And then when enabling HAVE_RB_FD_INIT,
  * it doesn't work correctly and makes program abort. Therefore we need to
  * disable FORTY_SOURCE until glibc fixes it.
@@ -60,6 +60,7 @@
 #include "eval_intern.h"
 #include "gc.h"
 #include "internal.h"
+#include "timev.h"
 #include "ruby/io.h"
 #include "ruby/thread.h"
 
@@ -79,6 +80,7 @@ VALUE rb_cThreadShield;
 static VALUE sym_immediate;
 static VALUE sym_on_blocking;
 static VALUE sym_never;
+static ID id_locals;
 
 static void sleep_timeval(rb_thread_t *th, struct timeval time, int spurious_check);
 static void sleep_wait_for_interrupt(rb_thread_t *th, double sleepsec, int spurious_check);
@@ -490,7 +492,7 @@ thread_start_func_2(rb_thread_t *th, VALUE *stack_start, VALUE *register_stack_s
 # endif
 
     if (th == th->vm->main_thread)
-	rb_bug("thread_start_func_2 must not used for main thread");
+	rb_bug("thread_start_func_2 must not be used for main thread");
 
     ruby_thread_set_native(th);
 
@@ -842,7 +844,7 @@ thread_join(rb_thread_t *target_th, double delay)
  *  Does not return until +thr+ exits or until the given +limit+ seconds have
  *  passed.
  *
- *  If the time limit expires, +nil+ will be returned, otherwise this +thr+ is
+ *  If the time limit expires, +nil+ will be returned, otherwise +thr+ is
  *  returned.
  *
  *  Any threads not joined will be killed when the main program exits.
@@ -853,7 +855,7 @@ thread_join(rb_thread_t *target_th, double delay)
  *
  *     a = Thread.new { print "a"; sleep(10); print "b"; print "c" }
  *     x = Thread.new { print "x"; Thread.pass; print "y"; print "z" }
- *     x.join # Let x thread finish, a will be killed on exit.
+ *     x.join # Let thread x finish, thread a will be killed on exit.
  *     #=> "axyz"
  *
  *  The following example illustrates the +limit+ parameter.
@@ -911,21 +913,45 @@ thread_value(VALUE self)
  * Thread Scheduling
  */
 
+/*
+ * The type of tv_sec in struct timeval is time_t in POSIX.
+ * But several systems violate POSIX.
+ *
+ * OpenBSD 5.2 (amd64):
+ *   time_t: int (signed 32bit integer)
+ *   tv_sec: long (signed 64bit integer)
+ *
+ * MinGW-w64 (x64):
+ *   time_t: long long (signed 64bit integer)
+ *   tv_sec: long (signed 32bit integer)
+ */
+
+#if SIGNEDNESS_OF_TIME_T < 0	/* signed */
+# define TIMEVAL_SEC_MAX SIGNED_INTEGER_MAX(TYPEOF_TIMEVAL_TV_SEC)
+# define TIMEVAL_SEC_MIN SIGNED_INTEGER_MIN(TYPEOF_TIMEVAL_TV_SEC)
+#elif SIGNEDNESS_OF_TIME_T > 0	/* unsigned */
+# define TIMEVAL_SEC_MAX ((TYPEOF_TIMEVAL_TV_SEC)(~(unsigned_time_t)0))
+# define TIMEVAL_SEC_MIN ((TYPEOF_TIMEVAL_TV_SEC)0)
+#endif
+
 static struct timeval
 double2timeval(double d)
 {
+    /* assume timeval.tv_sec has same signedness as time_t */
+    const double TIMEVAL_SEC_MAX_PLUS_ONE = (2*(double)(TIMEVAL_SEC_MAX/2+1));
+
     struct timeval time;
 
-    if (TIMET_MAX_PLUS_ONE <= d) {
-        time.tv_sec = TIMET_MAX;
+    if (TIMEVAL_SEC_MAX_PLUS_ONE <= d) {
+        time.tv_sec = TIMEVAL_SEC_MAX;
         time.tv_usec = 999999;
     }
-    else if (d <= TIMET_MIN) {
-        time.tv_sec = TIMET_MIN;
+    else if (d <= TIMEVAL_SEC_MIN) {
+        time.tv_sec = TIMEVAL_SEC_MIN;
         time.tv_usec = 0;
     }
     else {
-        time.tv_sec = (time_t)d;
+        time.tv_sec = (TYPEOF_TIMEVAL_TV_SEC)d;
         time.tv_usec = (int)((d - (time_t)d) * 1e6);
         if (time.tv_usec < 0) {
             time.tv_usec += (int)1e6;
@@ -982,10 +1008,17 @@ sleep_timeval(rb_thread_t *th, struct timeval tv, int spurious_check)
     enum rb_thread_status prev_status = th->status;
 
     getclockofday(&to);
-    to.tv_sec += tv.tv_sec;
+    if (TIMEVAL_SEC_MAX - tv.tv_sec < to.tv_sec)
+        to.tv_sec = TIMEVAL_SEC_MAX;
+    else
+        to.tv_sec += tv.tv_sec;
     if ((to.tv_usec += tv.tv_usec) >= 1000000) {
-	to.tv_sec++;
-	to.tv_usec -= 1000000;
+        if (to.tv_sec == TIMEVAL_SEC_MAX)
+            to.tv_usec = 999999;
+        else {
+            to.tv_sec++;
+            to.tv_usec -= 1000000;
+        }
     }
 
     th->status = THREAD_STOPPED;
@@ -996,9 +1029,9 @@ sleep_timeval(rb_thread_t *th, struct timeval tv, int spurious_check)
 	getclockofday(&tvn);
 	if (to.tv_sec < tvn.tv_sec) break;
 	if (to.tv_sec == tvn.tv_sec && to.tv_usec <= tvn.tv_usec) break;
-	thread_debug("sleep_timeval: %ld.%.6ld > %ld.%.6ld\n",
-		     (long)to.tv_sec, (long)to.tv_usec,
-		     (long)tvn.tv_sec, (long)tvn.tv_usec);
+	thread_debug("sleep_timeval: %"PRI_TIMET_PREFIX"d.%.6ld > %"PRI_TIMET_PREFIX"d.%.6ld\n",
+		     (time_t)to.tv_sec, (long)to.tv_usec,
+		     (time_t)tvn.tv_sec, (long)tvn.tv_usec);
 	tv.tv_sec = to.tv_sec - tvn.tv_sec;
 	if ((tv.tv_usec = to.tv_usec - tvn.tv_usec) < 0) {
 	    --tv.tv_sec;
@@ -1258,12 +1291,12 @@ call_without_gvl(void *(*func)(void *), void *data1,
  * provide proper ubf(), your program will not stop for Control+C or other
  * shutdown events.
  *
- * "Check interrupts" on above list means that check asynchronous
+ * "Check interrupts" on above list means checking asynchronous
  * interrupt events (such as Thread#kill, signal delivery, VM-shutdown
- * request, and so on) and call corresponding procedures
+ * request, and so on) and calling corresponding procedures
  * (such as `trap' for signals, raise an exception for Thread#raise).
- * If `func()' finished and receive interrupts, you may skip interrupt
- * checking.  For example, assume the following func() it read data from file.
+ * If `func()' finished and received interrupts, you may skip interrupt
+ * checking.  For example, assume the following func() it reads data from file.
  *
  *   read_func(...) {
  *                   // (a) before read
@@ -1273,12 +1306,12 @@ call_without_gvl(void *(*func)(void *), void *data1,
  *
  * If an interrupt occurs at (a) or (b), then `ubf()' cancels this
  * `read_func()' and interrupts are checked. However, if an interrupt occurs
- * at (c), after *read* operation is completed, check intterrupts is harmful
+ * at (c), after *read* operation is completed, checking interrupts is harmful
  * because it causes irrevocable side-effect, the read data will vanish.  To
  * avoid such problem, the `read_func()' should be used with
  * `rb_thread_call_without_gvl2()'.
  *
- * If `rb_thread_call_without_gvl2()' detects interrupt, return its execution
+ * If `rb_thread_call_without_gvl2()' detects interrupt, it returns
  * immediately. This function does not show when the execution was interrupted.
  * For example, there are 4 possible timing (a), (b), (c) and before calling
  * read_func(). You need to record progress of a read_func() and check
@@ -1340,7 +1373,7 @@ rb_thread_io_blocking_region(rb_blocking_function_t *func, void *data1, int fd)
     }
     TH_POP_TAG();
 
-    /* clear waitinf_fd anytime */
+    /* clear waiting_fd anytime */
     th->waiting_fd = -1;
 
     if (state) {
@@ -1378,13 +1411,13 @@ rb_thread_blocking_region(
  * (4) return a value which is returned at (2).
  *
  * NOTE: You should not return Ruby object at (2) because such Object
- *       will not marked.
+ *       will not be marked.
  *
  * NOTE: If an exception is raised in `func', this function DOES NOT
  *       protect (catch) the exception.  If you have any resources
  *       which should free before throwing exception, you need use
  *       rb_protect() in `func' and return a value which represents
- *       exception is raised.
+ *       exception was raised.
  *
  * NOTE: This function should not be called by a thread which was not
  *       created as Ruby thread (created by Thread.new or so).  In other
@@ -1400,7 +1433,7 @@ rb_thread_call_with_gvl(void *(*func)(void *), void *data1)
     void *r;
 
     if (th == 0) {
-	/* Error is occurred, but we can't use rb_bug()
+	/* Error has occurred, but we can't use rb_bug()
 	 * because this thread is not Ruby's thread.
          * What should we do?
 	 */
@@ -1470,8 +1503,8 @@ thread_s_pass(VALUE klass)
  * Thread#kill and thread termination (after main thread termination)
  * will be queued to th->pending_interrupt_queue.
  * - clear: clear the queue.
- * - enque: enque err object into queue.
- * - deque: deque err object from queue.
+ * - enque: enqueue err object into queue.
+ * - deque: dequeue err object from queue.
  * - active_p: return 1 if the queue should be checked.
  *
  * All rb_threadptr_pending_interrupt_* functions are called by
@@ -1599,7 +1632,7 @@ rb_threadptr_pending_interrupt_active_p(rb_thread_t *th)
 {
     /*
      * For optimization, we don't check async errinfo queue
-     * if it nor a thread interrupt mask were not changed
+     * if the queue and the thread interrupt mask were not changed
      * since last check.
      */
     if (th->pending_interrupt_queue_checked) {
@@ -1814,8 +1847,8 @@ rb_thread_pending_interrupt_p(int argc, VALUE *argv, VALUE target_thread)
  *
  * Returns whether or not the asynchronous queue is empty.
  *
- * Since Thread::handle_interrupt can be used to defer asynchronous events.
- * This method can be used to determine if there are any deferred events.
+ * Since Thread::handle_interrupt can be used to defer asynchronous events,
+ * this method can be used to determine if there are any deferred events.
  *
  * If you find this method returns true, then you may finish +:never+ blocks.
  *
@@ -2736,7 +2769,7 @@ rb_thread_local_aref(VALUE thread, ID id)
  *
  *  Thread#[] and Thread#[]= are not thread-local but fiber-local.
  *  This confusion did not exist in Ruby 1.8 because
- *  fibers were only available since Ruby 1.9.
+ *  fibers are only available since Ruby 1.9.
  *  Ruby 1.9 chooses that the methods behaves fiber-local to save
  *  following idiom for dynamic scope.
  *
@@ -2772,9 +2805,11 @@ rb_thread_local_aref(VALUE thread, ID id)
  */
 
 static VALUE
-rb_thread_aref(VALUE thread, VALUE id)
+rb_thread_aref(VALUE thread, VALUE key)
 {
-    return rb_thread_local_aref(thread, rb_to_id(id));
+    ID id = rb_check_id(&key);
+    if (!id) return Qnil;
+    return rb_thread_local_aref(thread, id);
 }
 
 VALUE
@@ -2789,12 +2824,13 @@ rb_thread_local_aset(VALUE thread, ID id, VALUE val)
     if (OBJ_FROZEN(thread)) {
 	rb_error_frozen("thread locals");
     }
-    if (!th->local_storage) {
-	th->local_storage = st_init_numtable();
-    }
     if (NIL_P(val)) {
+	if (!th->local_storage) return Qnil;
 	st_delete_wrap(th->local_storage, id);
 	return Qnil;
+    }
+    if (!th->local_storage) {
+	th->local_storage = st_init_numtable();
     }
     st_insert(th->local_storage, id, val);
     return val;
@@ -2850,19 +2886,21 @@ rb_thread_aset(VALUE self, VALUE id, VALUE val)
  */
 
 static VALUE
-rb_thread_variable_get(VALUE thread, VALUE id)
+rb_thread_variable_get(VALUE thread, VALUE key)
 {
     VALUE locals;
     rb_thread_t *th;
+    ID id = rb_check_id(&key);
 
     GetThreadPtr(thread, th);
 
     if (rb_safe_level() >= 4 && th != GET_THREAD()) {
-	rb_raise(rb_eSecurityError, "Insecure: can't modify thread locals");
+	rb_raise(rb_eSecurityError, "Insecure: can't access thread locals");
     }
 
-    locals = rb_iv_get(thread, "locals");
-    return rb_hash_aref(locals, ID2SYM(rb_to_id(id)));
+    if (!id) return Qnil;
+    locals = rb_ivar_get(thread, id_locals);
+    return rb_hash_aref(locals, ID2SYM(id));
 }
 
 /*
@@ -2889,7 +2927,7 @@ rb_thread_variable_set(VALUE thread, VALUE id, VALUE val)
 	rb_error_frozen("thread locals");
     }
 
-    locals = rb_iv_get(thread, "locals");
+    locals = rb_ivar_get(thread, id_locals);
     return rb_hash_aset(locals, ID2SYM(rb_to_id(id)), val);
 }
 
@@ -2910,11 +2948,11 @@ static VALUE
 rb_thread_key_p(VALUE self, VALUE key)
 {
     rb_thread_t *th;
-    ID id = rb_to_id(key);
+    ID id = rb_check_id(&key);
 
     GetThreadPtr(self, th);
 
-    if (!th->local_storage) {
+    if (!id || !th->local_storage) {
 	return Qfalse;
     }
     if (st_lookup(th->local_storage, id, 0)) {
@@ -2951,7 +2989,7 @@ rb_thread_alone(void)
  *  call-seq:
  *     thr.keys   -> array
  *
- *  Returns an an array of the names of the fiber-local variables (as Symbols).
+ *  Returns an array of the names of the fiber-local variables (as Symbols).
  *
  *     thr = Thread.new do
  *       Thread.current[:cat] = 'meow'
@@ -2985,7 +3023,7 @@ keys_i(VALUE key, VALUE value, VALUE ary)
  *  call-seq:
  *     thr.thread_variables   -> array
  *
- *  Returns an an array of the names of the thread-local variables (as Symbols).
+ *  Returns an array of the names of the thread-local variables (as Symbols).
  *
  *     thr = Thread.new do
  *       Thread.current.thread_variable_set(:cat, 'meow')
@@ -3004,7 +3042,7 @@ rb_thread_variables(VALUE thread)
     VALUE locals;
     VALUE ary;
 
-    locals = rb_iv_get(thread, "locals");
+    locals = rb_ivar_get(thread, id_locals);
     ary = rb_ary_new();
     rb_hash_foreach(locals, keys_i, ary);
 
@@ -3031,13 +3069,16 @@ static VALUE
 rb_thread_variable_p(VALUE thread, VALUE key)
 {
     VALUE locals;
+    ID id = rb_check_id(&key);
 
-    locals = rb_iv_get(thread, "locals");
+    if (!id) return Qfalse;
+
+    locals = rb_ivar_get(thread, id_locals);
 
     if (!RHASH(locals)->ntbl)
         return Qfalse;
 
-    if (st_lookup(RHASH(locals)->ntbl, ID2SYM(rb_to_id(key)), 0)) {
+    if (st_lookup(RHASH(locals)->ntbl, ID2SYM(id), 0)) {
 	return Qtrue;
     }
 
@@ -3652,7 +3693,7 @@ retry:
 
     /*
      * POLLIN, POLLOUT have a different meanings from select(2)'s read/write bit.
-     * Therefore we need fix it up.
+     * Therefore we need to fix it up.
      */
     result = 0;
     if (fds.revents & POLLIN_SET)
@@ -3776,7 +3817,7 @@ timer_thread_function(void *arg)
 
     /*
      * Tricky: thread_destruct_lock doesn't close a race against
-     * vm->running_thread switch. however it guarantee th->running_thread
+     * vm->running_thread switch. however it guarantees th->running_thread
      * point to valid pointer or NULL.
      */
     native_mutex_lock(&vm->thread_destruct_lock);
@@ -4567,7 +4608,7 @@ rb_mutex_synchronize_m(VALUE self, VALUE args)
 	rb_raise(rb_eThreadError, "must be called with a block");
     }
 
-    return rb_mutex_synchronize(self, rb_yield, Qnil);
+    return rb_mutex_synchronize(self, rb_yield, Qundef);
 }
 
 void rb_mutex_allow_trap(VALUE self, int val)
@@ -4973,6 +5014,7 @@ Init_Thread(void)
     sym_never = ID2SYM(rb_intern("never"));
     sym_immediate = ID2SYM(rb_intern("immediate"));
     sym_on_blocking = ID2SYM(rb_intern("on_blocking"));
+    id_locals = rb_intern("locals");
 
     rb_define_singleton_method(rb_cThread, "new", thread_s_new, -1);
     rb_define_singleton_method(rb_cThread, "start", thread_start, -2);

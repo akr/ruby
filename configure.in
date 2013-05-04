@@ -3,7 +3,7 @@ AC_INIT()
 {
 AC_CONFIG_AUX_DIR(tool)
 
-AC_PREREQ(2.62)
+AC_PREREQ(2.67)
 
 AC_DEFUN([RUBY_PREREQ_AC],
 	[m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [$1]), [-1],
@@ -11,10 +11,13 @@ AC_DEFUN([RUBY_PREREQ_AC],
 
 AC_DISABLE_OPTION_CHECKING
 
+AC_DEFUN([RUBY_RM_RECURSIVE], [
+m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.70]), [-1], [
 # suppress error messages, rm: cannot remove 'conftest.dSYM', from
 # AC_EGREP_CPP with CFLAGS=-g on Darwin.
 #
 # TODO: remove this hack when AC_PREREQ() becomes 2.70 or later.
+AS_CASE([$build_os], [darwin*], [
 rm() {
     rm_recursive=''
     for arg do
@@ -24,8 +27,9 @@ rm() {
 		[conftest.*], [if test -d "$arg"; then rm_recursive=-r; break; fi],
 		[])
     done
-    command rm $rm_recursive "$@"
+    command rm $rm_recursive "[$]@"
 }
+])])])
 
 { # environment section
 
@@ -194,6 +198,7 @@ RUBY_PATCHLEVEL=`sed -n 's/^#define RUBY_PATCHLEVEL //p' $srcdir/version.h`
 AC_DEFINE(CANONICALIZATION_FOR_MATHN)
 dnl checks for alternative programs
 AC_CANONICAL_BUILD
+RUBY_RM_RECURSIVE
 AC_ARG_WITH(gcc,
 	AS_HELP_STRING([--without-gcc], [never use gcc]),
 	[
@@ -306,7 +311,6 @@ if test ${target_archs+set}; then
     target=`echo $target | sed "s/^$target_cpu-/-/"`
     target_alias=`echo $target_alias | sed "s/^$target_cpu-/-/"`
     if test "${universal_binary-no}" = yes; then
-	RUBY_PREREQ_AC(2.63, [ to compile universal binary])
 	AC_SUBST(try_header,try_compile)
 	target_cpu=universal
 	real_cross_compiling=$cross_compiling
@@ -392,6 +396,17 @@ RUBY_NACL
 AS_CASE(["$host_os:$build_os"],
 [darwin*:darwin*], [
     AC_CHECK_TOOLS(CC, [gcc-4.2 clang gcc cc])
+    # Following Apple deployed clang are broken
+    # clang version 1.0 (http://llvm.org/svn/llvm-project/cfe/tags/Apple/clang-23 exported)
+    # Apple clang version 2.0 (tags/Apple/clang-137) (based on LLVM 2.9svn)
+    # Apple clang version 2.1 (tags/Apple/clang-163.7.1) (based on LLVM 3.0svn)
+    if ! $CC -E -xc - <<SRC >/dev/null; then
+	@%:@if defined __APPLE_CC__ && defined __clang_major__ && __clang_major__ < 3
+	@%:@error premature clang
+	@%:@endif
+SRC
+	AC_MSG_ERROR([clang version 3.0 or later is required])
+    fi
 ])
 if test x"${build}" != x"${host}"; then
   AC_CHECK_TOOL(CC, gcc)
@@ -409,7 +424,9 @@ AC_SUBST(LD)
 if test "$GCC" = yes; then
     linker_flag=-Wl,
     : ${optflags=-O3}
-    RUBY_APPEND_OPTIONS(XCFLAGS, ["-include ruby/config.h" "-include ruby/missing.h"])
+    gcc_major=`echo =__GNUC__ | $CC -E -xc - | sed '/^=/!d;s///'`
+    test -n "$gcc_major" || gcc_major=0
+    # RUBY_APPEND_OPTIONS(XCFLAGS, ["-include ruby/config.h" "-include ruby/missing.h"])
 else
     linker_flag=
 fi
@@ -422,7 +439,7 @@ RUBY_CPPOUTFILE
 AC_SUBST(OUTFLAG)
 AC_SUBST(COUTFLAG)
 
-cc_version_option=
+cc_version=
 for option in --version -v -V -qversion; do
     $CC $option > /dev/null 2>&1 || continue
     cc_version='$(CC) '$option
@@ -654,6 +671,11 @@ AC_ARG_ENABLE(werror,
 
 rb_cv_warnflags="$warnflags"
 if test "$GCC:${warnflags+set}:no" = yes::no; then
+    if test $gcc_major -ge 4; then
+	extra_warning=-Werror=extra-tokens
+    else
+	extra_warning=
+    fi
     for wflag in -Wno-unused-parameter -Wno-parentheses -Wno-long-long \
 		 -Wno-missing-field-initializers \
 		 -Wunused-variable \
@@ -662,6 +684,7 @@ if test "$GCC:${warnflags+set}:no" = yes::no; then
 		 -Werror=declaration-after-statement \
 		 -Werror=shorten-64-to-32 \
 		 -Werror=implicit-function-declaration \
+		 $extra_warning \
 		 ; do
 	if test "$particular_werror_flags" != yes; then
 	    wflag=`echo x$wflag | sed 's/^x-Werror=/-W/;s/^x//'`
@@ -687,10 +710,6 @@ if test "$GCC:${warnflags+set}:no" = yes::no; then
     warnflags=
 fi
 if test "$GCC" = yes; then
-    test "${debugflags+set}" || {RUBY_TRY_CFLAGS(-ggdb3, [debugflags=-ggdb3])}
-    test "${debugflags+set}" || {RUBY_TRY_CFLAGS(-ggdb, [debugflags=-ggdb])}
-    test "${debugflags+set}" || {RUBY_TRY_CFLAGS(-g3, [debugflags=-g3])}
-
     # -D_FORTIFY_SOURCE
     # When defined _FORTIFY_SOURCE, glibc enables some additional sanity
     # argument check. The performance drop is very little and Ubuntu enables
@@ -702,13 +721,13 @@ if test "$GCC" = yes; then
     AS_CASE(["$target_os"],
     [mingw*|nacl|haiku], [
 	stack_protector=no
-    ],
-    [
+    ])
+    if test -z "${stack_protector+set}"; then
 	RUBY_TRY_CFLAGS(-fstack-protector, [stack_protector=yes], [stack_protector=no])
 	if test "x$stack_protector" = xyes; then
 	    RUBY_TRY_LDFLAGS(-fstack-protector, [], [stack_protector=broken])
 	fi
-    ])
+    fi
     if test "x$stack_protector" = xyes; then
 	RUBY_APPEND_OPTION(XCFLAGS, -fstack-protector)
 	RUBY_APPEND_OPTION(XLDFLAGS, -fstack-protector)
@@ -740,6 +759,10 @@ if test "$GCC" = yes; then
 
     # suppress annoying -Wstrict-overflow warnings
     RUBY_TRY_CFLAGS(-fno-strict-overflow, [RUBY_APPEND_OPTION(XCFLAGS, -fno-strict-overflow)])
+
+    test "${debugflags+set}" || {RUBY_TRY_CFLAGS(-ggdb3, [debugflags=-ggdb3])}
+    test "${debugflags+set}" || {RUBY_TRY_CFLAGS(-ggdb, [debugflags=-ggdb])}
+    test "${debugflags+set}" || {RUBY_TRY_CFLAGS(-g3, [debugflags=-g3])}
 fi
 test $ac_cv_prog_cc_g = yes && : ${debugflags=-g}
 
@@ -747,18 +770,14 @@ if test "$GCC" = ""; then
     AS_CASE(["$target_os"],[aix*],[warnflags="$warnflags -qinfo=por" rb_cv_warnflags="$rb_cv_warnflags -qinfo=por"])
 fi
 if test "$GCC" = yes; then
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-	@%:@if !(defined __GNUC__ && __GNUC__ >= 4)
-	@%:@error not GCC 4 or later
-	>>>not GCC 4 or later<<<
-	@%:@endif])],
-	[visibility_option=yes], [visibility_option=no])
-    if test "$visibility_option" = yes; then
+    if test "$gcc_major" -ge 4; then
 	RUBY_TRY_CFLAGS(-fvisibility=hidden, [visibility_option=yes], [visibility_option=no])
     fi
     AC_SUBST(WERRORFLAG, "-Werror")
     if test "$visibility_option" = yes; then
 	RUBY_APPEND_OPTION(XCFLAGS, -fvisibility=hidden)
+	AC_DEFINE(RUBY_SYMBOL_EXPORT_BEGIN, [_Pragma("GCC visibility push(default)")])
+	AC_DEFINE(RUBY_SYMBOL_EXPORT_END,   [_Pragma("GCC visibility pop")])
     else
 	RUBY_TRY_LDFLAGS([-Wl,-unexported_symbol,_Init_*], [visibility_option=ld], [visibility_option=no])
     fi
@@ -980,7 +999,7 @@ AC_CHECK_HEADERS(limits.h sys/file.h sys/ioctl.h sys/syscall.h\
 		 syscall.h pwd.h grp.h a.out.h utime.h direct.h sys/resource.h \
 		 sys/mkdev.h sys/utime.h float.h ieeefp.h \
 		 ucontext.h intrinsics.h langinfo.h locale.h sys/sendfile.h time.h \
-		 net/socket.h sys/socket.h process.h sys/prctl.h)
+		 net/socket.h sys/socket.h process.h sys/prctl.h atomic.h)
 
 dnl check for large file stuff
 mv confdefs.h confdefs1.h
@@ -1461,6 +1480,24 @@ AC_CHECK_TYPES([struct timeval], [], [], [@%:@ifdef HAVE_TIME_H
 @%:@include <sys/time.h>
 @%:@endif])
 
+if test "${ac_cv_type_struct_timeval}" = yes; then
+    RUBY_CHECK_SIZEOF([struct timeval.tv_sec], [time_t long "long long"], [],
+		      [@%:@ifdef HAVE_TIME_H
+@%:@include <time.h>
+@%:@endif
+@%:@ifdef HAVE_SYS_TIME_H
+@%:@include <sys/time.h>
+@%:@endif])
+    AS_CASE(${ac_cv_sizeof_struct_timeval_tv_sec},
+	    [SIZEOF_INT], [t=int],
+	    [SIZEOF_LONG], [t=long],
+	    [SIZEOF_LONG_LONG], [t=LONG_LONG],
+	    [t=])
+    if test "${t}" != ""; then
+	AC_DEFINE_UNQUOTED(TYPEOF_TIMEVAL_TV_SEC, [$t])
+    fi
+fi
+
 AC_CHECK_TYPES([struct timespec], [], [], [@%:@ifdef HAVE_TIME_H
 @%:@include <time.h>
 @%:@endif
@@ -1663,13 +1700,21 @@ AC_CHECK_FUNCS(fmod killpg wait4 waitpid fork spawnv syscall __syscall chroot ge
 	      setitimer setruid seteuid setreuid setresuid socketpair\
 	      setrgid setegid setregid setresgid issetugid pause lchown lchmod\
 	      getpgrp setpgrp getpgid setpgid initgroups getgroups setgroups\
-	      getpriority getrlimit setrlimit sysconf close getpwnam_r getgrnam_r\
-	      dlopen sigprocmask sigaction sigsetjmp _setjmp _longjmp\
+	      getpriority getrlimit setrlimit sysconf close \
+              getpwnam_r getgrnam_r endgrent \
+	      dlopen sigprocmask sigaction _setjmp _longjmp\
 	      getsid setsid telldir seekdir fchmod cosh sinh tanh log2 round llabs\
 	      setuid setgid daemon select_large_fdset setenv unsetenv\
               mktime timegm gmtime_r clock_gettime gettimeofday poll ppoll\
               pread sendfile shutdown sigaltstack dl_iterate_phdr\
-              dup dup3 pipe2 posix_memalign memalign ioctl)
+              dup dup3 pipe2 posix_memalign memalign ioctl mblen)
+
+AC_CACHE_CHECK(for sigsetjmp as a macro or function, ac_cv_func_sigsetjmp,
+  [AC_TRY_COMPILE([
+#include <setjmp.h>
+], [sigjmp_buf env; sigsetjmp(env,1);],
+	ac_cv_func_sigsetjmp=yes,
+	ac_cv_func_sigsetjmp=no)])
 
 AC_CACHE_CHECK(for unsetenv returns a value, rb_cv_unsetenv_return_value,
   [AC_TRY_COMPILE([
@@ -1907,9 +1952,16 @@ main()
 fi
 
 if test "$ac_cv_func_getpgid" = no; then
+  # AC_FUNC_GETPGRP fails when cross-compiling with old autoconf.
+  # autoconf is changed between 2.52d and 2.52f?
+  # http://lists.gnu.org/archive/html/bug-gnu-utils/2001-09/msg00181.html
+  # "autoconf cleanup for AC_FUNC_GETPGRP and GETPGRP_VOID"
 AC_FUNC_GETPGRP
 fi
 if test "$ac_cv_func_setpgid:$ac_cv_func_setpgrp" = no:yes; then
+  # AC_FUNC_SETPGRP fails when cross-compiling.  (until autoconf 2.69?)
+  # https://lists.gnu.org/archive/html/bug-autoconf/2013-02/msg00002.html
+  # "AC_FUNC_SETPGRP fails to work properly when cross-compiling"
 AC_FUNC_SETPGRP
 fi
 
@@ -2407,8 +2459,7 @@ if test "$with_dln_a_out" != yes; then
 			    DLDFLAGS="$DLDFLAGS -lroot glue-noinit.a init_term_dyn.o start_dyn.o"
                             ],
 			  [i586*], [
-			    : ${LDSHARED='$(LD) -shared'}
-			    DLDFLAGS="$DLDFLAGS -L/boot/develop/lib/x86 -lroot"
+			    : ${LDSHARED='$(CC) -shared'}
 			    ])
 			: ${LIBPATHENV=LIBRARY_PATH}
 			rb_cv_dlopen=yes ],

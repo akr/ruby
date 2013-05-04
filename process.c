@@ -1395,7 +1395,6 @@ proc_spawn_cmd_internal(char **argv, char *prog)
 	after_exec();
 	if (status == -1) errno = ENOEXEC;
     }
-    rb_last_status_set(status == -1 ? 127 : status, 0);
     return status;
 }
 #endif
@@ -1431,7 +1430,6 @@ proc_spawn_sh(char *str)
     char *shell = dln_find_exe_r("sh", 0, fbuf, sizeof(fbuf));
     before_exec();
     status = spawnl(P_NOWAIT, (shell ? shell : "/bin/sh"), "sh", "-c", str, (char*)NULL);
-    rb_last_status_set(status == -1 ? 127 : status, 0);
     after_exec();
     return status;
 }
@@ -2349,6 +2347,12 @@ static int rb_exec_without_timer_thread(const struct rb_execarg *eargp, char *er
  *  The standard shell means always <code>"/bin/sh"</code> on Unix-like systems,
  *  <code>ENV["RUBYSHELL"]</code> or <code>ENV["COMSPEC"]</code> on Windows NT series, and
  *  similar.
+ *  If _commandline_ is simple enough,
+ *  no meta characters, no shell reserved word and no special built-in,
+ *  Ruby invokes the command directly without shell.
+ *  You can force shell invocation by adding ";" for _commandline_ (because ";" is a meta characetr).
+ *  Note that this behavior is observable by pid obtained
+ *  (return value of spawn() and IO#pid for IO.popen) is the pid of the invoked command, not shell.
  *
  *  If two or more +string+ given,
  *  the first is taken as a command name and
@@ -3680,10 +3684,8 @@ rb_spawn_process(struct rb_execarg *eargp, char *errmsg, size_t errmsg_buflen)
         char **argv = ARGVSTR2ARGV(eargp->invoke.cmd.argv_str);
 	pid = proc_spawn_cmd(argv, prog, eargp);
     }
-#  if defined(_WIN32)
     if (pid == -1)
 	rb_last_status_set(0x7f << 8, 0);
-#  endif
 # else
     if (!eargp->use_shell) {
         char **argv = ARGVSTR2ARGV(eargp->invoke.cmd.argv_str);
@@ -4802,13 +4804,13 @@ obj2gid(VALUE id
 	grptr = getgrnam(grpname);
 #endif
 	if (!grptr) {
-#ifndef USE_GETGRNAM_R
+#if !defined(USE_GETGRNAM_R) && defined(HAVE_ENDGRENT)
 	    endgrent();
 #endif
 	    rb_raise(rb_eArgError, "can't find group for %s", grpname);
 	}
 	gid = grptr->gr_gid;
-#ifndef USE_GETGRNAM_R
+#if !defined(USE_GETGRNAM_R) && defined(HAVE_ENDGRENT)
 	endgrent();
 #endif
     }
@@ -5670,26 +5672,19 @@ rb_daemon(int nochdir, int noclose)
 #else
     int n;
 
-    switch (rb_fork_ruby(NULL)) {
-      case -1:
-	rb_sys_fail("daemon");
-      case 0:
-	break;
-      default:
-	_exit(EXIT_SUCCESS);
+#define fork_daemon() \
+    switch (rb_fork_ruby(NULL)) { \
+      case -1: return -1; \
+      case 0:  break; \
+      default: _exit(EXIT_SUCCESS); \
     }
 
-    proc_setsid();
+    fork_daemon();
+
+    if (setsid() < 0) return -1;
 
     /* must not be process-leader */
-    switch (rb_fork_ruby(NULL)) {
-      case -1:
-	return -1;
-      case 0:
-	break;
-      default:
-	_exit(EXIT_SUCCESS);
-    }
+    fork_daemon();
 
     if (!nochdir)
 	err = chdir("/");

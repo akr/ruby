@@ -32,7 +32,7 @@
 #include <ctype.h>
 
 extern st_table *rb_class_tbl;
-static ID id_attached;
+#define id_attached id__attached__
 
 /**
  * Allocates a struct RClass for a new class.
@@ -307,6 +307,14 @@ rb_singleton_class_attached(VALUE klass, VALUE obj)
  */
 #define META_CLASS_OF_CLASS_CLASS_P(k)  (METACLASS_OF(k) == (k))
 
+/*!
+ * whether k has a metaclass
+ * @retval 1 if \a k has a metaclass
+ * @retval 0 otherwise
+ */
+#define HAVE_METACLASS_P(k) \
+    (FL_TEST(METACLASS_OF(k), FL_SINGLETON) && \
+     rb_ivar_get(METACLASS_OF(k), id_attached) == (k))
 
 /*!
  * ensures \a klass belongs to its own eigenclass.
@@ -316,7 +324,7 @@ rb_singleton_class_attached(VALUE klass, VALUE obj)
  * @note this macro creates a new eigenclass if necessary.
  */
 #define ENSURE_EIGENCLASS(klass) \
- (rb_ivar_get(METACLASS_OF(klass), id_attached) == (klass) ? METACLASS_OF(klass) : make_metaclass(klass))
+    (HAVE_METACLASS_P(klass) ? METACLASS_OF(klass) : make_metaclass(klass))
 
 
 /*!
@@ -392,8 +400,6 @@ boot_defclass(const char *name, VALUE super)
 void
 Init_class_hierarchy(void)
 {
-    id_attached = rb_intern("__attached__");
-
     rb_cBasicObject = boot_defclass("BasicObject", 0);
     rb_cObject = boot_defclass("Object", rb_cBasicObject);
     rb_cModule = boot_defclass("Module", rb_cObject);
@@ -1109,13 +1115,14 @@ rb_class_public_instance_methods(int argc, VALUE *argv, VALUE mod)
 
 /*
  *  call-seq:
- *     obj.methods(all=true)    -> array
+ *     obj.methods(regular=true)    -> array
  *
  *  Returns a list of the names of public and protected methods of
  *  <i>obj</i>. This will include all the methods accessible in
  *  <i>obj</i>'s ancestors.
- *  If the <i>all</i> parameter is set to <code>false</code>, only those methods
- *  in the receiver will be listed.
+ *  If the <i>regular</i> parameter is set to <code>false</code>,
+ *  Returns an array of obj's public and protected singleton methods,
+ *  the array will not include methods in modules included in <i>obj</i>.
  *
  *     class Klass
  *       def klass_method()
@@ -1126,6 +1133,14 @@ rb_class_public_instance_methods(int argc, VALUE *argv, VALUE mod)
  *                        #    :==~, :!, :eql?
  *                        #    :hash, :<=>, :class, :singleton_class]
  *     k.methods.length   #=> 57
+ *
+ *     k.methods(false)   #=> []
+ *     def k.singleton_method; end
+ *     k.methods(false)   #=> [:singleton_method]
+ *
+ *     module M123; def m123; end end
+ *     k.extend M123
+ *     k.methods(false)   #=> [:singleton_method]
  */
 
 VALUE

@@ -630,7 +630,7 @@ num_to_int(VALUE num)
  *  So you should know its esoteric system. see following:
  *
  *  - http://docs.sun.com/source/806-3568/ncg_goldberg.html
- *  - http://wiki.github.com/rdp/ruby_tutorials_core/ruby-talk-faq#floats_imprecise
+ *  - http://wiki.github.com/rdp/ruby_tutorials_core/ruby-talk-faq#wiki-floats_imprecise
  *  - http://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
  */
 
@@ -853,6 +853,7 @@ flo_div(VALUE x, VALUE y)
 
 /*
  *  call-seq:
+ *     float.fdiv(numeric)  ->  float
  *     float.quo(numeric)  ->  float
  *
  *  Returns float / numeric.
@@ -1959,7 +1960,7 @@ rb_num2long(VALUE val)
       case T_FLOAT:
 	if (RFLOAT_VALUE(val) < LONG_MAX_PLUS_ONE
 	    && LONG_MIN_MINUS_ONE_IS_LESS_THAN(RFLOAT_VALUE(val))) {
-	    return (SIGNED_VALUE)(RFLOAT_VALUE(val));
+	    return (long)RFLOAT_VALUE(val);
 	}
 	else {
 	    char buf[24];
@@ -1979,21 +1980,31 @@ rb_num2long(VALUE val)
     }
 }
 
-VALUE
-rb_num2ulong(VALUE val)
+static unsigned long
+rb_num2ulong_internal(VALUE val, int *wrap_p)
 {
   again:
     if (NIL_P(val)) {
        rb_raise(rb_eTypeError, "no implicit conversion from nil to integer");
     }
 
-    if (FIXNUM_P(val)) return FIX2LONG(val); /* this is FIX2LONG, inteneded */
+    if (FIXNUM_P(val)) {
+        long l = FIX2LONG(val); /* this is FIX2LONG, inteneded */
+        if (wrap_p)
+            *wrap_p = l < 0;
+        return (unsigned long)l;
+    }
 
     switch (TYPE(val)) {
       case T_FLOAT:
        if (RFLOAT_VALUE(val) < ULONG_MAX_PLUS_ONE
            && LONG_MIN_MINUS_ONE_IS_LESS_THAN(RFLOAT_VALUE(val))) {
-           return (VALUE)RFLOAT_VALUE(val);
+           double d = RFLOAT_VALUE(val);
+           if (wrap_p)
+               *wrap_p = d <= -1.0; /* NUM2ULONG(v) uses v.to_int conceptually.  */
+           if (0 <= d)
+               return (unsigned long)d;
+           return (unsigned long)(long)d;
        }
        else {
            char buf[24];
@@ -2005,15 +2016,26 @@ rb_num2ulong(VALUE val)
        }
 
       case T_BIGNUM:
-	return rb_big2ulong(val);
+        {
+            unsigned long ul = rb_big2ulong(val);
+            if (wrap_p)
+                *wrap_p = RBIGNUM_NEGATIVE_P(val);
+            return ul;
+        }
 
       default:
-       val = rb_to_int(val);
-       goto again;
+        val = rb_to_int(val);
+        goto again;
     }
 }
 
-#if SIZEOF_INT < SIZEOF_VALUE
+VALUE
+rb_num2ulong(VALUE val)
+{
+    return rb_num2ulong_internal(val, NULL);
+}
+
+#if SIZEOF_INT < SIZEOF_LONG
 void
 rb_out_of_int(SIGNED_VALUE num)
 {
@@ -2022,28 +2044,25 @@ rb_out_of_int(SIGNED_VALUE num)
 }
 
 static void
-check_int(SIGNED_VALUE num)
+check_int(long num)
 {
-    if ((SIGNED_VALUE)(int)num != num) {
+    if ((long)(int)num != num) {
 	rb_out_of_int(num);
     }
 }
 
 static void
-check_uint(VALUE num, int sign)
+check_uint(unsigned long num, int sign)
 {
-    static const VALUE mask = ~(VALUE)UINT_MAX;
-
     if (sign) {
 	/* minus */
-	if ((num & mask) != mask || (num & ~mask) <= INT_MAX)
-#define VALUE_MSBMASK   ((VALUE)1 << ((sizeof(VALUE) * CHAR_BIT) - 1))
-	    rb_raise(rb_eRangeError, "integer %"PRIdVALUE " too small to convert to `unsigned int'", num|VALUE_MSBMASK);
+	if (num < (unsigned long)INT_MIN)
+	    rb_raise(rb_eRangeError, "integer %ld too small to convert to `unsigned int'", (long)num);
     }
     else {
 	/* plus */
-	if ((num & mask) != 0)
-	    rb_raise(rb_eRangeError, "integer %"PRIuVALUE " too big to convert to `unsigned int'", num);
+	if (UINT_MAX < num)
+	    rb_raise(rb_eRangeError, "integer %lu too big to convert to `unsigned int'", num);
     }
 }
 
@@ -2068,10 +2087,11 @@ rb_fix2int(VALUE val)
 unsigned long
 rb_num2uint(VALUE val)
 {
-    VALUE num = rb_num2ulong(val);
+    int wrap;
+    unsigned long num = rb_num2ulong_internal(val, &wrap);
 
-    check_uint(num, negative_int_p(val));
-    return (unsigned long)num;
+    check_uint(num, wrap);
+    return num;
 }
 
 unsigned long
@@ -2109,28 +2129,25 @@ rb_out_of_short(SIGNED_VALUE num)
 }
 
 static void
-check_short(SIGNED_VALUE num)
+check_short(long num)
 {
-    if ((SIGNED_VALUE)(short)num != num) {
+    if ((long)(short)num != num) {
 	rb_out_of_short(num);
     }
 }
 
 static void
-check_ushort(VALUE num, int sign)
+check_ushort(unsigned long num, int sign)
 {
-    static const VALUE mask = ~(VALUE)USHRT_MAX;
-
     if (sign) {
 	/* minus */
-	if ((num & mask) != mask || (num & ~mask) <= SHRT_MAX)
-#define VALUE_MSBMASK   ((VALUE)1 << ((sizeof(VALUE) * CHAR_BIT) - 1))
-	    rb_raise(rb_eRangeError, "integer %"PRIdVALUE " too small to convert to `unsigned short'", num|VALUE_MSBMASK);
+	if (num < (unsigned long)SHRT_MIN)
+	    rb_raise(rb_eRangeError, "integer %ld too small to convert to `unsigned short'", (long)num);
     }
     else {
 	/* plus */
-	if ((num & mask) != 0)
-	    rb_raise(rb_eRangeError, "integer %"PRIuVALUE " too big to convert to `unsigned short'", num);
+	if (USHRT_MAX < num)
+	    rb_raise(rb_eRangeError, "integer %lu too big to convert to `unsigned short'", num);
     }
 }
 
@@ -2155,10 +2172,11 @@ rb_fix2short(VALUE val)
 unsigned short
 rb_num2ushort(VALUE val)
 {
-    VALUE num = rb_num2ulong(val);
+    int wrap;
+    unsigned long num = rb_num2ulong_internal(val, &wrap);
 
-    check_ushort(num, negative_int_p(val));
-    return (unsigned long)num;
+    check_ushort(num, wrap);
+    return num;
 }
 
 unsigned short
@@ -2178,13 +2196,13 @@ rb_fix2ushort(VALUE val)
 VALUE
 rb_num2fix(VALUE val)
 {
-    SIGNED_VALUE v;
+    long v;
 
     if (FIXNUM_P(val)) return val;
 
     v = rb_num2long(val);
     if (!FIXABLE(v))
-	rb_raise(rb_eRangeError, "integer %"PRIdVALUE " out of range of fixnum", v);
+	rb_raise(rb_eRangeError, "integer %ld out of range of fixnum", v);
     return LONG2FIX(v);
 }
 
@@ -2258,7 +2276,9 @@ rb_num2ull(VALUE val)
       case T_FLOAT:
 	if (RFLOAT_VALUE(val) < ULLONG_MAX_PLUS_ONE
             && LLONG_MIN_MINUS_ONE_IS_LESS_THAN(RFLOAT_VALUE(val))) {
-	    return (unsigned LONG_LONG)(RFLOAT_VALUE(val));
+            if (0 <= RFLOAT_VALUE(val))
+                return (unsigned LONG_LONG)(RFLOAT_VALUE(val));
+	    return (unsigned LONG_LONG)(LONG_LONG)(RFLOAT_VALUE(val));
 	}
 	else {
 	    char buf[24];
@@ -2712,7 +2732,6 @@ fix_mul(VALUE x, VALUE y)
 #if SIZEOF_LONG * 2 <= SIZEOF_LONG_LONG
 	LONG_LONG d;
 #else
-	volatile long c;
 	VALUE r;
 #endif
 
@@ -2726,13 +2745,11 @@ fix_mul(VALUE x, VALUE y)
 #else
 	if (FIT_SQRT_LONG(a) && FIT_SQRT_LONG(b))
 	    return LONG2FIX(a*b);
-	c = a * b;
-	r = LONG2FIX(c);
-
 	if (a == 0) return x;
-	if (FIX2LONG(r) != c || c/a != b) {
+        if (MUL_OVERFLOW_FIXNUM_P(a, b))
 	    r = rb_big_mul(rb_int2big(a), rb_int2big(b));
-	}
+        else
+            r = LONG2FIX(a * b);
 	return r;
 #endif
     }
@@ -2954,11 +2971,10 @@ int_pow(long x, unsigned long y)
 	    y >>= 1;
 	}
 	{
-	    volatile long xz = x * z;
-	    if (!POSFIXABLE(xz) || xz / x != z) {
+            if (MUL_OVERFLOW_FIXNUM_P(x, z)) {
 		goto bignum;
 	    }
-	    z = xz;
+	    z = x * z;
 	}
     } while (--y);
     if (neg) z = -z;

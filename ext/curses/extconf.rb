@@ -77,39 +77,56 @@ if header_library
   # SVR4 curses has a (undocumented) variable char *curses_version.
   # ncurses and PDcurses has a function char *curses_version().
   # Note that the original BSD curses doesn't provide version information.
+  #
+  # configure option:
+  #   --with-curses-version=function    for SVR4
+  #   --with-curses-version=variable    for ncurses and PDcurses
+  #   (not given)                       automatically determined
 
-  prolog = cpp_include(curses)
-  if checking_for(checking_message('function curses_version', curses)) {
-      try_run(<<-"End")
-        #{prolog}
-        int main(int argc, char *argv[])
-        {
-            curses_version();
-            return EXIT_SUCCESS;
-        }
-      End
-    }
+  case with_curses_version = with_config("curses-version")
+  when "function"
     $defs << '-DHAVE_FUNC_CURSES_VERSION'
-  end
-
-  if checking_for(checking_message('variable curses_version', curses)) {
-      try_run(<<-"End")
-        #{prolog}
-        extern char *curses_version;
-        int main(int argc, char *argv[])
-        {
-            int i = 0;
-            for (i = 0; i < 100; i++) {
-                if (curses_version[i] == 0)
-                    return 0 < i ? EXIT_SUCCESS : EXIT_FAILURE;
-                if (curses_version[i] & 0x80)
-                    return EXIT_FAILURE;
-            }
-            return EXIT_FAILURE;
-        }
-      End
-    }
+  when "variable"
     $defs << '-DHAVE_VAR_CURSES_VERSION'
+  when nil
+    func_test_program = cpp_include(curses) + <<-"End"
+      int main(int argc, char *argv[])
+      {
+          curses_version();
+          return EXIT_SUCCESS;
+      }
+    End
+    var_test_program = cpp_include(curses) + <<-"End"
+      extern char *curses_version;
+      int main(int argc, char *argv[])
+      {
+          int i = 0;
+          for (i = 0; i < 100; i++) {
+              if (curses_version[i] == 0)
+                  return 0 < i ? EXIT_SUCCESS : EXIT_FAILURE;
+              if (curses_version[i] & 0x80)
+                  return EXIT_FAILURE;
+          }
+          return EXIT_FAILURE;
+      }
+    End
+    try = method(CROSS_COMPILING ? :try_link : :try_run)
+    function_p = checking_for(checking_message('function curses_version', curses)) { try[func_test_program] }
+    variable_p = checking_for(checking_message('variable curses_version', curses)) { try[var_test_program] }
+    if function_p and variable_p
+      if [header, library].grep(/ncurses|pdcurses|xcurses/i)
+        variable_p = false
+      else
+        warn "found curses_version but cannot determin whether it is a"
+        warn "function or a variable, so assume a variable in old SVR4"
+        warn "ncurses."
+        function_p = false
+      end
+    end
+    $defs << '-DHAVE_FUNC_CURSES_VERSION' if function_p
+    $defs << '-DHAVE_VAR_CURSES_VERSION' if variable_p
+  else
+    warn "unexpeted value for --with-curses-version: #{with_curses_version}"
   end
 
   create_makefile("curses")

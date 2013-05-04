@@ -34,9 +34,7 @@ extern "C" {
 
 #include "ruby/st.h"
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility push(default)
-#endif
+RUBY_SYMBOL_EXPORT_BEGIN
 
 /*
  * Functions and variables that are used by more than one source file of
@@ -378,7 +376,7 @@ VALUE rb_require_safe(VALUE, int);
 void rb_obj_call_init(VALUE, int, VALUE*);
 VALUE rb_class_new_instance(int, VALUE*, VALUE);
 VALUE rb_block_proc(void);
-VALUE rb_f_lambda(void);
+VALUE rb_block_lambda(void);
 VALUE rb_proc_new(VALUE (*)(ANYARGS/* VALUE yieldarg[, VALUE procarg] */), VALUE);
 VALUE rb_obj_is_proc(VALUE);
 VALUE rb_proc_call(VALUE, VALUE);
@@ -909,9 +907,7 @@ int rb_frame_method_id_and_class(ID *idp, VALUE *klassp);
 VALUE rb_make_backtrace(void);
 VALUE rb_make_exception(int, VALUE*);
 
-#if defined __GNUC__ && __GNUC__ >= 4
-#pragma GCC visibility pop
-#endif
+RUBY_SYMBOL_EXPORT_END
 
 #if defined(__cplusplus)
 #if 0
