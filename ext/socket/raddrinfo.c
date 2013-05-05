@@ -1205,7 +1205,7 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
             else
                 rb_str_cat2(ret, "?");
 
-            if (ap) {
+            if (ap && 0 < alen) {
 		CATSEP;
                 for (i = 0; i < alen; i++)
                     rb_str_catf(ret, "%s%02x", i == 0 ? "" : ":", (unsigned char)ap[i]);
