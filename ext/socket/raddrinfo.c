@@ -1089,7 +1089,7 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
           {
             struct sockaddr_ll *addr;
             addr = (struct sockaddr_ll *)sockaddr;
-            char *sep = "[";
+            const char *sep = "[";
 #define CATSEP do { rb_str_cat2(ret, sep); sep = " "; } while (0);
 
             rb_str_cat2(ret, "PACKET");
@@ -1177,7 +1177,7 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
             char *np = NULL, *ap = NULL, *endp;
             int nlen = 0, alen = 0;
             int i, off;
-            char *sep = "[";
+            const char *sep = "[";
 #define CATSEP do { rb_str_cat2(ret, sep); sep = " "; } while (0);
 
             rb_str_cat2(ret, "LINK");
