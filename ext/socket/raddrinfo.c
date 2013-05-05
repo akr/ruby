@@ -997,7 +997,7 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
 	    else
 		rb_str_cat2(ret, ".?");
 
-	    if (((char*)&addr->sin_port)-(char*)addr+sizeof(addr->sin_port) < socklen) {
+	    if (((char*)&addr->sin_port)-(char*)addr+(int)sizeof(addr->sin_port) < socklen) {
 		port = ntohs(addr->sin_port);
 		if (port)
 		    rb_str_catf(ret, ":%d", port);
