@@ -329,34 +329,30 @@ ifaddr_inspect(VALUE self)
         ifaddr_inspect_flags(ifa->ifa_flags, result);
 
     if (ifa->ifa_addr) {
-      rb_str_cat2(result, " [");
+      rb_str_cat2(result, " ");
       rsock_inspect_sockaddr(ifa->ifa_addr,
           rsock_sockaddr_len(ifa->ifa_addr),
           result);
-      rb_str_cat2(result, "]");
     }
     if (ifa->ifa_netmask) {
-      rb_str_cat2(result, " netmask:[");
+      rb_str_cat2(result, " netmask=");
       rsock_inspect_sockaddr(ifa->ifa_netmask,
           rsock_sockaddr_len(ifa->ifa_netmask),
           result);
-      rb_str_cat2(result, "]");
     }
 
     if ((ifa->ifa_flags & IFF_BROADCAST) && ifa->ifa_broadaddr) {
-      rb_str_cat2(result, " broadcast:[");
+      rb_str_cat2(result, " broadcast=");
       rsock_inspect_sockaddr(ifa->ifa_broadaddr,
           rsock_sockaddr_len(ifa->ifa_broadaddr),
           result);
-      rb_str_cat2(result, "]");
     }
 
     if ((ifa->ifa_flags & IFF_POINTOPOINT) && ifa->ifa_dstaddr) {
-      rb_str_cat2(result, " dstaddr:[");
+      rb_str_cat2(result, " dstaddr=");
       rsock_inspect_sockaddr(ifa->ifa_dstaddr,
           rsock_sockaddr_len(ifa->ifa_dstaddr),
           result);
-      rb_str_cat2(result, "]");
     }
 
     rb_str_cat2(result, ">");
