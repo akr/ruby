@@ -237,7 +237,7 @@ ifaddr_dstaddr(VALUE self)
 static void
 ifaddr_inspect_flags(unsigned int flags, VALUE result)
 {
-    char *sep = " ";
+    const char *sep = " ";
 #define INSPECT_BIT(bit, name) \
     if (flags & (bit)) { rb_str_catf(result, "%s" name, sep); flags &= ~(bit); sep = ","; }
 #ifdef IFF_UP
