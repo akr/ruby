@@ -1177,10 +1177,12 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
             char *np = NULL, *ap = NULL, *endp;
             int nlen = 0, alen = 0;
             int i, off;
-
-            endp = ((char *)addr) + socklen;
+            char *sep = "[";
+#define CATSEP do { rb_str_cat2(ret, sep); sep = " "; } while (0);
 
             rb_str_cat2(ret, "LINK");
+
+            endp = ((char *)addr) + socklen;
 
             if (offsetof(struct sockaddr_dl, sdl_data) < socklen) {
                 np = addr->sdl_data;
@@ -1197,14 +1199,16 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
                     alen = endp - ap;
             }
 
+	    CATSEP;
             if (np)
-                rb_str_catf(ret, " %.*s", nlen, np);
+                rb_str_catf(ret, "%.*s", nlen, np);
             else
-                rb_str_cat2(ret, " ?");
+                rb_str_cat2(ret, "?");
 
             if (ap) {
+		CATSEP;
                 for (i = 0; i < alen; i++)
-                    rb_str_catf(ret, "%s%02x", i == 0 ? " " : ":", (unsigned char)ap[i]);
+                    rb_str_catf(ret, "%s%02x", i == 0 ? "" : ":", (unsigned char)ap[i]);
             }
 
             if (socklen < (socklen_t)(offsetof(struct sockaddr_dl, sdl_nlen) + sizeof(addr->sdl_nlen)) ||
@@ -1212,9 +1216,14 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
                 socklen < (socklen_t)(offsetof(struct sockaddr_dl, sdl_slen) + sizeof(addr->sdl_slen)) ||
                 /* longer length is possible behavior because struct sockaddr_dl has "minimum work area, can be larger" as the last field.
                  * cf. Net2:/usr/src/sys/net/if_dl.h. */
-                socklen < (socklen_t)(offsetof(struct sockaddr_dl, sdl_data) + addr->sdl_nlen + addr->sdl_alen + addr->sdl_slen))
-                rb_str_catf(ret, " (%d bytes for %d bytes sockaddr_dl)",
+                socklen < (socklen_t)(offsetof(struct sockaddr_dl, sdl_data) + addr->sdl_nlen + addr->sdl_alen + addr->sdl_slen)) {
+		CATSEP;
+                rb_str_catf(ret, "(%d bytes for %d bytes sockaddr_dl)",
                     (int)socklen, (int)sizeof(struct sockaddr_dl));
+	    }
+
+            rb_str_cat2(ret, "]");
+#undef CATSEP
             break;
           }
 #endif
