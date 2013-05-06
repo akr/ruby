@@ -1088,9 +1088,10 @@ rsock_inspect_sockaddr(struct sockaddr *sockaddr_arg, socklen_t socklen, VALUE r
           case AF_PACKET:
           {
             struct sockaddr_ll *addr;
-            addr = (struct sockaddr_ll *)sockaddr;
             const char *sep = "[";
 #define CATSEP do { rb_str_cat2(ret, sep); sep = " "; } while (0);
+
+            addr = (struct sockaddr_ll *)sockaddr;
 
             rb_str_cat2(ret, "PACKET");
 
