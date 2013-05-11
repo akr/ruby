@@ -157,13 +157,13 @@ unix_recvfrom(int argc, VALUE *argv, VALUE sock)
     return rsock_s_recvfrom(sock, argc, argv, RECV_UNIX);
 }
 
-#if defined(HAVE_ST_MSG_CONTROL) && defined(SCM_RIGHTS)
+#if defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL) && defined(SCM_RIGHTS)
 #define FD_PASSING_BY_MSG_CONTROL 1
 #else
 #define FD_PASSING_BY_MSG_CONTROL 0
 #endif
 
-#if defined(HAVE_ST_MSG_ACCRIGHTS)
+#if defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS)
 #define FD_PASSING_BY_MSG_ACCRIGHTS 1
 #else
 #define FD_PASSING_BY_MSG_ACCRIGHTS 0
@@ -381,7 +381,7 @@ unix_recv_io(int argc, VALUE *argv, VALUE sock)
 #else
     if (arg.msg.msg_accrightslen != sizeof(fd)) {
 	rb_raise(rb_eSocket,
-		 "file descriptor was not passed (accrightslen) : %d != %d",
+		 "file descriptor was not passed (accrightslen=%d, %d expected)",
 		 arg.msg.msg_accrightslen, (int)sizeof(fd));
     }
 #endif

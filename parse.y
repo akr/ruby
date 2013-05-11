@@ -6157,6 +6157,70 @@ ripper_flush_string_content(struct parser_params *parser, rb_encoding *enc)
 #define flush_string_content(enc) ((void)(enc))
 #endif
 
+RUBY_FUNC_EXPORTED const unsigned int ruby_global_name_punct_bits[(0x7e - 0x20 + 31) / 32];
+/* this can be shared with ripper, since it's independent from struct
+ * parser_params. */
+#ifndef RIPPER
+#define BIT(c, idx) (((c) / 32 - 1 == idx) ? (1U << ((c) % 32)) : 0)
+#define SPECIAL_PUNCT(idx) ( \
+	BIT('~', idx) | BIT('*', idx) | BIT('$', idx) | BIT('?', idx) | \
+	BIT('!', idx) | BIT('@', idx) | BIT('/', idx) | BIT('\\', idx) | \
+	BIT(';', idx) | BIT(',', idx) | BIT('.', idx) | BIT('=', idx) | \
+	BIT(':', idx) | BIT('<', idx) | BIT('>', idx) | BIT('\"', idx) | \
+	BIT('&', idx) | BIT('`', idx) | BIT('\'', idx) | BIT('+', idx) | \
+	BIT('0', idx))
+const unsigned int ruby_global_name_punct_bits[] = {
+    SPECIAL_PUNCT(0),
+    SPECIAL_PUNCT(1),
+    SPECIAL_PUNCT(2),
+};
+#undef BIT
+#undef SPECIAL_PUNCT
+#endif
+
+static inline int
+is_global_name_punct(const char c)
+{
+    if (c <= 0x20 || 0x7e < c) return 0;
+    return (ruby_global_name_punct_bits[(c - 0x20) / 32] >> (c % 32)) & 1;
+}
+
+static int
+parser_peek_variable_name(struct parser_params *parser)
+{
+    int c;
+    const char *p = lex_p;
+
+    if (p + 1 >= lex_pend) return 0;
+    c = *p++;
+    switch (c) {
+      case '$':
+	if ((c = *p) == '-') {
+	    if (++p >= lex_pend) return 0;
+	    c = *p;
+	}
+	else if (is_global_name_punct(c) || ISDIGIT(c)) {
+	    return tSTRING_DVAR;
+	}
+	break;
+      case '@':
+	if ((c = *p) == '@') {
+	    if (++p >= lex_pend) return 0;
+	    c = *p;
+	}
+	break;
+      case '{':
+	lex_p = p;
+	command_start = TRUE;
+	return tSTRING_DBEG;
+      default:
+	return 0;
+    }
+    if (!ISASCII(c) || c == '_' || ISALPHA(c))
+	return tSTRING_DVAR;
+    return 0;
+}
+
 static int
 parser_parse_string(struct parser_params *parser, NODE *quote)
 {
@@ -6187,16 +6251,10 @@ parser_parse_string(struct parser_params *parser, NODE *quote)
     }
     newtok();
     if ((func & STR_FUNC_EXPAND) && c == '#') {
-	switch (c = nextc()) {
-	  case '$':
-	  case '@':
-	    pushback(c);
-	    return tSTRING_DVAR;
-	  case '{':
-	    command_start = TRUE;
-	    return tSTRING_DBEG;
-	}
+	int t = parser_peek_variable_name(parser);
+	if (t) return t;
 	tokadd('#');
+	c = nextc();
     }
     pushback(c);
     if (tokadd_string(func, term, paren, &quote->nd_nest,
@@ -6403,16 +6461,10 @@ parser_here_document(struct parser_params *parser, NODE *here)
 	/*	int mb = ENC_CODERANGE_7BIT, *mbp = &mb;*/
 	newtok();
 	if (c == '#') {
-	    switch (c = nextc()) {
-	      case '$':
-	      case '@':
-		pushback(c);
-		return tSTRING_DVAR;
-	      case '{':
-		command_start = TRUE;
-		return tSTRING_DBEG;
-	    }
+	    int t = parser_peek_variable_name(parser);
+	    if (t) return t;
 	    tokadd('#');
+	    c = nextc();
 	}
 	do {
 	    pushback(c);
@@ -7876,7 +7928,8 @@ parser_yylex(struct parser_params *parser)
 	  default:
 	    if (!parser_is_identchar()) {
 		pushback(c);
-		return '$';
+		compile_error(PARSER_ARG "`$%c' is not allowed as a global variable name", c);
+		return 0;
 	    }
 	  case '0':
 	    tokadd('$');
@@ -7891,7 +7944,8 @@ parser_yylex(struct parser_params *parser)
 	    tokadd('@');
 	    c = nextc();
 	}
-	if (c != -1 && ISDIGIT(c)) {
+	if (c != -1 && (ISDIGIT(c) || !parser_is_identchar())) {
+	    pushback(c);
 	    if (tokidx == 1) {
 		compile_error(PARSER_ARG "`@%c' is not allowed as an instance variable name", c);
 	    }
@@ -7899,10 +7953,6 @@ parser_yylex(struct parser_params *parser)
 		compile_error(PARSER_ARG "`@@%c' is not allowed as a class variable name", c);
 	    }
 	    return 0;
-	}
-	if (!parser_is_identchar()) {
-	    pushback(c);
-	    return '@';
 	}
 	break;
 
@@ -8008,11 +8058,11 @@ parser_yylex(struct parser_params *parser)
 		if (kw) {
 		    enum lex_state_e state = lex_state;
 		    lex_state = kw->state;
-		    if (state == EXPR_FNAME) {
+		    if (IS_lex_state_for(state, EXPR_FNAME)) {
 			set_yylval_name(rb_intern(kw->name));
 			return kw->id[0];
 		    }
-		    if (lex_state == EXPR_BEG) {
+		    if (IS_lex_state(EXPR_BEG)) {
 			command_start = TRUE;
 		    }
 		    if (kw->id[0] == keyword_do) {
@@ -8022,13 +8072,13 @@ parser_yylex(struct parser_params *parser)
 			    return keyword_do_LAMBDA;
 			}
 			if (COND_P()) return keyword_do_cond;
-			if (CMDARG_P() && state != EXPR_CMDARG)
+			if (CMDARG_P() && !IS_lex_state_for(state, EXPR_CMDARG))
 			    return keyword_do_block;
-			if (state & (EXPR_BEG | EXPR_ENDARG))
+			if (IS_lex_state_for(state, (EXPR_BEG | EXPR_ENDARG)))
 			    return keyword_do_block;
 			return keyword_do;
 		    }
-		    if (state & (EXPR_BEG | EXPR_VALUE))
+		    if (IS_lex_state_for(state, (EXPR_BEG | EXPR_VALUE)))
 			return kw->id[0];
 		    else {
 			if (kw->id[0] != kw->id[1])
@@ -10000,22 +10050,17 @@ is_special_global_name(const char *m, const char *e, rb_encoding *enc)
     int mb = 0;
 
     if (m >= e) return 0;
-    switch (*m) {
-      case '~': case '*': case '$': case '?': case '!': case '@':
-      case '/': case '\\': case ';': case ',': case '.': case '=':
-      case ':': case '<': case '>': case '\"':
-      case '&': case '`': case '\'': case '+':
-      case '0':
+    if (is_global_name_punct(*m)) {
 	++m;
-	break;
-      case '-':
+    }
+    else if (*m == '-') {
 	if (++m >= e) return 0;
 	if (is_identchar(m, e, enc)) {
 	    if (!ISASCII(*m)) mb = 1;
 	    m += rb_enc_mbclen(m, e, enc);
 	}
-	break;
-      default:
+    }
+    else {
 	if (!rb_enc_isdigit(*m, enc)) return 0;
 	do {
 	    if (!ISASCII(*m)) mb = 1;

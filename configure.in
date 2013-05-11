@@ -900,7 +900,7 @@ main()
 		if test -n "$codesign"; then
 		    POSTLINK="test -z '\$(RUBY_CODESIGN)' || $codesign -s '\$(RUBY_CODESIGN)' -f \$@"
 		    LINK_SO="$LINK_SO
-$POSTLINK"
+\$(POSTLINK)"
 		fi
 		AC_CHECK_HEADERS(crt_externs.h, [], [], [
 		    #include <crt_externs.h>
@@ -989,17 +989,59 @@ $POSTLINK"
   ],
 [	LIBS="-lm $LIBS"])
 
+AC_CHECK_LIB(crypt, crypt)      # glibc (GNU/Linux, GNU/Hurd, GNU/kFreeBSD)
+AC_CHECK_LIB(dl, dlopen)	# Dynamic linking for SunOS/Solaris and SYSV
+AC_CHECK_LIB(dld, shl_load)	# Dynamic linking for HP-UX
+AC_CHECK_LIB(socket, shutdown)  # SunOS/Solaris
+
+AC_CHECK_FUNCS(clock_gettime)
+if test x"$ac_cv_func_clock_gettime" != xyes; then
+    # glibc 2.17 moves clock_* functions from librt to the main C library.
+    # http://sourceware.org/ml/libc-announce/2012/msg00001.html
+    AC_CHECK_LIB(rt, clock_gettime)
+    unset ac_cv_func_clock_gettime
+    AC_CHECK_FUNCS(clock_gettime)
+fi
+
 dnl Checks for header files.
 AC_HEADER_DIRENT
 dnl AC_HEADER_STDC has been checked in AC_USE_SYSTEM_EXTENSIONS
 AC_HEADER_STDBOOL
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(limits.h sys/file.h sys/ioctl.h sys/syscall.h\
-		 fcntl.h sys/fcntl.h sys/select.h sys/time.h sys/times.h sys/param.h\
-		 syscall.h pwd.h grp.h a.out.h utime.h direct.h sys/resource.h \
-		 sys/mkdev.h sys/utime.h float.h ieeefp.h \
-		 ucontext.h intrinsics.h langinfo.h locale.h sys/sendfile.h time.h \
-		 net/socket.h sys/socket.h process.h sys/prctl.h atomic.h)
+AC_CHECK_HEADERS( \
+  limits.h \
+  sys/file.h \
+  sys/ioctl.h \
+  sys/syscall.h \
+  fcntl.h \
+  sys/fcntl.h \
+  sys/select.h \
+  sys/time.h \
+  sys/times.h \
+  sys/param.h \
+  syscall.h \
+  pwd.h \
+  grp.h \
+  a.out.h \
+  utime.h \
+  direct.h \
+  sys/resource.h \
+  sys/mkdev.h \
+  sys/utime.h \
+  float.h \
+  ieeefp.h \
+  ucontext.h \
+  intrinsics.h \
+  langinfo.h \
+  locale.h \
+  sys/sendfile.h \
+  time.h \
+  net/socket.h \
+  sys/socket.h \
+  process.h \
+  sys/prctl.h \
+  atomic.h \
+)
 
 dnl check for large file stuff
 mv confdefs.h confdefs1.h
@@ -1428,12 +1470,6 @@ dnl Check whether we need to define sys_nerr locally
 AC_CHECK_DECLS([sys_nerr], [], [], [$ac_includes_default
 @%:@include <errno.h>])
 
-AC_CHECK_LIB(crypt, crypt)
-AC_CHECK_LIB(dl, dlopen)	# Dynamic linking for SunOS/Solaris and SYSV
-AC_CHECK_LIB(dld, shl_load)	# Dynamic linking for HP-UX
-AC_CHECK_LIB(socket, socketpair)	# SunOS/Solaris
-AC_CHECK_LIB(rt, clock_gettime)	# GNU/Linux
-
 AS_CASE(["$target_cpu"],
 [alpha*|sh4|sh4el|sh4eb], [AS_CASE(["$target_os"::"$GCC"],
 		[*::yes],  # gcc
@@ -1693,21 +1729,111 @@ if test "$rb_cv_have_signbit" = yes; then
 else
   AC_LIBOBJ([signbit])
 fi
-AC_CHECK_FUNCS(fmod killpg wait4 waitpid fork spawnv syscall __syscall chroot getcwd eaccess\
-	      truncate ftruncate ftello chsize times utimes utimensat fcntl lockf lstat\
-	      truncate64 ftruncate64 ftello64 fseeko fseeko64 \
-	      link symlink readlink readdir_r fsync fdatasync fchown posix_fadvise\
-	      setitimer setruid seteuid setreuid setresuid socketpair\
-	      setrgid setegid setregid setresgid issetugid pause lchown lchmod\
-	      getpgrp setpgrp getpgid setpgid initgroups getgroups setgroups\
-	      getpriority getrlimit setrlimit sysconf close \
-              getpwnam_r getgrnam_r endgrent \
-	      dlopen sigprocmask sigaction _setjmp _longjmp\
-	      getsid setsid telldir seekdir fchmod cosh sinh tanh log2 round llabs\
-	      setuid setgid daemon select_large_fdset setenv unsetenv\
-              mktime timegm gmtime_r clock_gettime gettimeofday poll ppoll\
-              pread sendfile shutdown sigaltstack dl_iterate_phdr\
-              dup dup3 pipe2 posix_memalign memalign ioctl mblen)
+
+AC_CHECK_FUNCS( \
+  fmod \
+  killpg \
+  wait4 \
+  waitpid \
+  fork \
+  spawnv \
+  syscall \
+  __syscall \
+  chroot \
+  getcwd \
+  eaccess \
+  truncate \
+  ftruncate \
+  ftello \
+  chsize \
+  times \
+  utimes \
+  utimensat \
+  fcntl \
+  lockf \
+  lstat \
+  truncate64 \
+  ftruncate64 \
+  ftello64 \
+  fseeko \
+  fseeko64 \
+  link \
+  symlink \
+  readlink \
+  readdir_r \
+  fsync \
+  fdatasync \
+  fchown \
+  posix_fadvise \
+  setitimer \
+  setruid \
+  seteuid \
+  setreuid \
+  setresuid \
+  setrgid \
+  setegid \
+  setregid \
+  setresgid \
+  issetugid \
+  pause \
+  lchown \
+  lchmod \
+  getpgrp \
+  setpgrp \
+  getpgid \
+  setpgid \
+  initgroups \
+  getgroups \
+  setgroups \
+  getpriority \
+  getrlimit \
+  setrlimit \
+  sysconf \
+  close \
+  getpwnam_r \
+  getgrnam_r \
+  endgrent \
+  dlopen \
+  sigprocmask \
+  sigaction \
+  _setjmp \
+  _longjmp \
+  getsid \
+  setsid \
+  telldir \
+  seekdir \
+  fchmod \
+  cosh \
+  sinh \
+  tanh \
+  log2 \
+  round \
+  llabs \
+  setuid \
+  setgid \
+  daemon \
+  select_large_fdset \
+  setenv \
+  unsetenv \
+  mktime \
+  timegm \
+  gmtime_r \
+  gettimeofday \
+  poll \
+  ppoll \
+  pread \
+  sendfile \
+  shutdown \
+  sigaltstack \
+  dl_iterate_phdr \
+  dup \
+  dup3 \
+  pipe2 \
+  posix_memalign \
+  memalign \
+  ioctl \
+  mblen \
+)
 
 AC_CACHE_CHECK(for sigsetjmp as a macro or function, ac_cv_func_sigsetjmp,
   [AC_TRY_COMPILE([

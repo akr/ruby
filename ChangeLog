@@ -1,3 +1,188 @@
+Sat May 11 17:28:51 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket: New method, Socket.getifaddrs, implemented.
+	  [ruby-core:54777] [Feature #8368]
+
+Sat May 11 00:47:22 2013  Tanaka Akira  <akr@fsij.org>
+
+	* gc.h (SET_MACHINE_STACK_END): Add !defined(_ILP32) to a defining
+	  condition to avoid compilation error on x32.
+	  https://sites.google.com/site/x32abi/
+
+Fri May 10 23:56:34 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* parse.y (parser_peek_variable_name): treat invalid global, class,
+	  and instance variable names as mere strings rather than errors.
+	  [ruby-core:54885] [Bug #8375]
+
+Fri May 10 20:22:40 2013  Tanaka Akira  <akr@fsij.org>
+
+	* configure.in: Move library checks into "Checks for libraries." part.
+
+Fri May 10 19:32:01 2013  Tanaka Akira  <akr@fsij.org>
+
+	* configure.in: Reformat arguments of AC_CHECK_HEADERS and
+	  AC_CHECK_FUNCS to track modifications easily.
+
+Fri May 10 12:01:36 2013  Tanaka Akira  <akr@fsij.org>
+
+	* configure.in: Don't link librt if clock_gettime is available in
+	  the main C library.
+	  glibc 2.17 moves clock_* from librt to the main C library.
+	  http://sourceware.org/ml/libc-announce/2012/msg00001.html
+
+Thu May  9 22:00:35 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/ancdata.c (bsock_sendmsg_internal): controls_num should
+	  not be negative.
+
+Thu May  9 21:09:57 2013  Tanaka Akira  <akr@fsij.org>
+
+	* file.c, ext/etc/etc.c, ext/socket/unixsocket.c,
+	  ext/openssl/ossl.h, ext/openssl/openssl_missing.c: Use
+	  HAVE_AGGREGATE_MEMBER instead of HAVE_ST_MEMBER.
+
+Thu May  9 20:43:41 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/ancdata.c (bsock_sendmsg_internal): Always set
+	  controls_num to raise NotImplementedError appropriately.
+	  (bsock_recvmsg_internal): Raise NotImplementedError if
+	  :scm_rights=>true is given on platforms which don't have
+	  4.4BSD style control message.
+
+Thu May  9 12:06:07 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/rubysocket.h, ext/socket/unixsocket.c,
+	  ext/socket/ancdata.c: Use HAVE_STRUCT_MSGHDR_MSG_CONTROL instead
+	  of HAVE_ST_MSG_CONTROL.
+
+Thu May  9 11:30:02 2013  Zachary Scott	 <zachary@zacharyscott.net>
+
+	* string.c: Add call-seq alias for String#=== [Bug #8381]
+
+Thu May  9 11:14:18 2013  Zachary Scott	 <zachary@zacharyscott.net>
+
+	* doc/contributing.rdoc: Add guide for contributing to CRuby
+
+Thu May  9 04:55:49 2013  Tanaka Akira  <akr@fsij.org>
+
+	* configure.in: Check socket library again.  shutdown() is used in
+	  io.c.
+
+Thu May  9 01:52:31 2013  Tanaka Akira  <akr@fsij.org>
+
+	* configure.in: Don't check socketpair.  socketpair is not used in
+	  ruby command itself.
+
+Thu May  9 01:05:41 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* class.c (rb_mod_included_modules): should not include non-modules.
+	  [ruby-core:53158] [Bug #8025]
+
+Wed May  8 22:46:59 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* class.c (rb_mod_included_modules): should not include the original
+	  module itself.  [ruby-core:53158] [Bug #8025]
+
+Wed May  8 17:43:55 2013  NARUSE, Yui  <naruse@ruby-lang.org>
+
+	* io.c (rb_io_ext_int_to_encs): ignore internal encoding if external
+	  encoding is ASCII-8BIT. [Bug #8342]
+
+Wed May  8 13:49:38 2013  NARUSE, Yui  <naruse@ruby-lang.org>
+
+	* ext/json/generator/generator.c (isArrayOrObject): cast char to
+	  unsigned char. [Bug #8378]
+
+Wed May  8 13:46:10 2013  NARUSE, Yui  <naruse@ruby-lang.org>
+
+	* ext/json/generator/depend: fix dependencies [Bug #8379]
+
+	* ext/json/parser/depend: ditto.
+
+Wed May  8 13:07:17 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* parse.y (parser_yylex): fail if $, @, @@ are not followed by a valid
+	  name character.  [ruby-core:54846] [Bug #8375].
+
+Wed May  8 13:06:31 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* include/ruby/ruby.h (ISGRAPH): add missing macro.
+
+Wed May  8 06:42:56 2013  NARUSE, Yui  <naruse@ruby-lang.org>
+
+	* ext/socket/socket.c (socket_s_ip_address_list): fix wrongly filled
+	  sin6_scope_id on KAME introduced by r40593 for OpenIndiana.
+	  KAME uses fe80:<scope_id>::<interface id> for link-local address
+	  internally.
+	  Setting sin6_scope_id causes it leaked.
+	  see also comments of sockaddr_obj().
+
+Tue May  7 22:12:34 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/readline/readline.c (insert_ignore_escape): Add a cast to
+	  unsigned char * before dereference.
+	  This suppress a warning on Cygwin.
+
+Tue May  7 12:15:24 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/ancdata.c (bsock_recvmsg_internal): Add a cast to
+	  suppress warning.
+	  Bionic defines socklen_t as int.
+	  Bionic defines msg_controllen as unsigned int (__kernel_size_t)
+	  instead of socklen_t as POSIX.
+
+Tue May  7 12:12:42 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/ancdata.c (ancillary_inspect): Don't call
+	  anc_inspect_ipv6_pktinfo if !HAVE_TYPE_STRUCT_IN6_PKTINFO.
+	  anc_inspect_ipv6_pktinfo is not defined in the case.
+
+Tue May  7 12:10:52 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/socket.c (socket_s_ip_address_list): Cast EXTRA_SPACE as
+	  int.  This suppress a warning.
+
+Tue May  7 12:09:29 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/extconf.rb: Set close_fds false for Cygwin.
+	  Cygwin doesn't support fd passing.
+	  This enables socket extension library cross-compilable by default.
+
+Tue May  7 12:07:35 2013  Tanaka Akira  <akr@fsij.org>
+
+	* pack.c (swap32): Don't redefine it if it is already defined.
+	  Bionic defines it.
+	  (swap64): Ditto.
+
+Mon May  6 20:50:37 2013  Tanaka Akira  <akr@fsij.org>
+
+	* ext/socket/socket.c (socket_s_ip_address_list): Fill sin6_scope_id
+	  if getifaddrs() returns an IPv6 link local address which
+	  sin6_scope_id is zero, such as on OpenIndiana SunOS 5.11.
+
+Sun May  5 18:56:52 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* insns.def (defined): use vm_search_superclass() like as normal super
+	  call.  based on a patch <https://gist.github.com/wanabe/5520026> by
+	  wanabe.
+
+	* vm_insnhelper.c (vm_search_superclass): return error but not raise
+	  exceptions.
+
+	* vm_insnhelper.c (vm_search_super_method): check the result of
+	  vm_search_superclass and raise exceptions on error.
+
+Sun May  5 16:29:41 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* insns.def (defined): get method entry from the method top level
+	  frame, not block frame.  [ruby-core:54769] [Bug #8367]
+
+Sun May  5 13:28:54 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
+
+	* template/ruby.pc.in (Cflags): use rubyarchhdrdir for multiarch.
+	  [Bug #7874]
+
 Sat May  4 07:20:00 2013  Zachary Scott  <zachary@zacharyscott.net>
 
 	* doc/security.rdoc: Add note about reporting security vulns
@@ -57,7 +242,7 @@ Thu May  2 22:11:47 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
 Thu May  2 17:32:45 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
 
 	* marshal.c (copy_ivar_i): get rid of overwriting already copied
-	  instance variales.  c.f. [Bug #8276]
+	  instance variables.  c.f. [Bug #8276]
 
 Thu May  2 16:55:43 2013  Nobuyoshi Nakada  <nobu@ruby-lang.org>
 
