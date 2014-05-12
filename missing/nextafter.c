@@ -4,9 +4,9 @@
 /* This function doesn't set errno. */
 
 double
-nextafter(volatile double x, volatile double y)
+nextafter(double x, double y)
 {
-    volatile double x1, x2, d;
+    double x1, x2, d;
     int e;
 
     if (isnan(x))
