@@ -619,4 +619,48 @@ class TestFloat < Test::Unit::TestCase
     assert_in_epsilon(10.0, ("1."+"1"*300000).to_f*9)
     end;
   end
+
+  def test_nexttoward_finite
+    assert_equal(0.0, 0.0.nexttoward(0.0))
+    assert_equal(1.0, 1.0.nexttoward(1.0))
+    assert_equal(-1.0, -1.0.nexttoward(-1.0))
+    assert_operator(9.0, :<, 9.0.nexttoward(10.0))
+    assert_operator(9.0, :>, 9.0.nexttoward(8.0))
+    assert_operator(-9.0, :>, (-9.0).nexttoward(-10.0))
+    assert_operator(-9.0, :<, (-9.0).nexttoward(-8.0))
+  end
+
+  def test_nexttoward_inf
+    inf = Float::INFINITY
+    assert_equal(inf, inf.nexttoward(inf))
+    assert_equal(-inf, (-inf).nexttoward(-inf))
+  end
+
+  def test_nexttoward_eps
+    eps = Float::EPSILON
+    assert_equal(eps, 1.0.nexttoward(2.0) - 1.0)
+  end
+
+  def test_nexttoward_max
+    inf = Float::INFINITY
+    max = Float::MAX
+    assert_equal(inf, max.nexttoward(inf))
+    assert_equal(-inf, (-max).nexttoward(-inf))
+    assert_equal(max, inf.nexttoward(0))
+  end
+
+  def test_nexttoward_nan
+    nan = Float::NAN
+    assert(nan.nexttoward(0.0).nan?)
+    assert(0.0.nexttoward(nan).nan?)
+    assert(nan.nexttoward(nan).nan?)
+  end
+
+  def test_nexttoward_int
+    eps = Float::EPSILON
+    assert_equal(0, 0.0.nexttoward(0))
+    assert_equal(0, 0.0.nexttoward(0))
+    assert_equal(1.0+eps, 1.0.nexttoward(2**100)) # bignum
+    assert_equal(1.0+eps, 1.0.nexttoward(2**2000)) # bigger than Float::MAX
+  end
 end

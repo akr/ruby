@@ -1480,6 +1480,31 @@ flo_is_finite_p(VALUE num)
 
 /*
  *  call-seq:
+ *     float.nexttoward(num)  ->  float
+ *
+ *  Returns the next representable float following the receiver
+ *  in the direction of _num_.
+ *
+ *  For example:
+ *
+ *    1.0.nexttoward(2)-1     #=> Float::EPSILON
+ *    (1-1.0.nexttoward(0))*2 #=> Float::EPSILON
+ *
+ */
+static VALUE
+flo_nexttoward(VALUE vx, VALUE vy)
+{
+    double x = NUM2DBL(vx);
+    double y = NUM2DBL(vy);
+    double z;
+
+    z = nextafter(x, y);
+
+    return DBL2NUM(z);
+}
+
+/*
+ *  call-seq:
  *     float.floor  ->  integer
  *
  *  Returns the largest integer less than or equal to +float+.
@@ -4106,6 +4131,7 @@ Init_Numeric(void)
     rb_define_method(rb_cFloat, "nan?",      flo_is_nan_p, 0);
     rb_define_method(rb_cFloat, "infinite?", flo_is_infinite_p, 0);
     rb_define_method(rb_cFloat, "finite?",   flo_is_finite_p, 0);
+    rb_define_method(rb_cFloat, "nexttoward", flo_nexttoward, 1);
 
     sym_to = ID2SYM(rb_intern("to"));
     sym_by = ID2SYM(rb_intern("by"));
