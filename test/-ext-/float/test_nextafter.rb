@@ -35,6 +35,11 @@ class TestFloatExt < Test::Unit::TestCase
           assert_equal(v1, v2,
             "Bug::Float.missing_nextafter(#{'%a' % n1}, #{'%a' % n2}) = #{'%a' % v1} != " +
             "#{'%a' % v2} = Bug::Float.system_nextafter(#{'%a' % n1}, #{'%a' % n2})")
+          if v1 == 0
+            assert_equal(1.0/v1, 1.0/v2,
+            "Bug::Float.missing_nextafter(#{'%a' % n1}, #{'%a' % n2}) = #{'%a' % v1} != " +
+            "#{'%a' % v2} = Bug::Float.system_nextafter(#{'%a' % n1}, #{'%a' % n2})")
+          end
         end
       }
     }

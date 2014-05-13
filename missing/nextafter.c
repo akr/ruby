@@ -64,5 +64,12 @@ nextafter(double x, double y)
 
     x2 = x1 + d;
 
+    if (x2 == 0.0) {
+        if (x1 < 0)
+            return -0.0;
+        else
+            return +0.0;
+    }
+
     return ldexp(x2, e);
 }
