@@ -24,8 +24,8 @@ class TestFloatExt < Test::Unit::TestCase
     ]
     nums.each {|n1|
       nums.each {|n2|
-        v1 = n1.my_nextafter(n2)
-        v2 = n1.nexttoward(n2)
+        v1 = Bug::Float.missing_nextafter(n1, n2)
+        v2 = Bug::Float.system_nextafter(n1, n2)
         assert_kind_of(Float, v1)
         assert_kind_of(Float, v2)
         if v1.nan?
