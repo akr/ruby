@@ -1,7 +1,7 @@
 #include <math.h>
 #include <float.h>
 
-/* This function doesn't set errno. */
+/* This function doesn't set errno.  It should on POSIX, though. */
 
 double
 nextafter(double x, double y)
