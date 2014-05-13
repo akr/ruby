@@ -2,7 +2,7 @@ require 'test/unit'
 require "-test-/float"
 
 class TestFloatExt < Test::Unit::TestCase
-  def test_nexttoward
+  def test_nextafter
     nums = [
       -Float::INFINITY,
       -Float::MAX,
@@ -29,11 +29,11 @@ class TestFloatExt < Test::Unit::TestCase
         assert_kind_of(Float, v1)
         assert_kind_of(Float, v2)
         if v1.nan?
-          assert(v2.nan?, "#{n1}.nexttoward(#{n2}).nan?")
+          assert(v2.nan?, "Bug::Float.system_nextafter(#{n1}, #{n2}).nan?")
         else
           assert_equal(v1, v2,
-            "#{'%a' % n1}.my_nextafter(#{'%a' % n2}) = #{'%a' % v1} != " +
-            "#{'%a' % v2} = #{'%a' % n1}.nexttoward(#{'%a' % n2})")
+            "Bug::Float.missing_nextafter(#{'%a' % n1}, #{'%a' % n2}) = #{'%a' % v1} != " +
+            "#{'%a' % v2} = Bug::Float.system_nextafter(#{'%a' % n1}, #{'%a' % n2})")
         end
       }
     }
