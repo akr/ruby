@@ -11,6 +11,7 @@ class TestFloatExt < Test::Unit::TestCase
       -Float::EPSILON,
       -Float::MIN/2,
       -Math.ldexp(0.5, Float::MIN_EXP - Float::MANT_DIG + 1),
+      -0.0,
       0.0,
       Math.ldexp(0.5, Float::MIN_EXP - Float::MANT_DIG + 1),
       Float::MIN/2,
