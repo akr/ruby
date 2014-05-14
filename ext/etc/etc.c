@@ -23,6 +23,8 @@
 #include <grp.h>
 #endif
 
+#include <errno.h>
+
 static VALUE sPasswd;
 #ifdef HAVE_GETGRENT
 static VALUE sGroup;
@@ -39,6 +41,8 @@ static VALUE sGroup;
 char *getenv();
 #endif
 char *getlogin();
+
+#include "constdefs.h"
 
 /* call-seq:
  *	getlogin	->  String
@@ -636,6 +640,24 @@ etc_systmpdir(void)
     return tmpdir;
 }
 
+static VALUE
+etc_sysconf(VALUE obj, VALUE arg)
+{
+    int name;
+    long ret;
+
+    name = NUM2INT(arg);
+
+    errno = 0;
+    ret = sysconf(name);
+    if (ret == -1) {
+        if (errno == 0) /* no limit */
+            return Qnil;
+        rb_sys_fail("sysconf");
+    }
+    return LONG2NUM(ret);
+}
+
 /*
  * The Etc module provides access to information typically stored in
  * files in the /etc directory on Unix systems.
@@ -668,6 +690,8 @@ Init_etc(void)
     VALUE mEtc;
 
     mEtc = rb_define_module("Etc");
+    init_constants(mEtc);
+
     rb_define_module_function(mEtc, "getlogin", etc_getlogin, 0);
 
     rb_define_module_function(mEtc, "getpwuid", etc_getpwuid, -1);
@@ -685,6 +709,8 @@ Init_etc(void)
     rb_define_module_function(mEtc, "getgrent", etc_getgrent, 0);
     rb_define_module_function(mEtc, "sysconfdir", etc_sysconfdir, 0);
     rb_define_module_function(mEtc, "systmpdir", etc_systmpdir, 0);
+
+    rb_define_module_function(mEtc, "sysconf", etc_sysconf, 1);
 
     sPasswd =  rb_struct_define_under(mEtc, "Passwd",
 				      "name",
