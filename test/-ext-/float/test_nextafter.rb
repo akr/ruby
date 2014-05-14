@@ -47,8 +47,8 @@ class TestFloatExt < Test::Unit::TestCase
             "#{'%a' % v2} = Bug::Float.system_nextafter(#{'%a' % n1}, #{'%a' % n2})")
           end
         end
-        test_number += 1
       }
+      test_number += 1
     }
   }
 
