@@ -641,6 +641,7 @@ etc_systmpdir(void)
     return tmpdir;
 }
 
+#ifdef HAVE_SYSCONF
 /*
  * Returns system configuration variable using sysconf().
  *
@@ -665,7 +666,11 @@ etc_sysconf(VALUE obj, VALUE arg)
     }
     return LONG2NUM(ret);
 }
+#else
+#define etc_sysconf rb_f_notimplement
+#endif
 
+#ifdef HAVE_CONFSTR
 /*
  * Returns system configuration variable using confstr().
  *
@@ -705,7 +710,11 @@ etc_confstr(VALUE obj, VALUE arg)
     }
     return rb_str_new_cstr(buf);
 }
+#else
+#define etc_confstr rb_f_notimplement
+#endif
 
+#ifdef HAVE_FPATHCONF
 /*
  * Returns pathname configuration variable using fpathconf().
  *
@@ -734,7 +743,11 @@ io_pathconf(VALUE io, VALUE arg)
     }
     return LONG2NUM(ret);
 }
+#else
+#define io_pathconf rb_f_notimplement
+#endif
 
+#ifdef HAVE_PATHCONF
 /*
  * Returns pathname configuration variable using pathconf().
  *
@@ -764,6 +777,9 @@ io_s_pathconf(VALUE klass, VALUE path, VALUE arg)
     }
     return LONG2NUM(ret);
 }
+#else
+#define io_s_pathconf rb_f_notimplement
+#endif
 
 /*
  * The Etc module provides access to information typically stored in
