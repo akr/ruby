@@ -648,6 +648,10 @@ etc_systmpdir(void)
  * The return value is an integer.
  *
  *   Etc.sysconf(Etc::SC_ARG_MAX) #=> 2097152
+ *
+ *   # GNU/Linux
+ *   Etc.sysconf(Etc::SC_NPROCESSORS_ONLN) #=> 4
+ *
  */
 static VALUE
 etc_sysconf(VALUE obj, VALUE arg)
