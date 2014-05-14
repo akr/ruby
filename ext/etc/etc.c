@@ -9,6 +9,7 @@
 
 #include "ruby.h"
 #include "ruby/encoding.h"
+#include "ruby/io.h"
 
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -706,6 +707,35 @@ etc_confstr(VALUE obj, VALUE arg)
 }
 
 /*
+ * Returns pathname configuration variable using fpathconf().
+ *
+ * The return value is an integer.
+ *
+ *   open("/") {|f| p f.pathconf(Etc::PC_NAME_MAX) } #=> 255
+ *
+ */
+static VALUE
+io_pathconf(VALUE io, VALUE arg)
+{
+    int name;
+    long ret;
+    rb_io_t *fptr;
+
+    name = NUM2INT(arg);
+
+    GetOpenFile(io, fptr);
+
+    errno = 0;
+    ret = fpathconf(fptr->fd, name);
+    if (ret == -1) {
+        if (errno == 0) /* no limit */
+            return Qnil;
+        rb_sys_fail("fpathconf");
+    }
+    return LONG2NUM(ret);
+}
+
+/*
  * The Etc module provides access to information typically stored in
  * files in the /etc directory on Unix systems.
  *
@@ -759,6 +789,8 @@ Init_etc(void)
 
     rb_define_module_function(mEtc, "sysconf", etc_sysconf, 1);
     rb_define_module_function(mEtc, "confstr", etc_confstr, 1);
+    rb_define_method(rb_cIO, "pathconf", io_pathconf, 1);
+
 
     sPasswd =  rb_struct_define_under(mEtc, "Passwd",
 				      "name",
