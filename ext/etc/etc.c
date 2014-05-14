@@ -643,7 +643,9 @@ etc_systmpdir(void)
 /*
  * Returns system configuration variable using sysconf().
  *
- *   Etc.sysconf(Etc::SC_ARG_MAX) #=> *   2097152
+ * The return value is an integer.
+ *
+ *   Etc.sysconf(Etc::SC_ARG_MAX) #=> 2097152
  */
 static VALUE
 etc_sysconf(VALUE obj, VALUE arg)
