@@ -9147,6 +9147,35 @@ rb_io_fcntl(int argc, VALUE *argv, VALUE io)
 #define rb_io_fcntl rb_f_notimplement
 #endif
 
+/*
+ * Returns pathname configuration variable using fpathconf().
+ *
+ * The return value is an integer.
+ *
+ *   open("/") {|f| p f.pathconf(Etc::PC_NAME_MAX) } #=> 255
+ *
+ */
+static VALUE
+rb_io_pathconf(VALUE io, VALUE arg)
+{
+    int name;
+    long ret;
+    rb_io_t *fptr;
+
+    name = NUM2INT(arg);
+
+    GetOpenFile(io, fptr);
+
+    errno = 0;
+    ret = fpathconf(fptr->fd, name);
+    if (ret == -1) {
+        if (errno == 0) /* no limit */
+            return Qnil;
+        rb_sys_fail("fpathconf");
+    }
+    return LONG2NUM(ret);
+}
+
 #if defined(HAVE_SYSCALL) || defined(HAVE___SYSCALL)
 /*
  *  call-seq:
@@ -12139,6 +12168,7 @@ Init_IO(void)
 
     rb_define_method(rb_cIO, "ioctl", rb_io_ioctl, -1);
     rb_define_method(rb_cIO, "fcntl", rb_io_fcntl, -1);
+    rb_define_method(rb_cIO, "pathconf", rb_io_pathconf, 1);
     rb_define_method(rb_cIO, "pid", rb_io_pid, 0);
     rb_define_method(rb_cIO, "inspect",  rb_io_inspect, 0);
 
