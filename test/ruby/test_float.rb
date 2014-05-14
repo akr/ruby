@@ -646,4 +646,12 @@ class TestFloat < Test::Unit::TestCase
     assert(Float::NAN.prev_float.nan?)
   end
 
+  def test_next_prev_float_zero
+    z = 0.0.next_float.prev_float
+    assert_equal(0.0, z)
+    assert_equal(Float::INFINITY, 1.0/z)
+    z = 0.0.prev_float.next_float
+    assert_equal(0.0, z)
+    assert_equal(-Float::INFINITY, 1.0/z)
+  end
 end
