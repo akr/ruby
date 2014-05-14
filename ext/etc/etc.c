@@ -670,7 +670,11 @@ etc_sysconf(VALUE obj, VALUE arg)
  *
  * The return value is a string.
  *
- *   p Etc.confstr(Etc::CS_PATH) #=> "/bin:/usr/bin"
+ *   Etc.confstr(Etc::CS_PATH) #=> "/bin:/usr/bin"
+ *
+ *   # GNU/Linux
+ *   Etc.confstr(Etc::CS_GNU_LIBC_VERSION) #=> "glibc 2.18"
+ *   Etc.confstr(Etc::CS_GNU_LIBPTHREAD_VERSION) #=> "NPTL 2.18"
  *
  */
 static VALUE
