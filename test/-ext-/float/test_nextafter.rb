@@ -25,9 +25,10 @@ class TestFloatExt < Test::Unit::TestCase
     Float::NAN
   ]
 
+  test_number = 0
   NEXTAFTER_VALUES.each {|n1|
     NEXTAFTER_VALUES.each {|n2|
-      define_method("test_nextafter_#{n1}_#{n2}") {
+      define_method("test_nextafter_#{test_number}_#{n1}_#{n2}") {
         v1 = Bug::Float.missing_nextafter(n1, n2)
         v2 = Bug::Float.system_nextafter(n1, n2)
         assert_kind_of(Float, v1)
@@ -46,6 +47,7 @@ class TestFloatExt < Test::Unit::TestCase
             "#{'%a' % v2} = Bug::Float.system_nextafter(#{'%a' % n1}, #{'%a' % n2})")
           end
         end
+        test_number += 1
       }
     }
   }
