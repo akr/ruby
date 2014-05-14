@@ -2,29 +2,30 @@ require 'test/unit'
 require "-test-/float"
 
 class TestFloatExt < Test::Unit::TestCase
-  def test_nextafter
-    nums = [
-      -Float::INFINITY,
-      -Float::MAX,
-      -100.0,
-      -1.0,
-      -Float::EPSILON,
-      -Float::MIN/2,
-      -Math.ldexp(0.5, Float::MIN_EXP - Float::MANT_DIG + 1),
-      -0.0,
-      0.0,
-      Math.ldexp(0.5, Float::MIN_EXP - Float::MANT_DIG + 1),
-      Float::MIN/2,
-      Float::MIN,
-      Float::EPSILON,
-      1.0,
-      100.0,
-      Float::MAX,
-      Float::INFINITY,
-      Float::NAN
-    ]
-    nums.each {|n1|
-      nums.each {|n2|
+  NEXTAFTER_VALUES = [
+    -Float::INFINITY,
+    -Float::MAX,
+    -100.0,
+    -1.0,
+    -Float::EPSILON,
+    -Float::MIN/2,
+    -Math.ldexp(0.5, Float::MIN_EXP - Float::MANT_DIG + 1),
+    -0.0,
+    0.0,
+    Math.ldexp(0.5, Float::MIN_EXP - Float::MANT_DIG + 1),
+    Float::MIN/2,
+    Float::MIN,
+    Float::EPSILON,
+    1.0,
+    100.0,
+    Float::MAX,
+    Float::INFINITY,
+    Float::NAN
+  ]
+
+  NEXTAFTER_VALUES.each {|n1|
+    NEXTAFTER_VALUES.each {|n2|
+      define_method("test_nextafter_#{n1}_#{n2}") {
         v1 = Bug::Float.missing_nextafter(n1, n2)
         v2 = Bug::Float.system_nextafter(n1, n2)
         assert_kind_of(Float, v1)
@@ -43,5 +44,6 @@ class TestFloatExt < Test::Unit::TestCase
         end
       }
     }
-  end
+  }
+
 end
