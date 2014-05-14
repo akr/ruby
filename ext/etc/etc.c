@@ -666,6 +666,42 @@ etc_sysconf(VALUE obj, VALUE arg)
 }
 
 /*
+ * Returns system configuration variable using confstr().
+ *
+ * The return value is a string.
+ *
+ *   p Etc.confstr(Etc::CS_PATH) #=> "/bin:/usr/bin"
+ *
+ */
+static VALUE
+etc_confstr(VALUE obj, VALUE arg)
+{
+    int name;
+    char localbuf[128], *buf = localbuf;
+    size_t bufsize = sizeof(localbuf), ret;
+    VALUE tmp;
+
+    name = NUM2INT(arg);
+
+    errno = 0;
+    ret = confstr(name, buf, bufsize);
+    if (bufsize < ret) {
+        bufsize = ret;
+        buf = ALLOCV_N(char, tmp, bufsize);
+        errno = 0;
+        ret = confstr(name, buf, bufsize);
+    }
+    if (bufsize < ret)
+        rb_bug("required buffer size for confstr() changed dynamically.");
+    if (ret == 0) {
+        if (errno == 0) /* no configuration-defined value */
+            return Qnil;
+        rb_sys_fail("confstr");
+    }
+    return rb_str_new_cstr(buf);
+}
+
+/*
  * The Etc module provides access to information typically stored in
  * files in the /etc directory on Unix systems.
  *
@@ -718,6 +754,7 @@ Init_etc(void)
     rb_define_module_function(mEtc, "systmpdir", etc_systmpdir, 0);
 
     rb_define_module_function(mEtc, "sysconf", etc_sysconf, 1);
+    rb_define_module_function(mEtc, "confstr", etc_confstr, 1);
 
     sPasswd =  rb_struct_define_under(mEtc, "Passwd",
 				      "name",
