@@ -761,7 +761,6 @@ io_s_pathconf(VALUE klass, VALUE path, VALUE arg)
 {
     int name;
     long ret;
-    rb_io_t *fptr;
 
     name = NUM2INT(arg);
 
