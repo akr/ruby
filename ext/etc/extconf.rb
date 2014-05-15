@@ -10,7 +10,6 @@ $defs.push("-DSYSCONFDIR=#{Shellwords.escape(sysconfdir.dump)}")
 have_func("sysconf")
 have_func("confstr")
 have_func("fpathconf")
-have_func("pathconf")
 
 have_struct_member('struct passwd', 'pw_gecos', 'pwd.h')
 have_struct_member('struct passwd', 'pw_change', 'pwd.h')
