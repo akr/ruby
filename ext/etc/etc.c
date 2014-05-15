@@ -761,42 +761,6 @@ io_pathconf(VALUE io, VALUE arg)
 #define io_pathconf rb_f_notimplement
 #endif
 
-#ifdef HAVE_PATHCONF
-/*
- * Returns pathname configuration variable using pathconf().
- *
- * _name_ should be a constant undef <code>Etc</code> which begins with <code>PC_</code>.
- *
- * The return value is an integer or nil.
- * nil means indefinite limit.  (pathconf() returns -1 but errno is not set.)
- *
- *   IO.pathconf("/", Etc::PC_NAME_MAX) #=> 255
- *
- */
-static VALUE
-io_s_pathconf(VALUE klass, VALUE path, VALUE arg)
-{
-    int name;
-    long ret;
-
-    name = NUM2INT(arg);
-
-    FilePathValue(path);
-    path = rb_str_encode_ospath(path);
-
-    errno = 0;
-    ret = pathconf(StringValueCStr(path), name);
-    if (ret == -1) {
-        if (errno == 0) /* no limit */
-            return Qnil;
-        rb_sys_fail("pathconf");
-    }
-    return LONG2NUM(ret);
-}
-#else
-#define io_s_pathconf rb_f_notimplement
-#endif
-
 /*
  * The Etc module provides access to information typically stored in
  * files in the /etc directory on Unix systems.
@@ -852,7 +816,6 @@ Init_etc(void)
     rb_define_module_function(mEtc, "sysconf", etc_sysconf, 1);
     rb_define_module_function(mEtc, "confstr", etc_confstr, 1);
     rb_define_method(rb_cIO, "pathconf", io_pathconf, 1);
-    rb_define_singleton_method(rb_cIO, "pathconf", io_s_pathconf, 2);
 
     sPasswd =  rb_struct_define_under(mEtc, "Passwd",
 				      "name",
