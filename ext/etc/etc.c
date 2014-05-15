@@ -645,11 +645,15 @@ etc_systmpdir(void)
 /*
  * Returns system configuration variable using sysconf().
  *
- * The return value is an integer.
+ * _name_ should be a constant undef <code>Etc</code> which begins with <code>SC_</code>.
+ *
+ * The return value is an integer or nil.
+ * nil means indefinite limit.  (sysconf() returns -1 but errno is not set.)
  *
  *   Etc.sysconf(Etc::SC_ARG_MAX) #=> 2097152
  *
- *   # GNU/Linux
+ *   # Number of processors.
+ *   # It is not standardized.
  *   Etc.sysconf(Etc::SC_NPROCESSORS_ONLN) #=> 4
  *
  */
@@ -678,7 +682,10 @@ etc_sysconf(VALUE obj, VALUE arg)
 /*
  * Returns system configuration variable using confstr().
  *
- * The return value is a string.
+ * _name_ should be a constant undef <code>Etc</code> which begins with <code>CS_</code>.
+ *
+ * The return value is a string or nil.
+ * nil means no configuration-defined value.  (confstr() returns 0 but errno is not set.)
  *
  *   Etc.confstr(Etc::CS_PATH) #=> "/bin:/usr/bin"
  *
@@ -722,7 +729,10 @@ etc_confstr(VALUE obj, VALUE arg)
 /*
  * Returns pathname configuration variable using fpathconf().
  *
- * The return value is an integer.
+ * _name_ should be a constant undef <code>Etc</code> which begins with <code>PC_</code>.
+ *
+ * The return value is an integer or nil.
+ * nil means indefinite limit.  (fpathconf() returns -1 but errno is not set.)
  *
  *   open("/") {|f| p f.pathconf(Etc::PC_NAME_MAX) } #=> 255
  *
@@ -755,7 +765,10 @@ io_pathconf(VALUE io, VALUE arg)
 /*
  * Returns pathname configuration variable using pathconf().
  *
- * The return value is an integer.
+ * _name_ should be a constant undef <code>Etc</code> which begins with <code>PC_</code>.
+ *
+ * The return value is an integer or nil.
+ * nil means indefinite limit.  (pathconf() returns -1 but errno is not set.)
  *
  *   IO.pathconf("/", Etc::PC_NAME_MAX) #=> 255
  *
