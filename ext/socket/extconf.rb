@@ -370,6 +370,8 @@ have_msg_control = nil
 have_msg_control = have_struct_member('struct msghdr', 'msg_control', headers) unless $mswin or $mingw
 have_struct_member('struct msghdr', 'msg_accrights', headers)
 
+have_type("struct tcp_info", headers)
+
 case RUBY_PLATFORM
 when /mswin(32|64)|mingw/
   test_func = "WSACleanup"

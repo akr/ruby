@@ -808,6 +808,86 @@ inspect_ipv6_mreq(int level, int optname, VALUE data, VALUE ret)
 }
 #endif
 
+#if defined(IPPROTO_TCP) && defined(TCP_INFO) && defined(HAVE_TYPE_STRUCT_TCP_INFO)
+static void
+str_cat_time_or_zero(VALUE ret, const char *prefix, u_int32_t time)
+{
+    rb_str_cat_cstr(ret, prefix);
+    if (time == 0) {
+        rb_str_cat_cstr(ret, "0");
+    }
+    else {
+        VALUE v = rb_time_num_new(ULONG2NUM(time), Qnil);
+        rb_str_concat(ret, rb_funcall(v, rb_intern("strftime"), 1, rb_str_new_cstr("%FT%T%:z")));
+    }
+}
+
+static int
+inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
+{
+    if (RSTRING_LEN(data) == sizeof(struct tcp_info)) {
+        struct tcp_info s;
+        memcpy((char*)&s, RSTRING_PTR(data), sizeof(s));
+        switch (s.tcpi_state) {
+          case TCP_ESTABLISHED: rb_str_cat_cstr(ret, " state=ESTABLISHED"); break;
+          case TCP_SYN_SENT: rb_str_cat_cstr(ret, " state=SYN_SENT"); break;
+          case TCP_SYN_RECV: rb_str_cat_cstr(ret, " state=SYN_RECV"); break;
+          case TCP_FIN_WAIT1: rb_str_cat_cstr(ret, " state=FIN_WAIT1"); break;
+          case TCP_FIN_WAIT2: rb_str_cat_cstr(ret, " state=FIN_WAIT2"); break;
+          case TCP_TIME_WAIT: rb_str_cat_cstr(ret, " state=TIME_WAIT"); break;
+          case TCP_CLOSE: rb_str_cat_cstr(ret, " state=CLOSE"); break;
+          case TCP_CLOSE_WAIT: rb_str_cat_cstr(ret, " state=CLOSE_WAIT"); break;
+          case TCP_LAST_ACK: rb_str_cat_cstr(ret, " state=LAST_ACK"); break;
+          case TCP_LISTEN: rb_str_cat_cstr(ret, " state=LISTEN"); break;
+          case TCP_CLOSING: rb_str_cat_cstr(ret, " state=CLOSING"); break;
+          default: rb_str_catf(ret, " state=%u", s.tcpi_state); break;
+        }
+        switch (s.tcpi_ca_state) {
+          case TCP_CA_Open: rb_str_cat_cstr(ret, " ca_state=Open"); break;
+          case TCP_CA_Disorder: rb_str_cat_cstr(ret, " ca_state=Disorder"); break;
+          case TCP_CA_CWR: rb_str_cat_cstr(ret, " ca_state=CWR"); break;
+          case TCP_CA_Recovery: rb_str_cat_cstr(ret, " ca_state=Recovery"); break;
+          case TCP_CA_Loss: rb_str_cat_cstr(ret, " ca_state=Loss"); break;
+          default: rb_str_catf(ret, " ca_state=%u", s.tcpi_ca_state); break;
+        }
+        rb_str_catf(ret, " retransmits=%u", s.tcpi_retransmits);
+        rb_str_catf(ret, " probes=%u", s.tcpi_probes);
+        rb_str_catf(ret, " backoff=%u", s.tcpi_backoff);
+        rb_str_catf(ret, " options=%u", s.tcpi_options);
+        rb_str_catf(ret, " snd_wscale=%u", s.tcpi_snd_wscale);
+        rb_str_catf(ret, " rcv_wscale=%u", s.tcpi_rcv_wscale);
+        rb_str_catf(ret, " rto=%u", s.tcpi_rto);
+        rb_str_catf(ret, " ato=%u", s.tcpi_ato);
+        rb_str_catf(ret, " snd_mss=%u", s.tcpi_snd_mss);
+        rb_str_catf(ret, " rcv_mss=%u", s.tcpi_rcv_mss);
+        rb_str_catf(ret, " unacked=%u", s.tcpi_unacked);
+        rb_str_catf(ret, " sacked=%u", s.tcpi_sacked);
+        rb_str_catf(ret, " lost=%u", s.tcpi_lost);
+        rb_str_catf(ret, " retrans=%u", s.tcpi_retrans);
+        rb_str_catf(ret, " fackets=%u", s.tcpi_fackets);
+        str_cat_time_or_zero(ret, " last_data_sent=", s.tcpi_last_data_sent);
+        str_cat_time_or_zero(ret, " last_ack_sent=", s.tcpi_last_ack_sent);
+        str_cat_time_or_zero(ret, " last_data_recv=", s.tcpi_last_data_recv);
+        str_cat_time_or_zero(ret, " last_ack_recv=", s.tcpi_last_ack_recv);
+        rb_str_catf(ret, " pmtu=%u", s.tcpi_pmtu);
+        rb_str_catf(ret, " rcv_ssthresh=%u", s.tcpi_rcv_ssthresh);
+        rb_str_catf(ret, " rtt=%u", s.tcpi_rtt);
+        rb_str_catf(ret, " rttvar=%u", s.tcpi_rttvar);
+        rb_str_catf(ret, " snd_ssthresh=%u", s.tcpi_snd_ssthresh);
+        rb_str_catf(ret, " snd_cwnd=%u", s.tcpi_snd_cwnd);
+        rb_str_catf(ret, " advmss=%u", s.tcpi_advmss);
+        rb_str_catf(ret, " reordering=%u", s.tcpi_reordering);
+        rb_str_catf(ret, " rcv_rtt=%u", s.tcpi_rcv_rtt);
+        rb_str_catf(ret, " rcv_space=%u", s.tcpi_rcv_space);
+        rb_str_catf(ret, " total_retrans=%u", s.tcpi_total_retrans);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+#endif
+
 #if defined(SOL_SOCKET) && defined(SO_PEERCRED) /* GNU/Linux, OpenBSD */
 #if defined(__OpenBSD__)
 #define RUBY_SOCK_PEERCRED struct sockpeercred
@@ -1054,6 +1134,9 @@ sockopt_inspect(VALUE self)
             switch (optname) {
 #            if defined(TCP_NODELAY) /* POSIX */
               case TCP_NODELAY: inspected = inspect_int(level, optname, data, ret); break;
+#            endif
+#            if defined(TCP_INFO) && defined(HAVE_TYPE_STRUCT_TCP_INFO) /* Linux, FreeBSD */
+              case TCP_INFO: inspected = inspect_tcp_info(level, optname, data, ret); break;
 #            endif
             }
             break;
