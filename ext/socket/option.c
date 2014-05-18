@@ -809,6 +809,41 @@ inspect_ipv6_mreq(int level, int optname, VALUE data, VALUE ret)
 #endif
 
 #if defined(IPPROTO_TCP) && defined(TCP_INFO) && defined(HAVE_TYPE_STRUCT_TCP_INFO)
+
+#ifndef HAVE_CONST_TCP_ESTABLISHED
+# define TCP_ESTABLISHED 1
+#endif
+#ifndef HAVE_CONST_TCP_SYN_SENT
+# define TCP_SYN_SENT 2
+#endif
+#ifndef HAVE_CONST_TCP_SYN_RECV
+# define TCP_SYN_RECV 3
+#endif
+#ifndef HAVE_CONST_TCP_FIN_WAIT1
+# define TCP_FIN_WAIT1 4
+#endif
+#ifndef HAVE_CONST_TCP_FIN_WAIT2
+# define TCP_FIN_WAIT2 5
+#endif
+#ifndef HAVE_CONST_TCP_TIME_WAIT
+# define TCP_TIME_WAIT 6
+#endif
+#ifndef HAVE_CONST_TCP_CLOSE
+# define TCP_CLOSE 7
+#endif
+#ifndef HAVE_CONST_TCP_CLOSE_WAIT
+# define TCP_CLOSE_WAIT 8
+#endif
+#ifndef HAVE_CONST_TCP_LAST_ACK
+# define TCP_LAST_ACK 9
+#endif
+#ifndef HAVE_CONST_TCP_LISTEN
+# define TCP_LISTEN 10
+#endif
+#ifndef HAVE_CONST_TCP_CLOSING
+# define TCP_CLOSING 11
+#endif
+
 static void
 str_cat_time_or_zero(VALUE ret, const char *prefix, u_int32_t time)
 {
