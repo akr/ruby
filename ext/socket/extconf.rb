@@ -371,6 +371,17 @@ have_msg_control = have_struct_member('struct msghdr', 'msg_control', headers) u
 have_struct_member('struct msghdr', 'msg_accrights', headers)
 
 have_type("struct tcp_info", headers)
+have_const("TCP_ESTABLISHED, headers)
+have_const("TCP_SYN_SENT, headers)
+have_const("TCP_SYN_RECV, headers)
+have_const("TCP_FIN_WAIT1, headers)
+have_const("TCP_FIN_WAIT2, headers)
+have_const("TCP_TIME_WAIT, headers)
+have_const("TCP_CLOSE, headers)
+have_const("TCP_CLOSE_WAIT, headers)
+have_const("TCP_LAST_ACK, headers)
+have_const("TCP_LISTEN, headers)
+have_const("TCP_CLOSING, headers)
 
 case RUBY_PLATFORM
 when /mswin(32|64)|mingw/
