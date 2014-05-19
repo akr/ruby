@@ -810,52 +810,72 @@ inspect_ipv6_mreq(int level, int optname, VALUE data, VALUE ret)
 
 #if defined(IPPROTO_TCP) && defined(TCP_INFO) && defined(HAVE_TYPE_STRUCT_TCP_INFO)
 
-#ifndef HAVE_CONST_TCP_ESTABLISHED
-# define TCP_ESTABLISHED 1
-#endif
-#ifndef HAVE_CONST_TCP_SYN_SENT
-# define TCP_SYN_SENT 2
-#endif
-#ifndef HAVE_CONST_TCP_SYN_RECV
-# define TCP_SYN_RECV 3
-#endif
-#ifndef HAVE_CONST_TCP_FIN_WAIT1
-# define TCP_FIN_WAIT1 4
-#endif
-#ifndef HAVE_CONST_TCP_FIN_WAIT2
-# define TCP_FIN_WAIT2 5
-#endif
-#ifndef HAVE_CONST_TCP_TIME_WAIT
-# define TCP_TIME_WAIT 6
-#endif
-#ifndef HAVE_CONST_TCP_CLOSE
-# define TCP_CLOSE 7
-#endif
-#ifndef HAVE_CONST_TCP_CLOSE_WAIT
-# define TCP_CLOSE_WAIT 8
-#endif
-#ifndef HAVE_CONST_TCP_LAST_ACK
-# define TCP_LAST_ACK 9
-#endif
-#ifndef HAVE_CONST_TCP_LISTEN
-# define TCP_LISTEN 10
-#endif
-#ifndef HAVE_CONST_TCP_CLOSING
-# define TCP_CLOSING 11
+#ifdef __FreeBSD__
+# ifndef HAVE_CONST_TCP_ESTABLISHED
+#  define TCP_ESTABLISHED TCPS_ESTABLISHED
+# endif
+# ifndef HAVE_CONST_TCP_SYN_SENT
+#  define TCP_SYN_SENT TCPS_SYN_SENT
+# endif
+# ifndef HAVE_CONST_TCP_SYN_RECV
+#  define TCP_SYN_RECV TCPS_SYN_RECEIVED
+# endif
+# ifndef HAVE_CONST_TCP_FIN_WAIT1
+#  define TCP_FIN_WAIT1 TCPS_FIN_WAIT_1
+# endif
+# ifndef HAVE_CONST_TCP_FIN_WAIT2
+#  define TCP_FIN_WAIT2 TCPS_FIN_WAIT_2
+# endif
+# ifndef HAVE_CONST_TCP_TIME_WAIT
+#  define TCP_TIME_WAIT TCPS_TIME_WAIT
+# endif
+# ifndef HAVE_CONST_TCP_CLOSE
+#  define TCP_CLOSE TCPS_CLOSED
+# endif
+# ifndef HAVE_CONST_TCP_CLOSE_WAIT
+#  define TCP_CLOSE_WAIT TCPS_CLOSE_WAIT
+# endif
+# ifndef HAVE_CONST_TCP_LAST_ACK
+#  define TCP_LAST_ACK TCPS_LAST_ACK
+# endif
+# ifndef HAVE_CONST_TCP_LISTEN
+#  define TCP_LISTEN TCPS_LISTEN
+# endif
+# ifndef HAVE_CONST_TCP_CLOSING
+#  define TCP_CLOSING TCPS_CLOSING
+# endif
 #endif
 
 static void
-str_cat_time_or_zero(VALUE ret, const char *prefix, u_int32_t time)
+inspect_tcpi_usec(VALUE ret, const char *prefix, u_int32_t t)
 {
-    rb_str_cat_cstr(ret, prefix);
-    if (time == 0) {
-        rb_str_cat_cstr(ret, "0");
-    }
-    else {
-        VALUE v = rb_time_num_new(ULONG2NUM(time), Qnil);
-        rb_str_concat(ret, rb_funcall(v, rb_intern("strftime"), 1, rb_str_new_cstr("%FT%T%:z")));
-    }
+    rb_str_catf(ret, "%s%u.%06us", prefix, t / 1000000, t % 1000000);
 }
+
+#ifdef __linux__
+static void
+inspect_tcpi_msec(VALUE ret, const char *prefix, u_int32_t t)
+{
+    rb_str_catf(ret, "%s%u.%03us", prefix, t / 1000, t % 1000);
+}
+#endif
+
+#ifdef __FreeBSD__
+# define inspect_tcpi_rto(ret, t) inspect_tcpi_usec(ret, " rto=", t)
+# define inspect_tcpi_last_data_recv(ret, t) inspect_tcpi_usec(ret, " last_data_recv=", t)
+# define inspect_tcpi_rtt(ret, t) inspect_tcpi_usec(ret, " rtt=", t)
+# define inspect_tcpi_rttvar(ret, t) inspect_tcpi_usec(ret, " rttvar=", t)
+#else
+# define inspect_tcpi_rto(ret, t) inspect_tcpi_usec(ret, " rto=", t)
+# define inspect_tcpi_ato(ret, t) inspect_tcpi_usec(ret, " ato=", t)
+# define inspect_tcpi_last_data_sent(ret, t) inspect_tcpi_msec(ret, " last_data_sent=", t)
+# define inspect_tcpi_last_data_recv(ret, t) inspect_tcpi_msec(ret, " last_data_recv=", t)
+# define inspect_tcpi_last_ack_sent(ret, t) inspect_tcpi_msec(ret, " last_ack_sent=", t)
+# define inspect_tcpi_last_ack_recv(ret, t) inspect_tcpi_msec(ret, " last_ack_recv=", t)
+# define inspect_tcpi_rtt(ret, t) inspect_tcpi_usec(ret, " rtt=", t)
+# define inspect_tcpi_rttvar(ret, t) inspect_tcpi_usec(ret, " rttvar=", t)
+# define inspect_tcpi_rcv_rtt(ret, t) inspect_tcpi_usec(ret, " rcv_rtt=", t)
+#endif
 
 static int
 inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
@@ -863,6 +883,7 @@ inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
     if (RSTRING_LEN(data) == sizeof(struct tcp_info)) {
         struct tcp_info s;
         memcpy((char*)&s, RSTRING_PTR(data), sizeof(s));
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_STATE
         switch (s.tcpi_state) {
           case TCP_ESTABLISHED: rb_str_cat_cstr(ret, " state=ESTABLISHED"); break;
           case TCP_SYN_SENT: rb_str_cat_cstr(ret, " state=SYN_SENT"); break;
@@ -877,6 +898,8 @@ inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
           case TCP_CLOSING: rb_str_cat_cstr(ret, " state=CLOSING"); break;
           default: rb_str_catf(ret, " state=%u", s.tcpi_state); break;
         }
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_CA_STATE
         switch (s.tcpi_ca_state) {
           case TCP_CA_Open: rb_str_cat_cstr(ret, " ca_state=Open"); break;
           case TCP_CA_Disorder: rb_str_cat_cstr(ret, " ca_state=Disorder"); break;
@@ -885,36 +908,121 @@ inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
           case TCP_CA_Loss: rb_str_cat_cstr(ret, " ca_state=Loss"); break;
           default: rb_str_catf(ret, " ca_state=%u", s.tcpi_ca_state); break;
         }
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RETRANSMITS
         rb_str_catf(ret, " retransmits=%u", s.tcpi_retransmits);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_PROBES
         rb_str_catf(ret, " probes=%u", s.tcpi_probes);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_BACKOFF
         rb_str_catf(ret, " backoff=%u", s.tcpi_backoff);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_OPTIONS
         rb_str_catf(ret, " options=%u", s.tcpi_options);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_WSCALE
         rb_str_catf(ret, " snd_wscale=%u", s.tcpi_snd_wscale);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_WSCALE
         rb_str_catf(ret, " rcv_wscale=%u", s.tcpi_rcv_wscale);
-        rb_str_catf(ret, " rto=%u", s.tcpi_rto);
-        rb_str_catf(ret, " ato=%u", s.tcpi_ato);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RTO
+        inspect_tcpi_rto(ret, s.tcpi_rto);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_ATO
+        inspect_tcpi_ato(ret, s.tcpi_ato);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_MSS
         rb_str_catf(ret, " snd_mss=%u", s.tcpi_snd_mss);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_MSS
         rb_str_catf(ret, " rcv_mss=%u", s.tcpi_rcv_mss);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_UNACKED
         rb_str_catf(ret, " unacked=%u", s.tcpi_unacked);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SACKED
         rb_str_catf(ret, " sacked=%u", s.tcpi_sacked);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_LOST
         rb_str_catf(ret, " lost=%u", s.tcpi_lost);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RETRANS
         rb_str_catf(ret, " retrans=%u", s.tcpi_retrans);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_FACKETS
         rb_str_catf(ret, " fackets=%u", s.tcpi_fackets);
-        str_cat_time_or_zero(ret, " last_data_sent=", s.tcpi_last_data_sent);
-        str_cat_time_or_zero(ret, " last_ack_sent=", s.tcpi_last_ack_sent);
-        str_cat_time_or_zero(ret, " last_data_recv=", s.tcpi_last_data_recv);
-        str_cat_time_or_zero(ret, " last_ack_recv=", s.tcpi_last_ack_recv);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_LAST_DATA_SENT
+	inspect_tcpi_last_data_sent(ret, s.tcpi_last_data_sent);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_LAST_ACK_SENT
+	inspect_tcpi_last_ack_sent(ret, s.tcpi_last_ack_sent);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_LAST_DATA_RECV
+	inspect_tcpi_last_data_recv(ret, s.tcpi_last_data_recv);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_LAST_ACK_RECV
+	inspect_tcpi_last_ack_recv(ret, s.tcpi_last_ack_recv);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_PMTU
         rb_str_catf(ret, " pmtu=%u", s.tcpi_pmtu);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_SSTHRESH
         rb_str_catf(ret, " rcv_ssthresh=%u", s.tcpi_rcv_ssthresh);
-        rb_str_catf(ret, " rtt=%u", s.tcpi_rtt);
-        rb_str_catf(ret, " rttvar=%u", s.tcpi_rttvar);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RTT
+	inspect_tcpi_rtt(ret, s.tcpi_rtt);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RTTVAR
+	inspect_tcpi_rttvar(ret, s.tcpi_rttvar);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_SSTHRESH
         rb_str_catf(ret, " snd_ssthresh=%u", s.tcpi_snd_ssthresh);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_CWND
         rb_str_catf(ret, " snd_cwnd=%u", s.tcpi_snd_cwnd);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_ADVMSS
         rb_str_catf(ret, " advmss=%u", s.tcpi_advmss);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_REORDERING
         rb_str_catf(ret, " reordering=%u", s.tcpi_reordering);
-        rb_str_catf(ret, " rcv_rtt=%u", s.tcpi_rcv_rtt);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_RTT
+        inspect_tcpi_rcv_rtt(ret, s.tcpi_rcv_rtt);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_SPACE
         rb_str_catf(ret, " rcv_space=%u", s.tcpi_rcv_space);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_TOTAL_RETRANS
         rb_str_catf(ret, " total_retrans=%u", s.tcpi_total_retrans);
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_WND
+        rb_str_catf(ret, " snd_wnd=%u", s.tcpi_snd_wnd); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_BWND
+        rb_str_catf(ret, " snd_bwnd=%u", s.tcpi_snd_bwnd); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_NXT
+        rb_str_catf(ret, " snd_nxt=%u", s.tcpi_snd_nxt); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_NXT
+        rb_str_catf(ret, " rcv_nxt=%u", s.tcpi_rcv_nxt); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_TOE_TID
+        rb_str_catf(ret, " toe_tid=%u", s.tcpi_toe_tid); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_REXMITPACK
+        rb_str_catf(ret, " snd_rexmitpack=%u", s.tcpi_snd_rexmitpack); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_RCV_OOOPACK
+        rb_str_catf(ret, " rcv_ooopack=%u", s.tcpi_rcv_ooopack); /* FreeBSD */
+#endif
+#ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_ZEROWIN
+        rb_str_catf(ret, " snd_zerowin=%u", s.tcpi_snd_zerowin); /* FreeBSD */
+#endif
         return 1;
     }
     else {
