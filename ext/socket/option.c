@@ -847,6 +847,46 @@ inspect_ipv6_mreq(int level, int optname, VALUE data, VALUE ret)
 #endif
 
 static void
+inspect_tcpi_options(VALUE ret, u_int8_t options)
+{
+    int sep = '=';
+
+    rb_str_cat2(ret, " options");
+#define INSPECT_TCPI_OPTION(optval, name) \
+    if (options & (optval)) { \
+        options &= ~(u_int8_t)(optval); \
+        rb_str_catf(ret, "%c%s", sep, name); \
+        sep = ','; \
+    }
+#ifdef TCPI_OPT_TIMESTAMPS /* GNU/Linux, FreeBSD */
+    INSPECT_TCPI_OPTION(TCPI_OPT_TIMESTAMPS, "TIMESTAMPS");
+#endif
+#ifdef TCPI_OPT_SACK /* GNU/Linux, FreeBSD */
+    INSPECT_TCPI_OPTION(TCPI_OPT_SACK, "SACK");
+#endif
+#ifdef TCPI_OPT_WSCALE /* GNU/Linux, FreeBSD */
+    INSPECT_TCPI_OPTION(TCPI_OPT_WSCALE, "WSCALE");
+#endif
+#ifdef TCPI_OPT_ECN /* GNU/Linux, FreeBSD */
+    INSPECT_TCPI_OPTION(TCPI_OPT_ECN, "ECN");
+#endif
+#ifdef TCPI_OPT_ECN_SEEN /* GNU/Linux */
+    INSPECT_TCPI_OPTION(TCPI_OPT_ECN_SEEN, "ECN_SEEN");
+#endif
+#ifdef TCPI_OPT_SYN_DATA /* GNU/Linux */
+    INSPECT_TCPI_OPTION(TCPI_OPT_SYN_DATA, "SYN_DATA");
+#endif
+#ifdef TCPI_OPT_TOE /* FreeBSD */
+    INSPECT_TCPI_OPTION(TCPI_OPT_TOE, "TOE");
+#endif
+#undef INSPECT_TCPI_OPTION
+
+    if (options || sep == '=') {
+        rb_str_catf(ret, "%c%u", sep, options);
+    }
+}
+
+static void
 inspect_tcpi_usec(VALUE ret, const char *prefix, u_int32_t t)
 {
     rb_str_catf(ret, "%s%u.%06us", prefix, t / 1000000, t % 1000000);
@@ -919,7 +959,7 @@ inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
         rb_str_catf(ret, " backoff=%u", s.tcpi_backoff);
 #endif
 #ifdef HAVE_STRUCT_TCP_INFO_TCPI_OPTIONS
-        rb_str_catf(ret, " options=%u", s.tcpi_options);
+        inspect_tcpi_options(ret, s.tcpi_options);
 #endif
 #ifdef HAVE_STRUCT_TCP_INFO_TCPI_SND_WSCALE
         rb_str_catf(ret, " snd_wscale=%u", s.tcpi_snd_wscale);
