@@ -39,7 +39,7 @@
 #  ifdef HAVE_NETINET_TCP_H
 #    include <netinet/tcp.h>
 #  endif
-#  ifdef HAVE_NETINET_TCP_H
+#  ifdef HAVE_NETINET_TCP_FSM_H
 #    include <netinet/tcp_fsm.h>
 #  endif
 #  ifdef HAVE_NETINET_UDP_H
