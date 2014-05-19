@@ -891,7 +891,7 @@ inspect_tcp_info(int level, int optname, VALUE data, VALUE ret)
           case TCP_FIN_WAIT1: rb_str_cat_cstr(ret, " state=FIN_WAIT1"); break;
           case TCP_FIN_WAIT2: rb_str_cat_cstr(ret, " state=FIN_WAIT2"); break;
           case TCP_TIME_WAIT: rb_str_cat_cstr(ret, " state=TIME_WAIT"); break;
-          case TCP_CLOSE: rb_str_cat_cstr(ret, " state=CLOSE"); break;
+          case TCP_CLOSE: rb_str_cat_cstr(ret, " state=CLOSED"); break; /* RFC 793 uses "CLOSED", not "CLOSE" */
           case TCP_CLOSE_WAIT: rb_str_cat_cstr(ret, " state=CLOSE_WAIT"); break;
           case TCP_LAST_ACK: rb_str_cat_cstr(ret, " state=LAST_ACK"); break;
           case TCP_LISTEN: rb_str_cat_cstr(ret, " state=LISTEN"); break;
