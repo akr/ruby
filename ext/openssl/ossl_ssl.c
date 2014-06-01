@@ -1170,6 +1170,15 @@ ossl_ssl_initialize(int argc, VALUE *argv, VALUE self)
 }
 
 static VALUE
+ossl_ssl_started_p(VALUE self)
+{
+    SSL *ssl;
+
+    Data_Get_Struct(self, SSL, ssl);
+    return ssl ? Qtrue : Qfalse;
+}
+
+static VALUE
 ossl_ssl_setup(VALUE self)
 {
     VALUE io, v_ctx, cb;
@@ -2196,6 +2205,7 @@ Init_ossl_ssl()
         rb_attr(cSSLSocket, rb_intern(ossl_ssl_attrs[i]), 1, 1, Qfalse);
     rb_define_alias(cSSLSocket, "to_io", "io");
     rb_define_method(cSSLSocket, "initialize", ossl_ssl_initialize, -1);
+    rb_define_method(cSSLSocket, "started?", ossl_ssl_started_p, 0);
     rb_define_method(cSSLSocket, "connect",    ossl_ssl_connect, 0);
     rb_define_method(cSSLSocket, "connect_nonblock",    ossl_ssl_connect_nonblock, 0);
     rb_define_method(cSSLSocket, "accept",     ossl_ssl_accept, 0);
