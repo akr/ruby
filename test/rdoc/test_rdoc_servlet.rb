@@ -139,7 +139,7 @@ class TestRDocServlet < RDoc::TestCase
 
       @s.asset_dirs[:darkfish] = '.'
 
-      @req.path = '/mount/path/rdoc.css'
+      @req.path = '/mount/path/rdoc.css'.dup
 
       @s.do_GET @req, @res
 

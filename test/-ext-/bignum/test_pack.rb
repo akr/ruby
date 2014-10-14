@@ -22,13 +22,13 @@ class TestBignum < Test::Unit::TestCase
     end
 
     def test_pack_argument_check
-      assert_raise(ArgumentError) { 0.test_pack_raw("", 2, 1, 0, MSBYTE_FIRST) }
-      assert_raise(ArgumentError) { 0.test_pack_raw("", 0, 1, 0, MSWORD_FIRST) }
-      assert_raise(ArgumentError) { 0.test_pack_raw("", 0, 0, 0, BIG_ENDIAN) }
-      assert_raise(ArgumentError) { 0.test_pack_raw("", 0, 1, 8, BIG_ENDIAN) }
+      assert_raise(ArgumentError) { 0.test_pack_raw("".dup, 2, 1, 0, MSBYTE_FIRST) }
+      assert_raise(ArgumentError) { 0.test_pack_raw("".dup, 0, 1, 0, MSWORD_FIRST) }
+      assert_raise(ArgumentError) { 0.test_pack_raw("".dup, 0, 0, 0, BIG_ENDIAN) }
+      assert_raise(ArgumentError) { 0.test_pack_raw("".dup, 0, 1, 8, BIG_ENDIAN) }
 
       # assume sizeof(ssize_t) == sizeof(intptr_t)
-      assert_raise(ArgumentError) { 0.test_pack_raw("", 1 << ([""].pack("p").length * 8 - 1), 0, BIG_ENDIAN) }
+      assert_raise(ArgumentError) { 0.test_pack_raw("".dup, 1 << (["".dup].pack("p").length * 8 - 1), 0, BIG_ENDIAN) }
     end
 
     def test_pack_wordsize
@@ -249,7 +249,7 @@ class TestBignum < Test::Unit::TestCase
       assert_raise(ArgumentError) { Integer.test_unpack("x", 1, 1, 8, BIG_ENDIAN) }
 
       # assume sizeof(ssize_t) == sizeof(intptr_t)
-      assert_raise(ArgumentError) { Integer.test_unpack("x", 1, 1 << ([""].pack("p").length * 8 - 1), 0, BIG_ENDIAN) }
+      assert_raise(ArgumentError) { Integer.test_unpack("x", 1, 1 << (["".dup].pack("p").length * 8 - 1), 0, BIG_ENDIAN) }
     end
 
     def test_unpack_wordsize

@@ -123,7 +123,7 @@ class TestRipper::ScannerEvents < Test::Unit::TestCase
   end
 
   def assert_location(src)
-    buf = ''
+    buf = ''.dup
     Ripper.lex(src).each do |pos, type, tok|
       line, col = *pos
       assert_equal buf.count("\n") + 1, line,

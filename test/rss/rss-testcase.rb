@@ -89,7 +89,7 @@ module RSS
 
     private
     def make_xmldecl(v=XMLDECL_VERSION, e=XMLDECL_ENCODING, s=XMLDECL_STANDALONE)
-      rv = "<?xml version='#{v}'"
+      rv = "<?xml version='#{v}'".dup
       rv << " encoding='#{e}'" if e
       rv << " standalone='#{s}'" if s
       rv << "?>"

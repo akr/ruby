@@ -56,7 +56,7 @@ class RubyLex
     @post_symbeg = false
 
     @continue = false
-    @line = ""
+    @line = "".dup
 
     @skip_space = false
     @readed_auto_clean_up = false
@@ -119,7 +119,7 @@ class RubyLex
   end
 
   def gets
-    l = ""
+    l = "".dup
     while c = getc
       l.concat(c)
       break if c == "\n"
@@ -221,7 +221,7 @@ class RubyLex
 
     prompt
 
-    @line = ""
+    @line = "".dup
     @exp_line_no = @line_no
   end
 
@@ -245,7 +245,7 @@ class RubyLex
             yield @line, @exp_line_no
           end
           break unless l
-          @line = ''
+          @line = ''.dup
           @exp_line_no = @line_no
 
           @indent = 0
@@ -745,7 +745,7 @@ class RubyLex
   end
 
   def identify_identifier
-    token = ""
+    token = "".dup
     if peek(0) =~ /[$@]/
       token.concat(c = getc)
       if c == "@" and peek(0) == "@"
@@ -860,7 +860,7 @@ class RubyLex
     end
     if /['"`]/ =~ ch
       lt = ch
-      quoted = ""
+      quoted = "".dup
       while (c = getc) && c != lt
         quoted.concat c
       end
@@ -886,13 +886,13 @@ class RubyLex
 
     @here_header = false
 
-    line = ""
+    line = "".dup
     while ch = getc
       if ch == "\n"
         if line == quoted
           break
         end
-        line = ""
+        line = "".dup
       else
         line.concat ch unless indent && line == "" && /\s/ =~ ch
         if @ltype != "'" && ch == "#" && peek(0) == "{"

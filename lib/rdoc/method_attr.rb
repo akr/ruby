@@ -187,7 +187,7 @@ class RDoc::MethodAttr < RDoc::CodeObject
       next if String === ancestor
       next if parent == ancestor
 
-      other = ancestor.find_method_named('#' << name) ||
+      other = ancestor.find_method_named('#'.dup << name) ||
               ancestor.find_attribute_named(name)
 
       return other if other
@@ -336,7 +336,7 @@ class RDoc::MethodAttr < RDoc::CodeObject
   # Method/attribute name with class/instance indicator
 
   def pretty_name
-    "#{name_prefix}#{@name}"
+    "#{name_prefix}#{@name}".dup
   end
 
   ##

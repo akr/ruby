@@ -637,11 +637,11 @@ class TestRefinement < Test::Unit::TestCase
       end
 
       def bar
-        return super << " Mixin#bar"
+        return super + " Mixin#bar"
       end
 
       def baz
-        return super << " Mixin#baz"
+        return super + " Mixin#baz"
       end
     end
 
@@ -650,7 +650,7 @@ class TestRefinement < Test::Unit::TestCase
         include Mixin
 
         def baz
-          return super << " M#baz"
+          return super + " M#baz"
         end
       end
     end
@@ -700,11 +700,11 @@ class TestRefinement < Test::Unit::TestCase
       end
 
       def bar
-        return super << " Mixin#bar"
+        return super + " Mixin#bar"
       end
 
       def baz
-        return super << " Mixin#baz"
+        return super + " Mixin#baz"
       end
     end
 
@@ -713,7 +713,7 @@ class TestRefinement < Test::Unit::TestCase
         prepend Mixin
 
         def baz
-          return super << " M#baz"
+          return super + " M#baz"
         end
       end
     end
@@ -989,7 +989,7 @@ class TestRefinement < Test::Unit::TestCase
       end
       using Test
       def t
-        'Refinements are broken!'.chop!
+        'Refinements are broken!'.dup.chop!
       end
       t
       module Test

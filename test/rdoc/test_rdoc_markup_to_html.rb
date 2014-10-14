@@ -345,7 +345,7 @@ class TestRDocMarkupToHtml < RDoc::Markup::FormatterTestCase
   def test_accept_heading_7
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(7, 'Hello')
+    @to.accept_heading @RM::Heading.new(7, 'Hello'.dup)
 
     links = '<span><a href="#label-Hello">&para;</a> ' +
             '<a href="#documentation">&uarr;</a></span>'
@@ -357,7 +357,7 @@ class TestRDocMarkupToHtml < RDoc::Markup::FormatterTestCase
     @to.code_object = RDoc::NormalClass.new 'Foo'
     @to.start_accepting
 
-    @to.accept_heading head(1, 'Hello')
+    @to.accept_heading head(1, 'Hello'.dup)
 
     links = '<span><a href="#class-Foo-label-Hello">&para;</a> ' +
             '<a href="#documentation">&uarr;</a></span>'
@@ -370,7 +370,7 @@ class TestRDocMarkupToHtml < RDoc::Markup::FormatterTestCase
     @to.code_object = RDoc::AnyMethod.new nil, 'foo'
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(1, 'Hello')
+    @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
     links = '<span><a href="#method-i-foo-label-Hello">&para;</a> ' +
             '<a href="#documentation">&uarr;</a></span>'
@@ -384,7 +384,7 @@ class TestRDocMarkupToHtml < RDoc::Markup::FormatterTestCase
 
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(1, 'Hello')
+    @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
     assert_equal "\n<h1 id=\"label-Hello\">Hello</h1>\n", @to.res.join
   end
@@ -402,7 +402,7 @@ class TestRDocMarkupToHtml < RDoc::Markup::FormatterTestCase
 
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(1, 'Hello')
+    @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
     assert_equal "\n<h1>Hello<span><a href=\"#label-Hello\">&para;</a> <a href=\"#documentation\">&uarr;</a></span></h1>\n", @to.res.join
   end
@@ -413,7 +413,7 @@ class TestRDocMarkupToHtml < RDoc::Markup::FormatterTestCase
 
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(1, 'Hello')
+    @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
     assert_equal "\n<h1>Hello</h1>\n", @to.res.join
   end

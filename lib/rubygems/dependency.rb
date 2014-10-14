@@ -303,9 +303,9 @@ class Gem::Dependency
 
       if specs.empty?
         total = Gem::Specification.to_a.size
-        msg   = "Could not find '#{name}' (#{requirement}) among #{total} total gem(s)\n"
+        msg   = "Could not find '#{name}' (#{requirement}) among #{total} total gem(s)\n".dup
       else
-        msg   = "Could not find '#{name}' (#{requirement}) - did find: [#{specs.join ','}]\n"
+        msg   = "Could not find '#{name}' (#{requirement}) - did find: [#{specs.join ','}]\n".dup
       end
       msg << "Checked in 'GEM_PATH=#{Gem.path.join(File::PATH_SEPARATOR)}', execute `gem env` for more information"
 

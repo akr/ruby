@@ -248,7 +248,7 @@ module REXML
     end
 
     def to_s
-      notation = "<!NOTATION #{@name} #{@middle}"
+      notation = "<!NOTATION #{@name} #{@middle}".dup
       notation << " #{@public.inspect}" if @public
       notation << " #{@system.inspect}" if @system
       notation << ">"

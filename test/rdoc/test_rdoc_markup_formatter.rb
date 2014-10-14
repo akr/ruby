@@ -23,7 +23,7 @@ class TestRDocMarkupFormatter < RDoc::TestCase
     end
 
     def start_accepting
-      @res = ""
+      @res = "".dup
     end
 
     def end_accepting

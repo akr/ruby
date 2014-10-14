@@ -303,7 +303,7 @@ module URI
       end
       str.gsub(unsafe) do
         us = $&
-        tmp = ''
+        tmp = ''.dup
         us.each_byte do |uc|
           tmp << sprintf('%%%02X', uc)
         end

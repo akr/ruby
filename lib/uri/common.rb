@@ -457,7 +457,7 @@ module URI
       if isindex
         if sep.empty?
           val = key
-          key = ''
+          key = ''.dup
         end
         isindex = false
       end

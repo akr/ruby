@@ -107,7 +107,7 @@ module DL
     def test_strcpy()
       f = Function.new(CFunc.new(@libc['strcpy'], TYPE_VOIDP, 'strcpy'),
                        [TYPE_VOIDP, TYPE_VOIDP])
-      buff = "000"
+      buff = "000".dup
       str = f.call(buff, "123")
       assert_equal("123", buff)
       assert_equal("123", str.to_s)
@@ -117,7 +117,7 @@ module DL
       stress, GC.stress = GC.stress, true
       f = Function.new(CFunc.new(@libc['strcpy'], TYPE_VOIDP, 'strcpy'),
                        [TYPE_VOIDP, TYPE_VOIDP])
-      buff = "000"
+      buff = "000".dup
       str = f.call(buff, "123")
       assert_equal("123", buff)
       assert_equal("123", str.to_s)

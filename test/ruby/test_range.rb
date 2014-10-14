@@ -567,7 +567,7 @@ class TestRange < Test::Unit::TestCase
   end
 
   def test_each_no_blockarg
-    a = "a"
+    a = "a".dup
     def a.upto(x, e, &b)
       super {|y| b.call(y) {|z| assert(false)}}
     end

@@ -88,7 +88,7 @@ module WEBrick
     # Generates a random string of length +len+
     def random_string(len)
       rand_max = RAND_CHARS.bytesize
-      ret = ""
+      ret = "".dup
       len.times{ ret << RAND_CHARS[rand(rand_max)] }
       ret
     end

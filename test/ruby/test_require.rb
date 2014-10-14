@@ -49,7 +49,7 @@ class TestRequire < Test::Unit::TestCase
 
   def test_require_nonascii
     bug3758 = '[ruby-core:31915]'
-    ["\u{221e}", "\x82\xa0".force_encoding("cp932")].each do |path|
+    ["\u{221e}", "\x82\xa0".dup.force_encoding("cp932")].each do |path|
       assert_raise_with_message(LoadError, /#{path}\z/, bug3758) {require path}
     end
   end
@@ -319,28 +319,28 @@ class TestRequire < Test::Unit::TestCase
       INPUT
 
       assert_separately([], <<-INPUT)
-        abs_dir = "#{ abs_dir }"
+        abs_dir = "#{ abs_dir }".dup
         $: << abs_dir.taint
         assert_nothing_raised {require "#{ file }"}
       INPUT
 
       assert_separately([], <<-INPUT)
-        abs_dir = "#{ abs_dir }"
+        abs_dir = "#{ abs_dir }".dup
         $: << abs_dir.taint
         $SAFE = 1
         assert_raise(SecurityError) {require "#{ file }"}
       INPUT
 
       assert_separately([], <<-INPUT)
-        abs_dir = "#{ abs_dir }"
+        abs_dir = "#{ abs_dir }".dup
         $: << abs_dir.taint
         $SAFE = 1
         assert_raise(SecurityError) {require "#{ file }"}
       INPUT
 
       assert_separately([], <<-INPUT)
-        abs_dir = "#{ abs_dir }"
-        $: << abs_dir << 'elsewhere'.taint
+        abs_dir = "#{ abs_dir }".dup
+        $: << abs_dir << 'elsewhere'.dup.taint
         assert_nothing_raised {require "#{ file }"}
       INPUT
     }
@@ -417,7 +417,7 @@ class TestRequire < Test::Unit::TestCase
       }
       tmp.close
 
-      class << (output = "")
+      class << (output = "".dup)
         alias write concat
       end
       $stderr = output

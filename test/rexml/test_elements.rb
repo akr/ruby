@@ -24,7 +24,7 @@ module REXMLTests
     def test_delete
       doc = Document.new '<a><b/><c/><c id="1"/></a>'
       block = proc { |str|
-        out = ''
+        out = ''.dup
         doc.write out
         assert_equal str, out
       }

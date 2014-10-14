@@ -232,7 +232,7 @@ class TestCSV::Encodings < TestCSV
   end
 
   def test_encoding_is_upgraded_during_writing_as_needed
-    data = ["foo".force_encoding("US-ASCII"), "\u3042"]
+    data = ["foo".dup.force_encoding("US-ASCII"), "\u3042"]
     assert_equal("US-ASCII", data.first.encoding.name)
     assert_equal("UTF-8",    data.last.encoding.name)
     assert_equal("UTF-8",    data.join('').encoding.name)
@@ -240,7 +240,7 @@ class TestCSV::Encodings < TestCSV
   end
 
   def test_encoding_is_upgraded_for_ascii_content_during_writing_as_needed
-    data = ["foo".force_encoding("ISO-8859-1"), "\u3042"]
+    data = ["foo".dup.force_encoding("ISO-8859-1"), "\u3042"]
     assert_equal("ISO-8859-1", data.first.encoding.name)
     assert_equal("UTF-8",      data.last.encoding.name)
     assert_equal("UTF-8",      data.join('').encoding.name)
@@ -250,7 +250,7 @@ class TestCSV::Encodings < TestCSV
   def test_explicit_encoding
     bug9766 = '[ruby-core:62113] [Bug #9766]'
     s = CSV.generate(encoding: "Windows-31J") do |csv|
-      csv << ["foo".force_encoding("ISO-8859-1"), "\u3042"]
+      csv << ["foo".dup.force_encoding("ISO-8859-1"), "\u3042"]
     end
     assert_equal(["foo,\u3042\n".encode(Encoding::Windows_31J), Encoding::Windows_31J], [s, s.encoding], bug9766)
   end

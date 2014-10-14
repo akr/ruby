@@ -253,7 +253,7 @@ class TestPath < Test::Unit::TestCase
     path = %w[a b]
     Encoding.list.each do |e|
       next unless e.ascii_compatible?
-      assert_equal(e, File.join(*path.map {|s| s.force_encoding(e)}).encoding, bug5483)
+      assert_equal(e, File.join(*path.map {|s| s.dup.force_encoding(e)}).encoding, bug5483)
     end
   end
 end

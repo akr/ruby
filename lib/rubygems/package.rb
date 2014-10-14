@@ -521,7 +521,7 @@ EOM
   rescue Errno::ENOENT => e
     raise Gem::Package::FormatError.new e.message
   rescue Gem::Package::TarInvalidError => e
-    raise Gem::Package::FormatError.new e.message, @gem
+    raise Gem::Package::FormatError.new e.message.dup, @gem
   end
 
   ##
@@ -537,7 +537,7 @@ EOM
 
         unless computed_digest.hexdigest == gem_hexdigest then
           raise Gem::Package::FormatError.new \
-            "#{algorithm} checksum mismatch for #{file_name}", @gem
+            "#{algorithm} checksum mismatch for #{file_name}".dup, @gem
         end
       end
     end
@@ -579,12 +579,12 @@ EOM
     end
 
     unless @spec then
-      raise Gem::Package::FormatError.new 'package metadata is missing', @gem
+      raise Gem::Package::FormatError.new 'package metadata is missing'.dup, @gem
     end
 
     unless @files.include? 'data.tar.gz' then
       raise Gem::Package::FormatError.new \
-              'package content (data.tar.gz) is missing', @gem
+              'package content (data.tar.gz) is missing'.dup, @gem
     end
   end
 

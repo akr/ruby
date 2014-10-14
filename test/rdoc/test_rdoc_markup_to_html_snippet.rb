@@ -8,7 +8,7 @@ class TestRDocMarkupToHtmlSnippet < RDoc::Markup::FormatterTestCase
     super
 
     @to = RDoc::Markup::ToHtmlSnippet.new @options, 100, 100
-    @ellipsis = @to.to_html '...'
+    @ellipsis = @to.to_html '...'.dup
   end
 
   def accept_blank_line
@@ -362,7 +362,7 @@ class TestRDocMarkupToHtmlSnippet < RDoc::Markup::FormatterTestCase
   def test_accept_heading_7
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(7, 'Hello')
+    @to.accept_heading @RM::Heading.new(7, 'Hello'.dup)
 
     assert_equal "<p>Hello\n", @to.res.join
     assert_equal 5, @to.characters
@@ -372,7 +372,7 @@ class TestRDocMarkupToHtmlSnippet < RDoc::Markup::FormatterTestCase
     @to.code_object = RDoc::NormalClass.new 'Foo'
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(1, 'Hello')
+    @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
     assert_equal "<p>Hello\n",
                  @to.res.join
@@ -383,7 +383,7 @@ class TestRDocMarkupToHtmlSnippet < RDoc::Markup::FormatterTestCase
     @to.code_object = RDoc::AnyMethod.new nil, 'foo'
     @to.start_accepting
 
-    @to.accept_heading @RM::Heading.new(1, 'Hello')
+    @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
     assert_equal "<p>Hello\n",
                  @to.res.join
@@ -602,7 +602,7 @@ This routine modifies its +comment+ parameter.
     @to = RDoc::Markup::ToHtmlSnippet.new @options, 4
     rdoc = "* text\n" * 2
 
-    expected = "<p>text\n"
+    expected = "<p>text\n".dup
     expected.chomp!
     expected << " #{@ellipsis}\n"
 

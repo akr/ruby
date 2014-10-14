@@ -43,7 +43,7 @@ module RSS
       end
 
       def to_s
-        rv = "<#{full_name}"
+        rv = "<#{full_name}".dup
         attributes.each do |key, value|
           rv << " #{Utils.html_escape(key)}=\"#{Utils.html_escape(value)}\""
         end

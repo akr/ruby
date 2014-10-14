@@ -133,7 +133,7 @@ class TestEnv < Test::Unit::TestCase
     rescue Errno::EINVAL
     end
 
-    ENV[PATH_ENV] = "/tmp/".taint
+    ENV[PATH_ENV] = "/tmp/".dup.taint
     assert_equal("/tmp/", ENV[PATH_ENV])
   end
 
@@ -432,7 +432,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV["FOO".taint]
+        ENV["FOO".dup.taint]
       end.call
     end
   end
@@ -441,7 +441,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV.fetch("FOO".taint)
+        ENV.fetch("FOO".dup.taint)
       end.call
     end
   end
@@ -450,7 +450,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV.assoc("FOO".taint)
+        ENV.assoc("FOO".dup.taint)
       end.call
     end
   end
@@ -459,7 +459,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV.rassoc("FOO".taint)
+        ENV.rassoc("FOO".dup.taint)
       end.call
     end
   end
@@ -468,7 +468,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV.key("FOO".taint)
+        ENV.key("FOO".dup.taint)
       end.call
     end
   end
@@ -477,7 +477,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV.key?("FOO".taint)
+        ENV.key?("FOO".dup.taint)
       end.call
     end
   end
@@ -486,7 +486,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV.value?("FOO".taint)
+        ENV.value?("FOO".dup.taint)
       end.call
     end
   end
@@ -495,7 +495,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV["FOO"] = "BAR".taint
+        ENV["FOO"] = "BAR".dup.taint
       end.call
     end
   end
@@ -504,7 +504,7 @@ class TestEnv < Test::Unit::TestCase
     assert_raise(SecurityError) do
       proc do
         $SAFE = 2
-        ENV["FOO".taint] = "BAR"
+        ENV["FOO".dup.taint] = "BAR"
       end.call
     end
   end

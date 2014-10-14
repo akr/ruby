@@ -755,7 +755,7 @@ class RDoc::Parser::C < RDoc::Parser
       comment = ''
     end
 
-    comment = RDoc::Comment.new comment, @top_level
+    comment = RDoc::Comment.new comment.dup, @top_level
     comment.normalize
 
     look_for_directives_in class_mod, comment
@@ -825,7 +825,7 @@ class RDoc::Parser::C < RDoc::Parser
   # +read+, +write+ or both
 
   def handle_attr(var_name, attr_name, read, write)
-    rw = ''
+    rw = ''.dup
     rw << 'R' if '1' == read
     rw << 'W' if '1' == write
 

@@ -9,7 +9,7 @@ class TestRDocMarkupToJoinedParagraph < RDoc::TestCase
   end
 
   def test_accept_paragraph
-    parsed = para('hello', ' ', 'world')
+    parsed = para('hello'.dup, ' ', 'world')
 
     @to.accept_paragraph parsed
 
@@ -19,7 +19,7 @@ class TestRDocMarkupToJoinedParagraph < RDoc::TestCase
   end
 
   def test_accept_paragraph_break
-    parsed = para('hello', ' ', 'world', hard_break, 'everyone')
+    parsed = para('hello'.dup, ' ', 'world', hard_break, 'everyone')
 
     @to.accept_paragraph parsed
 

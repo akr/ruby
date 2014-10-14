@@ -57,7 +57,7 @@ class MetaMetaMetaTestCase < MiniTest::Unit::TestCase
   def with_output
     synchronize do
       begin
-        @output = StringIO.new("")
+        @output = StringIO.new("".dup)
         MiniTest::Unit.output = @output
 
         yield

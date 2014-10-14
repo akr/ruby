@@ -432,7 +432,7 @@ class OptionParser
       while s = lopts.shift
         l = left[-1].length + s.length
         l += arg.length if left.size == 1 && arg
-        l < max or sopts.empty? or left << ''
+        l < max or sopts.empty? or left << ''.dup
         left[-1] << if left[-1].empty? then ' ' * 4 else ', ' end << s
       end
 
@@ -991,7 +991,7 @@ XXX
   #
   def banner
     unless @banner
-      @banner = "Usage: #{program_name} [options]"
+      @banner = "Usage: #{program_name} [options]".dup
       visit(:add_banner, @banner)
     end
     @banner

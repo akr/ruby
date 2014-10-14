@@ -5,7 +5,7 @@ class TestRDocRdInline < RDoc::TestCase
   def setup
     super
 
-    @inline = RDoc::RD::Inline.new '+text+', 'text'
+    @inline = RDoc::RD::Inline.new '+text+'.dup, 'text'.dup
   end
 
   def test_class_new

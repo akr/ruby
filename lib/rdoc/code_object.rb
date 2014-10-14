@@ -151,7 +151,7 @@ class RDoc::CodeObject
                    #      with the correct encoding
                    if String === @comment and
                       Object.const_defined? :Encoding and @comment.empty? then
-                     @comment.force_encoding comment.encoding
+                     @comment = @comment.dup.force_encoding comment.encoding
                    end
                    @comment
                  end

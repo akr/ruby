@@ -230,7 +230,7 @@ class TestDir < Test::Unit::TestCase
   end
 
   def test_glob_cases
-    feature5994 = "[ruby-core:42469] [Feature #5994]"
+    feature5994 = "[ruby-core:42469] [Feature #5994]".dup
     feature5994 << "\nDir.glob should return the filename with actual cases on the filesystem"
     Dir.chdir(File.join(@root, "a")) do
       open("FileWithCases", "w") {}

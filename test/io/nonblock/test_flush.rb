@@ -27,7 +27,7 @@ class TestIONonblock < Test::Unit::TestCase
     w << "b"
     w.flush
     w << "a" * 4096
-    result = ""
+    result = "".dup
     timeout(10) {
       t0 = Thread.new {
         Thread.pass

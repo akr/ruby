@@ -367,7 +367,7 @@ class TestMiniTestStub < MiniTest::Unit::TestCase
   end
 
   def test_stub_yield_self
-    obj = "foo"
+    obj = "foo".dup
 
     val = obj.stub :to_s, "bar" do |s|
       s.to_s

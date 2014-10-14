@@ -210,7 +210,7 @@ module MarshalTestLib
     marshal_equal(/A/mx)
     marshal_equal(/a\u3042/)
     marshal_equal(/aあ/)
-    assert_equal(Regexp.new("あ".force_encoding("ASCII-8BIT")),
+    assert_equal(Regexp.new("あ".dup.force_encoding("ASCII-8BIT")),
                  Marshal.load("\004\b/\b\343\201\202\000"))
     assert_equal(/au3042/, Marshal.load("\004\b/\fa\\u3042\000"))
     #assert_equal(/au3042/u, Marshal.load("\004\b/\fa\\u3042@")) # spec
@@ -226,7 +226,7 @@ module MarshalTestLib
   end
 
   def test_string_ivar
-    o1 = ""
+    o1 = "".dup
     o1.instance_eval { @iv = 1 }
     marshal_equal(o1) {|o| o.instance_eval { @iv }}
   end
@@ -245,7 +245,7 @@ module MarshalTestLib
   end
 
   def test_string_subclass_extend
-    o = "abc"
+    o = "abc".dup
     o.extend(Mod1)
     str = MyString.new(o, "c")
     marshal_equal(str) { |v|
@@ -395,14 +395,14 @@ module MarshalTestLib
   end
 
   def test_extend_string
-    o = ""
+    o = "".dup
     o.extend Mod1
     marshal_equal(o) { |obj| obj.kind_of? Mod1 }
-    o = ""
+    o = "".dup
     o.extend Mod1
     o.extend Mod2
     marshal_equal_with_ancestry(o)
-    o = ""
+    o = "".dup
     o.extend Module.new
     assert_raise(TypeError) { marshaltest(o) }
   end

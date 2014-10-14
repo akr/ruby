@@ -596,7 +596,7 @@ class RDoc::Options
       opt.version = RDoc::VERSION
       opt.release = nil
       opt.summary_indent = ' ' * 4
-      opt.banner = <<-EOF
+      opt.banner = <<-EOF.dup
 Usage: #{opt.program_name} [options] [names...]
 
   Files are parsed, and the information they contain collected, before any
@@ -1097,7 +1097,7 @@ Usage: #{opt.program_name} [options] [names...]
 
     unless quiet then
       deprecated.each do |opt|
-        $stderr.puts 'option ' << opt << ' is deprecated: ' << DEPRECATED[opt]
+        $stderr.puts 'option '.dup << opt << ' is deprecated: ' << DEPRECATED[opt]
       end
     end
 

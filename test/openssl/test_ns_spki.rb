@@ -7,7 +7,8 @@ class OpenSSL::TestNSSPI < Test::Unit::TestCase
     # This request data is adopt from the specification of
     # "Netscape Extensions for User Key Generation".
     # -- http://wp.netscape.com/eng/security/comm4-keygen.html
-    @b64  = "MIHFMHEwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAnX0TILJrOMUue+PtwBRE6XfV"
+    @b64  = "".dup
+    @b64 << "MIHFMHEwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAnX0TILJrOMUue+PtwBRE6XfV"
     @b64 << "WtKQbsshxk5ZhcUwcwyvcnIq9b82QhJdoACdD34rqfCAIND46fXKQUnb0mvKzQID"
     @b64 << "AQABFhFNb3ppbGxhSXNNeUZyaWVuZDANBgkqhkiG9w0BAQQFAANBAAKv2Eex2n/S"
     @b64 << "r/7iJNroWlSzSMtTiQTEB+ADWHGj9u1xrUrOilq/o2cuQxIfZcNZkYAkWP4DubqW"

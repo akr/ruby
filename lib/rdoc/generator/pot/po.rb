@@ -26,7 +26,7 @@ class RDoc::Generator::POT::PO
   # Returns PO format text for the PO.
 
   def to_s
-    po = ''
+    po = ''.dup
     sort_entries.each do |entry|
       po << "\n" unless po.empty?
       po << entry.to_s

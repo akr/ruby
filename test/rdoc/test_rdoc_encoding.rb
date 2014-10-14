@@ -39,7 +39,7 @@ class TestRDocEncoding < RDoc::TestCase
   def test_class_read_file_encoding_convert
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    content = ""
+    content = "".dup
     content.encode! 'ISO-8859-1'
     content << "# coding: ISO-8859-1\nhi \xE9verybody"
 
@@ -71,7 +71,7 @@ class TestRDocEncoding < RDoc::TestCase
   def test_class_read_file_encoding_fancy
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    expected = "# -*- coding: utf-8; fill-column: 74 -*-\nhi everybody"
+    expected = "# -*- coding: utf-8; fill-column: 74 -*-\nhi everybody".dup
     expected.encode! Encoding::UTF_8
 
     @tempfile.write expected
@@ -141,7 +141,7 @@ class TestRDocEncoding < RDoc::TestCase
 
     contents = RDoc::Encoding.read_file @tempfile.path, Encoding::UTF_8
 
-    expected = ":\xe3\x82\xb3\xe3\x83\x9e\xe3\x83\xb3\xe3\x83\x89:"
+    expected = ":\xe3\x82\xb3\xe3\x83\x9e\xe3\x83\xb3\xe3\x83\x89:".dup
     expected.force_encoding Encoding::UTF_8
 
     assert_equal expected, contents
@@ -149,7 +149,7 @@ class TestRDocEncoding < RDoc::TestCase
   end
 
   def test_class_set_encoding
-    s = "# coding: UTF-8\n"
+    s = "# coding: UTF-8\n".dup
     RDoc::Encoding.set_encoding s
 
     # sanity check for 1.8
@@ -158,18 +158,18 @@ class TestRDocEncoding < RDoc::TestCase
 
     assert_equal Encoding::UTF_8, s.encoding
 
-    s = "#!/bin/ruby\n# coding: UTF-8\n"
+    s = "#!/bin/ruby\n# coding: UTF-8\n".dup
     RDoc::Encoding.set_encoding s
 
     assert_equal Encoding::UTF_8, s.encoding
 
-    s = "<?xml version='1.0' encoding='UTF-8'?>\n"
+    s = "<?xml version='1.0' encoding='UTF-8'?>\n".dup
     expected = s.encoding
     RDoc::Encoding.set_encoding s
 
     assert_equal Encoding::UTF_8, s.encoding
 
-    s = "<?xml version='1.0' encoding=\"UTF-8\"?>\n"
+    s = "<?xml version='1.0' encoding=\"UTF-8\"?>\n".dup
     expected = s.encoding
     RDoc::Encoding.set_encoding s
 
@@ -177,13 +177,13 @@ class TestRDocEncoding < RDoc::TestCase
   end
 
   def test_class_set_encoding_strip
-    s = "# coding: UTF-8\n# more comments"
+    s = "# coding: UTF-8\n# more comments".dup
 
     RDoc::Encoding.set_encoding s
 
     assert_equal "# more comments", s
 
-    s = "#!/bin/ruby\n# coding: UTF-8\n# more comments"
+    s = "#!/bin/ruby\n# coding: UTF-8\n# more comments".dup
 
     RDoc::Encoding.set_encoding s
 
@@ -212,7 +212,7 @@ class TestRDocEncoding < RDoc::TestCase
     assert_equal expected, s.encoding
 
     assert_raises ArgumentError do
-      RDoc::Encoding.set_encoding "# -*- encoding: undecided -*-\n"
+      RDoc::Encoding.set_encoding "# -*- encoding: undecided -*-\n".dup
     end
   end
 

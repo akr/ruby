@@ -468,7 +468,7 @@ EOA
     def assert_atom_content_inline_text(generator)
       _wrap_assertion do
         [nil, "text", "html"].each do |type|
-          content = "<content"
+          content = "<content".dup
           content << " type='#{type}'" if type
 
           suffix = "/>"
@@ -2078,7 +2078,7 @@ EOA
       attributes = attributes.collect do |key, value|
         "#{ERB::Util.h(key)}=\"#{ERB::Util.h(value)}\""
       end.join(" ")
-      begin_tag = "<#{name}"
+      begin_tag = "<#{name}".dup
       begin_tag << " #{attributes}" unless attributes.empty?
       if content
         "#{begin_tag}>#{content}</#{name}>\n"

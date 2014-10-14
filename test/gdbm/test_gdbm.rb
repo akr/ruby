@@ -453,7 +453,7 @@ if defined? GDBM
       assert_equal('no called block', key)
       assert_equal(0, @gdbm.size)
 
-      key = 'no called block'
+      key = 'no called block'.dup
       assert_equal(:blockval,
                     @gdbm.delete(key) {|k| k.replace 'called block'; :blockval})
       assert_equal('called block', key)

@@ -736,7 +736,7 @@ x = __ENCODING__
     # Thus, warnings MUST NOT be suppressed.
     $VERBOSE = true
     stderr = $stderr
-    $stderr = StringIO.new("")
+    $stderr = StringIO.new("".dup)
     x = 1
     assert_nil eval("x; nil")
     assert_nil eval("1+1; nil")

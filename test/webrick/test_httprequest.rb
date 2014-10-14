@@ -231,7 +231,7 @@ GET /
 
   def test_chunked
     crlf = "\x0d\x0a"
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       POST /path HTTP/1.1
       Host: test.ruby-lang.org:8080
       Transfer-Encoding: chunked
@@ -251,7 +251,7 @@ GET /
   end
 
   def test_forwarded
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       GET /foo HTTP/1.1
       Host: localhost:10080
       User-Agent: w3m/0.5.2
@@ -271,7 +271,7 @@ GET /
     assert_equal("123.123.123.123", req.remote_ip)
     assert(!req.ssl?)
 
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       GET /foo HTTP/1.1
       Host: localhost:10080
       User-Agent: w3m/0.5.2
@@ -291,7 +291,7 @@ GET /
     assert_equal("123.123.123.123", req.remote_ip)
     assert(!req.ssl?)
 
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       GET /foo HTTP/1.1
       Host: localhost:10080
       Client-IP: 234.234.234.234
@@ -313,7 +313,7 @@ GET /
     assert_equal("234.234.234.234", req.remote_ip)
     assert(req.ssl?)
 
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       GET /foo HTTP/1.1
       Host: localhost:10080
       Client-IP: 234.234.234.234
@@ -337,7 +337,7 @@ GET /
   end
 
   def test_continue_sent
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       POST /path HTTP/1.1
       Expect: 100-continue
 
@@ -354,7 +354,7 @@ GET /
   end
 
   def test_continue_not_sent
-    msg = <<-_end_of_message_
+    msg = <<-_end_of_message_.dup
       POST /path HTTP/1.1
 
     _end_of_message_

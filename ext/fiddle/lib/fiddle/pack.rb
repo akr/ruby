@@ -100,7 +100,7 @@ module Fiddle
     private
 
     def parse_types(types)
-      @template = ""
+      @template = "".dup
       addr     = 0
       types.each{|t|
         orig_addr = addr

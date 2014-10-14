@@ -906,7 +906,7 @@ The ri pager can be set with the 'RI_PAGER' environment variable or the
   # will be expanded to Zlib::DataError.
 
   def expand_class klass
-    klass.split('::').inject '' do |expanded, klass_part|
+    klass.split('::').inject ''.dup do |expanded, klass_part|
       expanded << '::' unless expanded.empty?
       short = expanded << klass_part
 

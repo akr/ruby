@@ -1454,7 +1454,7 @@ void Init_Blah(void) {
   def test_look_for_directives_in
     parser = util_parser
 
-    comment = RDoc::Comment.new "# :other: not_handled\n"
+    comment = RDoc::Comment.new "# :other: not_handled\n".dup
 
     parser.look_for_directives_in @top_level, comment
 

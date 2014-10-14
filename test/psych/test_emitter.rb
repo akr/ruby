@@ -6,7 +6,7 @@ module Psych
   class TestEmitter < TestCase
     def setup
       super
-      @out = StringIO.new('')
+      @out = StringIO.new(''.dup)
       @emitter = Psych::Emitter.new @out
     end
 

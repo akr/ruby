@@ -12,7 +12,7 @@ class TestDL < TestBase
   # TODO: refactor test repetition
 
   def test_realloc
-    str = "abc"
+    str = "abc".dup
     ptr_id = DL.realloc(0, 4)
     ptr    = CPtr.new(ptr_id, 4)
 
@@ -25,7 +25,7 @@ class TestDL < TestBase
   end
 
   def test_malloc
-    str = "abc"
+    str = "abc".dup
 
     ptr_id = DL.malloc(4)
     ptr    = CPtr.new(ptr_id, 4)
@@ -40,30 +40,30 @@ class TestDL < TestBase
 
   def test_call_int()
     cfunc = CFunc.new(@libc['atoi'], TYPE_INT, 'atoi')
-    x = cfunc.call(["100"].pack("p").unpack("l!*"))
+    x = cfunc.call(["100".dup].pack("p").unpack("l!*"))
     assert_equal(100, x)
 
     cfunc = CFunc.new(@libc['atoi'], TYPE_INT, 'atoi')
-    x = cfunc.call(["-100"].pack("p").unpack("l!*"))
+    x = cfunc.call(["-100".dup].pack("p").unpack("l!*"))
     assert_equal(-100, x)
   end
 
   def test_call_long()
     cfunc = CFunc.new(@libc['atol'], TYPE_LONG, 'atol')
-    x = cfunc.call(["100"].pack("p").unpack("l!*"))
+    x = cfunc.call(["100".dup].pack("p").unpack("l!*"))
     assert_equal(100, x)
     cfunc = CFunc.new(@libc['atol'], TYPE_LONG, 'atol')
-    x = cfunc.call(["-100"].pack("p").unpack("l!*"))
+    x = cfunc.call(["-100".dup].pack("p").unpack("l!*"))
     assert_equal(-100, x)
   end
 
   def test_call_double()
     cfunc = CFunc.new(@libc['atof'], TYPE_DOUBLE, 'atof')
-    x = cfunc.call(["0.1"].pack("p").unpack("l!*"))
+    x = cfunc.call(["0.1".dup].pack("p").unpack("l!*"))
     assert_in_delta(0.1, x)
 
     cfunc = CFunc.new(@libc['atof'], TYPE_DOUBLE, 'atof')
-    x = cfunc.call(["-0.1"].pack("p").unpack("l!*"))
+    x = cfunc.call(["-0.1".dup].pack("p").unpack("l!*"))
     assert_in_delta(-0.1, x)
   end
 
@@ -83,27 +83,27 @@ class TestDL < TestBase
 
   def test_strlen()
     cfunc = CFunc.new(@libc['strlen'], TYPE_INT, 'strlen')
-    x = cfunc.call(["abc"].pack("p").unpack("l!*"))
+    x = cfunc.call(["abc".dup].pack("p").unpack("l!*"))
     assert_equal("abc".size, x)
   end
 
   def test_strcpy()
-    buff = "xxxx"
-    str  = "abc"
+    buff = "xxxx".dup
+    str  = "abc".dup
     cfunc = CFunc.new(@libc['strcpy'], TYPE_VOIDP, 'strcpy')
     x = cfunc.call(ptr2num(buff,str))
     assert_equal("abc\0", buff)
     assert_equal("abc\0", CPtr.new(x).to_s(4))
 
-    buff = "xxxx"
-    str  = "abc"
+    buff = "xxxx".dup
+    str  = "abc".dup
     cfunc = CFunc.new(@libc['strncpy'], TYPE_VOIDP, 'strncpy')
     x = cfunc.call(ptr2num(buff,str) + [3])
     assert_equal("abcx", buff)
     assert_equal("abcx", CPtr.new(x).to_s(4))
 
     ptr = CPtr.malloc(4)
-    str = "abc"
+    str = "abc".dup
     cfunc = CFunc.new(@libc['strcpy'], TYPE_VOIDP, 'strcpy')
     x = cfunc.call([ptr.to_i, *ptr2num(str)])
     assert_equal("abc\0", ptr[0,4])
@@ -111,7 +111,7 @@ class TestDL < TestBase
   end
 
   def test_callback()
-    buff = "foobarbaz"
+    buff = "foobarbaz".dup
     cb = set_callback(TYPE_INT,2){|x,y| CPtr.new(x)[0] <=> CPtr.new(y)[0]}
     cfunc = CFunc.new(@libc['qsort'], TYPE_VOID, 'qsort')
     cfunc.call(ptr2num(buff) + [buff.size, 1, cb])

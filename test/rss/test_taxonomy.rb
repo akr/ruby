@@ -28,7 +28,7 @@ module RSS
         "http://dmoz.org/Computers/Data_Formats/Markup_Languages/XML/",
       ]
 
-      @topics_node = "<#{@prefix}:topics>\n"
+      @topics_node = "<#{@prefix}:topics>\n".dup
       @topics_node << "  <rdf:Bag>\n"
       @topics_lis.each do |value|
         resource = CGI.escapeHTML(value)
@@ -62,7 +62,7 @@ module RSS
 
       @topic_nodes = @topic_contents.collect do |info|
         link = info[:link]
-        rv = "<#{@prefix}:topic rdf:about=\"#{link}\">\n"
+        rv = "<#{@prefix}:topic rdf:about=\"#{link}\">\n".dup
         info.each do |name, value|
           case name
           when :topics

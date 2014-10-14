@@ -157,7 +157,7 @@ class Gem::Security::Policy
     path = Gem::Security.trust_dir.cert_path root
 
     unless File.exist? path then
-      message = "root cert #{root.subject} is not trusted"
+      message = "root cert #{root.subject} is not trusted".dup
 
       message << " (root of signing cert #{chain.last.subject})" if
         chain.length > 1

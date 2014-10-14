@@ -54,7 +54,7 @@ class TestFile < Test::Unit::TestCase
 
     Tempfile.create(name.to_s) {|f|
       f.sync = true
-      expected = ""
+      expected = "".dup
       result = nil
       bytes[0...-1].each do |x|
         f.write x
@@ -62,7 +62,7 @@ class TestFile < Test::Unit::TestCase
         f.pos -= 1
         expected << x
         assert_nothing_raised(bug6487) {result = File.read(f.path, mode: 'rb:bom|utf-8')}
-        assert_equal("#{expected} ".force_encoding("utf-8"), result)
+        assert_equal("#{expected} ".dup.force_encoding("utf-8"), result)
       end
       f.write bytes[-1]
       assert_nothing_raised(bug6487) {result = File.read(f.path, mode: 'rb:bom|utf-8')}
@@ -125,7 +125,7 @@ class TestFile < Test::Unit::TestCase
       q2 = Queue.new
 
       th = Thread.new do
-        data = ''
+        data = ''.dup
         64.times do |i|
           data << i.to_s
           f.rewind
@@ -385,7 +385,7 @@ class TestFile < Test::Unit::TestCase
 
   def test_untainted_path
     bug5374 = '[ruby-core:39745]'
-    cwd = ("./"*40+".".taint).dup.untaint
+    cwd = ("./"*40+".".dup.taint).dup.untaint
     in_safe = proc {|safe| $SAFE = safe; File.stat(cwd)}
     assert_not_send([cwd, :tainted?])
     (0..1).each do |level|

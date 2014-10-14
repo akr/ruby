@@ -6,9 +6,9 @@ require_relative 'envutil'
 class TestTranscode < Test::Unit::TestCase
   def test_errors
     assert_raise(Encoding::ConverterNotFoundError) { 'abc'.encode('foo', 'bar') }
-    assert_raise(Encoding::ConverterNotFoundError) { 'abc'.encode!('foo', 'bar') }
-    assert_raise(Encoding::ConverterNotFoundError) { 'abc'.force_encoding('utf-8').encode('foo') }
-    assert_raise(Encoding::ConverterNotFoundError) { 'abc'.force_encoding('utf-8').encode!('foo') }
+    assert_raise(Encoding::ConverterNotFoundError) { 'abc'.dup.encode!('foo', 'bar') }
+    assert_raise(Encoding::ConverterNotFoundError) { 'abc'.dup.force_encoding('utf-8').encode('foo') }
+    assert_raise(Encoding::ConverterNotFoundError) { 'abc'.dup.force_encoding('utf-8').encode!('foo') }
     assert_raise(Encoding::UndefinedConversionError) { "\x80".encode('utf-8','ASCII-8BIT') }
     assert_raise(Encoding::InvalidByteSequenceError) { "\x80".encode('utf-8','US-ASCII') }
     assert_raise(Encoding::UndefinedConversionError) { "\xA5".encode('utf-8','iso-8859-3') }
@@ -17,12 +17,12 @@ class TestTranscode < Test::Unit::TestCase
   end
 
   def test_arguments
-    assert_equal('abc', 'abc'.force_encoding('utf-8').encode('iso-8859-1'))
+    assert_equal('abc', 'abc'.dup.force_encoding('utf-8').encode('iso-8859-1'))
     # check that encoding is kept when no conversion is done
-    assert_equal('abc'.force_encoding('Shift_JIS'), 'abc'.force_encoding('Shift_JIS').encode('Shift_JIS'))
-    assert_equal('abc'.force_encoding('Shift_JIS'), 'abc'.force_encoding('Shift_JIS').encode!('Shift_JIS'))
+    assert_equal('abc'.dup.force_encoding('Shift_JIS'), 'abc'.dup.force_encoding('Shift_JIS').encode('Shift_JIS'))
+    assert_equal('abc'.dup.force_encoding('Shift_JIS'), 'abc'.dup.force_encoding('Shift_JIS').encode!('Shift_JIS'))
     # assert that encoding is correctly set
-    assert_equal("D\u00FCrst".encoding, "D\xFCrst".force_encoding('iso-8859-1').encode('utf-8').encoding)
+    assert_equal("D\u00FCrst".encoding, "D\xFCrst".dup.force_encoding('iso-8859-1').encode('utf-8').encoding)
     # check that Encoding can be used as parameter
     assert_equal("D\u00FCrst", "D\xFCrst".encode('utf-8', Encoding.find('ISO-8859-1')))
     assert_equal("D\u00FCrst", "D\xFCrst".encode(Encoding.find('utf-8'), 'ISO-8859-1'))
@@ -32,13 +32,13 @@ class TestTranscode < Test::Unit::TestCase
   def test_noargument
     EnvUtil.with_default_internal(nil) do
       assert_equal("\u3042".encode, "\u3042")
-      assert_equal("\xE3\x81\x82\x81".force_encoding("utf-8").encode,
-                   "\xE3\x81\x82\x81".force_encoding("utf-8"))
+      assert_equal("\xE3\x81\x82\x81".dup.force_encoding("utf-8").encode,
+                   "\xE3\x81\x82\x81".dup.force_encoding("utf-8"))
     end
     EnvUtil.with_default_internal('EUC-JP') do
-      assert_equal("\u3042".encode, "\xA4\xA2".force_encoding('EUC-JP'))
-      assert_equal("\xE3\x81\x82\x81".force_encoding("utf-8").encode,
-                   "\xA4\xA2?".force_encoding('EUC-JP'))
+      assert_equal("\u3042".encode, "\xA4\xA2".dup.force_encoding('EUC-JP'))
+      assert_equal("\xE3\x81\x82\x81".dup.force_encoding("utf-8").encode,
+                   "\xA4\xA2?".dup.force_encoding('EUC-JP'))
     end
   end
 
@@ -52,13 +52,13 @@ class TestTranscode < Test::Unit::TestCase
   end
 
   def check_both_ways(utf8, raw, encoding)
-    assert_equal(utf8.force_encoding('utf-8'), raw.encode('utf-8', encoding),utf8.dump+raw.dump)
-    assert_equal(raw.force_encoding(encoding), utf8.encode(encoding, 'utf-8'))
+    assert_equal(utf8.dup.force_encoding('utf-8'), raw.encode('utf-8', encoding),utf8.dump+raw.dump)
+    assert_equal(raw.dup.force_encoding(encoding), utf8.encode(encoding, 'utf-8'))
   end
 
   def check_both_ways2(str1, enc1, str2, enc2)
-    assert_equal(str1.force_encoding(enc1), str2.encode(enc1, enc2))
-    assert_equal(str2.force_encoding(enc2), str1.encode(enc2, enc1))
+    assert_equal(str1.dup.force_encoding(enc1), str2.encode(enc1, enc2))
+    assert_equal(str2.dup.force_encoding(enc2), str1.encode(enc2, enc1))
   end
 
   def test_encoding_of_ascii_originating_from_binary
@@ -118,11 +118,11 @@ class TestTranscode < Test::Unit::TestCase
          "\xBE\xD6\xC0\xCE\xB1\xB8\xC7\xD4\x20\xDA\xD3\xC1\xF6\xC0\xCE", 'euc-kr') # 애인구함 朴지인
     check_both_ways("\uC544\uD58F\uD58F\u0020\uB620\uBC29\uD6BD\uB2D8\u0020\uC0AC\uB791\uD716",
          "\xBE\xC6\xC1\x64\xC1\x64\x20\x8C\x63\xB9\xE6\xC4\x4F\xB4\xD4\x20\xBB\xE7\xB6\xFB\xC5\x42", 'cp949') # 아햏햏 똠방횽님 사랑휖
-    assert_equal(Encoding::ISO_8859_1, "D\xFCrst".force_encoding('iso-8859-2').encode('iso-8859-1', 'iso-8859-1').encoding)
+    assert_equal(Encoding::ISO_8859_1, "D\xFCrst".dup.force_encoding('iso-8859-2').encode('iso-8859-1', 'iso-8859-1').encoding)
   end
 
   def test_twostep
-    assert_equal("D\xFCrst".force_encoding('iso-8859-2'), "D\xFCrst".encode('iso-8859-2', 'iso-8859-1'))
+    assert_equal("D\xFCrst".dup.force_encoding('iso-8859-2'), "D\xFCrst".encode('iso-8859-2', 'iso-8859-1'))
   end
 
   def test_ascii_range
@@ -1128,35 +1128,35 @@ class TestTranscode < Test::Unit::TestCase
     # arguments only
     assert_nothing_raised { 'abc'.encode('utf-8', invalid: :replace, replace: "") }
     # check handling of UTF-8 ill-formed subsequences
-    assert_equal("\x00\x41\x00\x3E\x00\x42".force_encoding('UTF-16BE'),
+    assert_equal("\x00\x41\x00\x3E\x00\x42".dup.force_encoding('UTF-16BE'),
       "\x41\xC2\x3E\x42".encode('UTF-16BE', 'UTF-8', invalid: :replace, replace: ""))
-    assert_equal("\x00\x41\x00\xF1\x00\x42".force_encoding('UTF-16BE'),
+    assert_equal("\x00\x41\x00\xF1\x00\x42".dup.force_encoding('UTF-16BE'),
       "\x41\xC2\xC3\xB1\x42".encode('UTF-16BE', 'UTF-8', invalid: :replace, replace: ""))
-    assert_equal("\x00\x42".force_encoding('UTF-16BE'),
+    assert_equal("\x00\x42".dup.force_encoding('UTF-16BE'),
       "\xF0\x80\x80\x42".encode('UTF-16BE', 'UTF-8', invalid: :replace, replace: ""))
-    assert_equal(''.force_encoding('UTF-16BE'),
+    assert_equal(''.dup.force_encoding('UTF-16BE'),
       "\x82\xAB".encode('UTF-16BE', 'UTF-8', invalid: :replace, replace: ""))
 
-    assert_equal("\e$B!!\e(B".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B!!\e(B".dup.force_encoding("ISO-2022-JP"),
       "\xA1\xA1\xFF".encode("ISO-2022-JP", "EUC-JP", invalid: :replace, replace: ""))
-    assert_equal("\e$B\x24\x22\x24\x24\e(B".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B\x24\x22\x24\x24\e(B".dup.force_encoding("ISO-2022-JP"),
       "\xA4\xA2\xFF\xA4\xA4".encode("ISO-2022-JP", "EUC-JP", invalid: :replace, replace: ""))
-    assert_equal("\e$B\x24\x22\x24\x24\e(B".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B\x24\x22\x24\x24\e(B".dup.force_encoding("ISO-2022-JP"),
       "\xA4\xA2\xFF\xFF\xA4\xA4".encode("ISO-2022-JP", "EUC-JP", invalid: :replace, replace: ""))
   end
 
   def test_invalid_replace
     # arguments only
     assert_nothing_raised { 'abc'.encode('UTF-8', invalid: :replace) }
-    assert_equal("\xEF\xBF\xBD".force_encoding("UTF-8"),
+    assert_equal("\xEF\xBF\xBD".dup.force_encoding("UTF-8"),
       "\x80".encode("UTF-8", "UTF-16BE", invalid: :replace))
-    assert_equal("\xFF\xFD".force_encoding("UTF-16BE"),
+    assert_equal("\xFF\xFD".dup.force_encoding("UTF-16BE"),
       "\x80".encode("UTF-16BE", "UTF-8", invalid: :replace))
-    assert_equal("\xFD\xFF".force_encoding("UTF-16LE"),
+    assert_equal("\xFD\xFF".dup.force_encoding("UTF-16LE"),
       "\x80".encode("UTF-16LE", "UTF-8", invalid: :replace))
-    assert_equal("\x00\x00\xFF\xFD".force_encoding("UTF-32BE"),
+    assert_equal("\x00\x00\xFF\xFD".dup.force_encoding("UTF-32BE"),
       "\x80".encode("UTF-32BE", "UTF-8", invalid: :replace))
-    assert_equal("\xFD\xFF\x00\x00".force_encoding("UTF-32LE"),
+    assert_equal("\xFD\xFF\x00\x00".dup.force_encoding("UTF-32LE"),
       "\x80".encode("UTF-32LE", "UTF-8", invalid: :replace))
 
     assert_equal("\uFFFD!",
@@ -1201,11 +1201,11 @@ class TestTranscode < Test::Unit::TestCase
     assert_equal("ab?cd?ef",
       "\0a\0b\xdc\x00\0c\0d\xdf\x00\0e\0f".encode("EUC-JP", "UTF-16BE", :invalid=>:replace))
 
-    assert_equal("\e$B!!\e(B?".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B!!\e(B?".dup.force_encoding("ISO-2022-JP"),
       "\xA1\xA1\xFF".encode("ISO-2022-JP", "EUC-JP", invalid: :replace))
-    assert_equal("\e$B\x24\x22\e(B?\e$B\x24\x24\e(B".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B\x24\x22\e(B?\e$B\x24\x24\e(B".dup.force_encoding("ISO-2022-JP"),
       "\xA4\xA2\xFF\xA4\xA4".encode("ISO-2022-JP", "EUC-JP", invalid: :replace))
-    assert_equal("\e$B\x24\x22\e(B??\e$B\x24\x24\e(B".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B\x24\x22\e(B??\e$B\x24\x24\e(B".dup.force_encoding("ISO-2022-JP"),
       "\xA4\xA2\xFF\xFF\xA4\xA4".encode("ISO-2022-JP", "EUC-JP", invalid: :replace))
   end
 
@@ -1462,9 +1462,9 @@ class TestTranscode < Test::Unit::TestCase
     assert_raise(Encoding::UndefinedConversionError) { "\u9299".encode("iso-2022-jp") }
     assert_raise(Encoding::UndefinedConversionError) { "\uff71\uff72\uff73\uff74\uff75".encode("iso-2022-jp") }
     assert_raise(Encoding::InvalidByteSequenceError) { "\x1b(I12345\x1b(B".encode("utf-8", "iso-2022-jp") }
-    assert_equal("\xA1\xA1".force_encoding("euc-jp"),
+    assert_equal("\xA1\xA1".dup.force_encoding("euc-jp"),
                  "\e$B!!\e(B".encode("EUC-JP", "ISO-2022-JP"))
-    assert_equal("\e$B!!\e(B".force_encoding("ISO-2022-JP"),
+    assert_equal("\e$B!!\e(B".dup.force_encoding("ISO-2022-JP"),
                  "\xA1\xA1".encode("ISO-2022-JP", "EUC-JP"))
   end
 
@@ -1484,14 +1484,14 @@ class TestTranscode < Test::Unit::TestCase
     assert_equal("\u5fde", "\e$B\x7A\x21".encode("utf-8", "cp50221"))
     assert_equal("\u72be", "\e$B\x7B\x21".encode("utf-8", "cp50221"))
     assert_equal("\u91d7", "\e$B\x7C\x21".encode("utf-8", "cp50221"))
-    assert_equal("\xA1\xDF".force_encoding("sjis"),
+    assert_equal("\xA1\xDF".dup.force_encoding("sjis"),
                  "\e(I!_\e(B".encode("sjis","cp50220"))
   end
 
   def test_to_cp50221
-    assert_equal("\e$B!#!,\e(B".force_encoding("cp50220"),
+    assert_equal("\e$B!#!,\e(B".dup.force_encoding("cp50220"),
                  "\xA1\xDF".encode("cp50220","sjis"))
-    assert_equal("\e$B%*!+%,%I%J!+%N!+%P%\\%^!+%Q%]%\"\e(B".force_encoding("cp50220"),
+    assert_equal("\e$B%*!+%,%I%J!+%N!+%P%\\%^!+%Q%]%\"\e(B".dup.force_encoding("cp50220"),
         "\xB5\xDE\xB6\xDE\xC4\xDE\xC5\xDE\xC9\xDE\xCA\xDE\xCE\xDE\xCF\xDE\xCA\xDF\xCE\xDF\xB1".
                  encode("cp50220", "sjis"))
   end
@@ -1501,15 +1501,15 @@ class TestTranscode < Test::Unit::TestCase
   end
 
   def test_unicode_public_review_issue_121 # see http://www.unicode.org/review/pr-121.html
-    assert_equal("\x00\x61\xFF\xFD\xFF\xFD\xFF\xFD\x00\x62".force_encoding('UTF-16BE'),
+    assert_equal("\x00\x61\xFF\xFD\xFF\xFD\xFF\xFD\x00\x62".dup.force_encoding('UTF-16BE'),
       "\x61\xF1\x80\x80\xE1\x80\xC2\x62".encode('UTF-16BE', 'UTF-8', invalid: :replace)) # option 2
-    assert_equal("\x61\x00\xFD\xFF\xFD\xFF\xFD\xFF\x62\x00".force_encoding('UTF-16LE'),
+    assert_equal("\x61\x00\xFD\xFF\xFD\xFF\xFD\xFF\x62\x00".dup.force_encoding('UTF-16LE'),
       "\x61\xF1\x80\x80\xE1\x80\xC2\x62".encode('UTF-16LE', 'UTF-8', invalid: :replace)) # option 2
 
     # additional clarification
-    assert_equal("\xFF\xFD\xFF\xFD\xFF\xFD\xFF\xFD".force_encoding('UTF-16BE'),
+    assert_equal("\xFF\xFD\xFF\xFD\xFF\xFD\xFF\xFD".dup.force_encoding('UTF-16BE'),
       "\xF0\x80\x80\x80".encode('UTF-16BE', 'UTF-8', invalid: :replace))
-    assert_equal("\xFD\xFF\xFD\xFF\xFD\xFF\xFD\xFF".force_encoding('UTF-16LE'),
+    assert_equal("\xFD\xFF\xFD\xFF\xFD\xFF\xFD\xFF".dup.force_encoding('UTF-16LE'),
       "\xF0\x80\x80\x80".encode('UTF-16LE', 'UTF-8', invalid: :replace))
   end
 
@@ -2020,7 +2020,7 @@ class TestTranscode < Test::Unit::TestCase
   end
 
   def test_nothing_changed
-    a = "James".force_encoding("US-ASCII")
+    a = "James".dup.force_encoding("US-ASCII")
     b = a.encode("Shift_JIS")
     assert_equal(Encoding::US_ASCII, a.encoding)
     assert_equal(Encoding::Shift_JIS, b.encoding)
@@ -2058,7 +2058,7 @@ class TestTranscode < Test::Unit::TestCase
   end
 
   def test_fallback_method
-    def (fallback = "U+%.4X").escape(x)
+    def (fallback = "U+%.4X".dup).escape(x)
       self % x.unpack("U")
     end
     assert_equal("U+3042", "\u{3042}".encode("US-ASCII", fallback: fallback.method(:escape)))
@@ -2075,7 +2075,7 @@ class TestTranscode < Test::Unit::TestCase
   def test_encode_with_invalid_chars
     bug8995 = '[ruby-dev:47747]'
     EnvUtil.with_default_internal(Encoding::UTF_8) do
-      str = "\xff".force_encoding('utf-8')
+      str = "\xff".dup.force_encoding('utf-8')
       assert_equal str, str.encode, bug8995
       assert_equal "\ufffd", str.encode(invalid: :replace), bug8995
     end

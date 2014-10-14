@@ -124,7 +124,7 @@ module DL
     end
 
     def test_strcpy()
-      buff = "000"
+      buff = "000".dup
       str = LIBC.strcpy(buff, "123")
       assert_equal("123", buff)
       assert_equal("123", str.to_s)

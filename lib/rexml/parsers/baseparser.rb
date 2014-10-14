@@ -473,7 +473,7 @@ module REXML
 
       # Unescapes all possible entities
       def unnormalize( string, entities=nil, filter=nil )
-        rv = string.clone
+        rv = string.dup
         rv.gsub!( /\r\n?/, "\n" )
         matches = rv.scan( REFERENCE_RE )
         return rv if matches.size == 0

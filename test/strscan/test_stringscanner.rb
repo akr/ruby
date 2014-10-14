@@ -13,7 +13,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_equal false, s.eos?
     assert_equal false, s.tainted?
 
-    str = 'test string'
+    str = 'test string'.dup
     str.taint
     s = StringScanner.new(str, false)
     assert_instance_of StringScanner, s
@@ -21,7 +21,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_same str, s.string
     assert_equal true, s.string.tainted?
 
-    str = 'test string'
+    str = 'test string'.dup
     str.taint
     s = StringScanner.new(str)
     assert_equal true, s.string.tainted?
@@ -95,7 +95,7 @@ class TestStringScanner < Test::Unit::TestCase
   end
 
   def test_inspect
-    str = 'test string'
+    str = 'test string'.dup
     str.taint
     s = StringScanner.new(str, false)
     assert_instance_of String, s.inspect
@@ -123,7 +123,7 @@ class TestStringScanner < Test::Unit::TestCase
     s.scan(/\w+/)
     assert_equal true, s.eos?
 
-    s = StringScanner.new('test')
+    s = StringScanner.new('test'.dup)
     s.scan(/te/)
     s.string.replace ''
     assert_equal true, s.eos?
@@ -180,11 +180,11 @@ class TestStringScanner < Test::Unit::TestCase
   end
 
   def test_string_append
-    s = StringScanner.new('tender')
+    s = StringScanner.new('tender'.dup)
     s << 'love'
     assert_equal 'tenderlove', s.string
 
-    s.string = 'tender'
+    s.string = 'tender'.dup
     s << 'love'
     assert_equal 'tenderlove', s.string
   end
@@ -212,7 +212,7 @@ class TestStringScanner < Test::Unit::TestCase
   end
 
   def test_concat
-    s = StringScanner.new('a')
+    s = StringScanner.new('a'.dup)
     s.scan(/a/)
     s.concat 'b'
     assert_equal false, s.eos?
@@ -245,7 +245,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_nil           s.scan(/\w+/)
 
 
-    str = 'stra strb strc'
+    str = 'stra strb strc'.dup
     str.taint
     s = StringScanner.new(str, false)
     tmp = s.scan(/\w+/)
@@ -266,7 +266,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_nil           s.scan(/\w+/)
     assert_nil           s.scan(/\w+/)
 
-    s = StringScanner.new('test')
+    s = StringScanner.new('test'.dup)
     s.scan(/te/)
     # This assumes #string does not duplicate string,
     # but it is implementation specific issue.
@@ -292,7 +292,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_nil      s.skip(/\s+/)
     assert_equal true, s.eos?
 
-    s = StringScanner.new('test')
+    s = StringScanner.new('test'.dup)
     s.scan(/te/)
     s.string.replace ''
     assert_equal nil, s.skip(/./)
@@ -312,7 +312,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_equal 'e', s.getch
     assert_nil        s.getch
 
-    str = 'abc'
+    str = 'abc'.dup
     str.taint
     s = StringScanner.new(str)
     assert_equal true, s.getch.tainted?
@@ -320,11 +320,11 @@ class TestStringScanner < Test::Unit::TestCase
     assert_equal true, s.getch.tainted?
     assert_nil s.getch
 
-    s = StringScanner.new("\244\242".force_encoding("euc-jp"))
-    assert_equal "\244\242".force_encoding("euc-jp"), s.getch
+    s = StringScanner.new("\244\242".dup.force_encoding("euc-jp"))
+    assert_equal "\244\242".dup.force_encoding("euc-jp"), s.getch
     assert_nil s.getch
 
-    s = StringScanner.new('test')
+    s = StringScanner.new('test'.dup)
     s.scan(/te/)
     s.string.replace ''
     assert_equal nil, s.getch
@@ -340,7 +340,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_nil        s.get_byte
     assert_nil        s.get_byte
 
-    str = 'abc'
+    str = 'abc'.dup
     str.taint
     s = StringScanner.new(str)
     assert_equal true, s.get_byte.tainted?
@@ -348,12 +348,12 @@ class TestStringScanner < Test::Unit::TestCase
     assert_equal true, s.get_byte.tainted?
     assert_nil s.get_byte
 
-    s = StringScanner.new("\244\242".force_encoding("euc-jp"))
-    assert_equal "\244".force_encoding("euc-jp"), s.get_byte
-    assert_equal "\242".force_encoding("euc-jp"), s.get_byte
+    s = StringScanner.new("\244\242".dup.force_encoding("euc-jp"))
+    assert_equal "\244".dup.force_encoding("euc-jp"), s.get_byte
+    assert_equal "\242".dup.force_encoding("euc-jp"), s.get_byte
     assert_nil s.get_byte
 
-    s = StringScanner.new('test')
+    s = StringScanner.new('test'.dup)
     s.scan(/te/)
     s.string.replace ''
     assert_equal nil, s.get_byte
@@ -386,7 +386,7 @@ class TestStringScanner < Test::Unit::TestCase
     assert_equal 't', s.matched
     assert_equal false, s.matched.tainted?
 
-    str = 'test'
+    str = 'test'.dup
     str.taint
     s = StringScanner.new(str)
     s.scan(/\w+/)
@@ -446,11 +446,11 @@ class TestStringScanner < Test::Unit::TestCase
     assert_nil           s[0]
 
 
-    s = StringScanner.new("\244\242".force_encoding("euc-jp"))
+    s = StringScanner.new("\244\242".dup.force_encoding("euc-jp"))
     s.getch
-    assert_equal "\244\242".force_encoding("euc-jp"), s[0]
+    assert_equal "\244\242".dup.force_encoding("euc-jp"), s[0]
 
-    str = 'test'
+    str = 'test'.dup
     str.taint
     s = StringScanner.new(str)
     s.scan(/(t)(e)(s)(t)/)
@@ -495,7 +495,7 @@ class TestStringScanner < Test::Unit::TestCase
     s.scan(/never match/)
     assert_nil s.pre_match
 
-    str = 'test string'
+    str = 'test string'.dup
     str.taint
     s = StringScanner.new(str)
     s.scan(/\w+/)
@@ -529,7 +529,7 @@ class TestStringScanner < Test::Unit::TestCase
     s.scan(/./)
     assert_nil s.post_match
 
-    str = 'test string'
+    str = 'test string'.dup
     str.taint
     s = StringScanner.new(str)
     s.scan(/\w+/)
@@ -584,14 +584,14 @@ class TestStringScanner < Test::Unit::TestCase
   end
 
   def test_encoding
-    ss = StringScanner.new("\xA1\xA2".force_encoding("euc-jp"))
+    ss = StringScanner.new("\xA1\xA2".dup.force_encoding("euc-jp"))
     assert_equal(Encoding::EUC_JP, ss.scan(/./e).encoding)
   end
 
   def test_generic_regexp
-    ss = StringScanner.new("\xA1\xA2".force_encoding("euc-jp"))
+    ss = StringScanner.new("\xA1\xA2".dup.force_encoding("euc-jp"))
     t = ss.scan(/./)
-    assert_equal("\xa1\xa2".force_encoding("euc-jp"), t)
+    assert_equal("\xa1\xa2".dup.force_encoding("euc-jp"), t)
   end
 
   def test_set_pos

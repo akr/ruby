@@ -106,7 +106,7 @@ module REXML
 
     private
     def content(enc)
-      rv = "version='#@version'"
+      rv = "version='#@version'".dup
       rv << " encoding='#{enc}'" if @writeencoding || enc !~ /\Autf-8\z/i
       rv << " standalone='#@standalone'" if @standalone
       rv

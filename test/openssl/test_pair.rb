@@ -114,11 +114,11 @@ module OpenSSL::TestPairM
     ssl_pair {|s1, s2|
       s2.write "a\nbcd"
       assert_equal("a\n", s1.gets)
-      result = ""
+      result = "".dup
       result << s1.readpartial(10) until result.length == 3
       assert_equal("bcd", result)
       s2.write "efg"
-      result = ""
+      result = "".dup
       result << s1.readpartial(10) until result.length == 3
       assert_equal("efg", result)
       s2.close

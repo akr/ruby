@@ -74,7 +74,7 @@ class TestLogDevice < Test::Unit::TestCase
     assert_equal("msg2\n\n", msg)
     #
     logdev = d(LogExcnRaiser.new)
-    class << (stderr = '')
+    class << (stderr = ''.dup)
       alias write <<
     end
     $stderr, stderr = stderr, $stderr

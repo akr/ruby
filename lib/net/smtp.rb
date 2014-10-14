@@ -940,7 +940,7 @@ module Net
     end
 
     def recv_response
-      buf = ''
+      buf = ''.dup
       while true
         line = @socket.readline
         buf << line << "\n"

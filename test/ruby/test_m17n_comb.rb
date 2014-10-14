@@ -55,9 +55,9 @@ class TestM17NComb < Test::Unit::TestCase
   ]
 
   WSTRINGS = [
-    "aa".force_encoding("utf-16be"),
-    "aaaa".force_encoding("utf-32be"),
-    "aaa".force_encoding("utf-32be"),
+    "aa".dup.force_encoding("utf-16be"),
+    "aaaa".dup.force_encoding("utf-32be"),
+    "aaa".dup.force_encoding("utf-32be"),
   ]
 
   def combination(*args, &b)
@@ -75,7 +75,7 @@ class TestM17NComb < Test::Unit::TestCase
   end
 
   def encdumpargs(args)
-    r = '('
+    r = '('.dup
     args.each_with_index {|a, i|
       r << ',' if 0 < i
       if String === a
@@ -89,7 +89,7 @@ class TestM17NComb < Test::Unit::TestCase
   end
 
   def encdumpcall(recv, meth, *args, &block)
-    desc = ''
+    desc = ''.dup
     if String === recv
       desc << encdump(recv)
     else
@@ -236,7 +236,7 @@ class TestM17NComb < Test::Unit::TestCase
 
   def test_sprintf_s
     STRINGS.each {|s|
-      assert_strenc(b(s), s.encoding, "%s".force_encoding(s.encoding) % s)
+      assert_strenc(b(s), s.encoding, "%s".dup.force_encoding(s.encoding) % s)
       if !s.empty? # xxx
         t = enccall(b("%s"), :%, s)
         assert_strenc(b(s), (b('')+s).encoding, t)
@@ -303,7 +303,7 @@ class TestM17NComb < Test::Unit::TestCase
 
   def test_str_aref
     STRINGS.each {|s|
-      t = ''.force_encoding(s.encoding)
+      t = ''.dup.force_encoding(s.encoding)
       0.upto(s.length-1) {|i|
         u = s[i]
         assert_predicate(u, :valid_encoding?) if s.valid_encoding?
@@ -315,7 +315,7 @@ class TestM17NComb < Test::Unit::TestCase
 
   def test_str_aref_len
     STRINGS.each {|s|
-      t = ''.force_encoding(s.encoding)
+      t = ''.dup.force_encoding(s.encoding)
       0.upto(s.length-1) {|i|
         u = s[i,1]
         assert_predicate(u, :valid_encoding?) if s.valid_encoding?
@@ -325,7 +325,7 @@ class TestM17NComb < Test::Unit::TestCase
     }
 
     STRINGS.each {|s|
-      t = ''.force_encoding(s.encoding)
+      t = ''.dup.force_encoding(s.encoding)
       0.step(s.length-1, 2) {|i|
         u = s[i,2]
         assert_predicate(u, :valid_encoding?) if s.valid_encoding?
@@ -372,7 +372,7 @@ class TestM17NComb < Test::Unit::TestCase
       if last < 0
         last += s.length
       end
-      t2 = ''
+      t2 = ''.dup
       first.upto(last) {|i|
         c = s[i]
         t2 << c if c
@@ -400,7 +400,7 @@ class TestM17NComb < Test::Unit::TestCase
         last += s.length
       end
       assert_predicate(t, :valid_encoding?) if s.valid_encoding?
-      t2 = ''
+      t2 = ''.dup
       first.upto(last-1) {|i|
         c = s[i]
         t2 << c if c
@@ -1254,16 +1254,16 @@ class TestM17NComb < Test::Unit::TestCase
   end
 
   def test_tr_sjis
-    expected = "\x83}\x83~\x83\x80\x83\x81\x83\x82".force_encoding(Encoding::SJIS)
-    source = "\xCF\xD0\xD1\xD2\xD3".force_encoding(Encoding::SJIS)
-    from = "\xCF-\xD3".force_encoding(Encoding::SJIS)
-    to = "\x83}-\x83\x82".force_encoding(Encoding::SJIS)
+    expected = "\x83}\x83~\x83\x80\x83\x81\x83\x82".dup.force_encoding(Encoding::SJIS)
+    source = "\xCF\xD0\xD1\xD2\xD3".dup.force_encoding(Encoding::SJIS)
+    from = "\xCF-\xD3".dup.force_encoding(Encoding::SJIS)
+    to = "\x83}-\x83\x82".dup.force_encoding(Encoding::SJIS)
     assert_equal(expected, source.tr(from, to))
 
-    expected = "\x84}\x84~\x84\x80\x84\x81\x84\x82".force_encoding(Encoding::SJIS)
-    source = "\x84M\x84N\x84O\x84P\x84Q".force_encoding(Encoding::SJIS)
-    from = "\x84@-\x84`".force_encoding(Encoding::SJIS)
-    to = "\x84p-\x84\x91".force_encoding(Encoding::SJIS)
+    expected = "\x84}\x84~\x84\x80\x84\x81\x84\x82".dup.force_encoding(Encoding::SJIS)
+    source = "\x84M\x84N\x84O\x84P\x84Q".dup.force_encoding(Encoding::SJIS)
+    from = "\x84@-\x84`".dup.force_encoding(Encoding::SJIS)
+    to = "\x84p-\x84\x91".dup.force_encoding(Encoding::SJIS)
     assert_equal(expected, source.tr(from, to))
   end
 

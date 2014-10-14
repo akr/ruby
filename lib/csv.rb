@@ -1149,7 +1149,7 @@ class CSV
       args.unshift(io)
     else
       encoding = args[-1][:encoding] if args.last.is_a?(Hash)
-      str      = ""
+      str      = "".dup
       str.force_encoding(encoding) if encoding
       args.unshift(str)
     end
@@ -1174,7 +1174,7 @@ class CSV
   def self.generate_line(row, options = Hash.new)
     options  = {row_sep: $INPUT_RECORD_SEPARATOR}.merge(options)
     encoding = options.delete(:encoding)
-    str      = ""
+    str      = "".dup
     if encoding
       str.force_encoding(encoding)
     elsif field = row.find { |f| not f.nil? }

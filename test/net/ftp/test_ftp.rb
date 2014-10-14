@@ -505,7 +505,7 @@ class FTPTest < Test::Unit::TestCase
         assert_match(/\AUSER /, commands.shift)
         assert_match(/\APASS /, commands.shift)
         assert_equal("TYPE I\r\n", commands.shift)
-        buf = ""
+        buf = "".dup
         assert_raise(Net::ReadTimeout) do
           ftp.retrbinary("RETR foo", 1024) do |s|
             buf << s
@@ -562,7 +562,7 @@ class FTPTest < Test::Unit::TestCase
         assert_match(/\AUSER /, commands.shift)
         assert_match(/\APASS /, commands.shift)
         assert_equal("TYPE I\r\n", commands.shift)
-        buf = ""
+        buf = "".dup
         ftp.retrbinary("RETR foo", 1024) do |s|
           buf << s
         end

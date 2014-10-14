@@ -528,7 +528,7 @@ cond = proc {|ext, *|
 end
 
 if $extout
-  extout = RbConfig.expand("#{$extout}", RbConfig::CONFIG.merge("topdir"=>$topdir))
+  extout = RbConfig.expand("#{$extout}".dup, RbConfig::CONFIG.merge("topdir"=>$topdir))
   unless $ignore
     FileUtils.mkpath(extout)
   end

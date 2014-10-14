@@ -8,7 +8,7 @@ class TestWeakMap < Test::Unit::TestCase
 
   def test_map
     x = Object.new
-    k = "foo"
+    k = "foo".dup
     @wm[k] = x
     assert_same(x, @wm[k])
     assert_not_same(x, @wm["FOO".downcase])
@@ -30,7 +30,7 @@ class TestWeakMap < Test::Unit::TestCase
 
   def test_include?
     m = __callee__[/test_(.*)/, 1]
-    k = "foo"
+    k = "foo".dup
     1.times do
       x = Object.new
       @wm[k] = x
@@ -55,10 +55,10 @@ class TestWeakMap < Test::Unit::TestCase
   def test_each
     m = __callee__[/test_(.*)/, 1]
     x1 = Object.new
-    k1 = "foo"
+    k1 = "foo".dup
     @wm[k1] = x1
     x2 = Object.new
-    k2 = "bar"
+    k2 = "bar".dup
     @wm[k2] = x2
     n = 0
     @wm.__send__(m) do |k, v|
@@ -78,10 +78,10 @@ class TestWeakMap < Test::Unit::TestCase
 
   def test_each_key
     x1 = Object.new
-    k1 = "foo"
+    k1 = "foo".dup
     @wm[k1] = x1
     x2 = Object.new
-    k2 = "bar"
+    k2 = "bar".dup
     @wm[k2] = x2
     n = 0
     @wm.each_key do |k|
@@ -98,10 +98,10 @@ class TestWeakMap < Test::Unit::TestCase
   end
 
   def test_each_value
-    x1 = "foo"
+    x1 = "foo".dup
     k1 = Object.new
     @wm[k1] = x1
-    x2 = "bar"
+    x2 = "bar".dup
     k2 = Object.new
     @wm[k2] = x2
     n = 0
@@ -121,11 +121,11 @@ class TestWeakMap < Test::Unit::TestCase
   def test_size
     m = __callee__[/test_(.*)/, 1]
     assert_equal(0, @wm.__send__(m))
-    x1 = "foo"
+    x1 = "foo".dup
     k1 = Object.new
     @wm[k1] = x1
     assert_equal(1, @wm.__send__(m))
-    x2 = "bar"
+    x2 = "bar".dup
     k2 = Object.new
     @wm[k2] = x2
     assert_equal(2, @wm.__send__(m))

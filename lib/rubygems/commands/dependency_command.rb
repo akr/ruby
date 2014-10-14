@@ -102,7 +102,7 @@ use with other commands.
   end
 
   def display_readable specs, reverse # :nodoc:
-    response = ''
+    response = ''.dup
 
     specs.each do |spec|
       response << print_dependencies(spec)
@@ -153,7 +153,7 @@ use with other commands.
   end
 
   def print_dependencies(spec, level = 0) # :nodoc:
-    response = ''
+    response = ''.dup
     response << '  ' * level + "Gem #{spec.full_name}\n"
     unless spec.dependencies.empty? then
       spec.dependencies.sort_by { |dep| dep.name }.each do |dep|

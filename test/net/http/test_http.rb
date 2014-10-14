@@ -237,7 +237,7 @@ module TestNetHTTP_version_1_1_methods
   end
 
   def _test_get__iter(http)
-    buf = ''
+    buf = ''.dup
     res = http.get('/') {|s| buf << s }
     assert_kind_of Net::HTTPResponse, res
     # assert_kind_of String, res.body
@@ -253,7 +253,7 @@ module TestNetHTTP_version_1_1_methods
   end
 
   def _test_get__chunked(http)
-    buf = ''
+    buf = ''.dup
     res = http.get('/') {|s| buf << s }
     assert_kind_of Net::HTTPResponse, res
     # assert_kind_of String, res.body
@@ -476,7 +476,7 @@ module TestNetHTTP_version_1_2_methods
         assert_not_nil res['content-length']
         assert_equal $test_net_http_data.size, res['content-length'].to_i
       end
-      f = StringIO.new("".force_encoding("ASCII-8BIT"))
+      f = StringIO.new("".dup.force_encoding("ASCII-8BIT"))
       res.read_body f
       assert_equal $test_net_http_data.bytesize, f.string.bytesize
       assert_equal $test_net_http_data.encoding, f.string.encoding
@@ -759,7 +759,7 @@ class TestNetHTTPContinue < Test::Unit::TestCase
   include TestNetHTTPUtils
 
   def logfile
-    @debug = StringIO.new('')
+    @debug = StringIO.new(''.dup)
   end
 
   def mount_proc(&block)

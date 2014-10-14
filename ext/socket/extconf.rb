@@ -521,7 +521,7 @@ EOF
       $CPPFLAGS << " -D_WIN32_WINNT=0x501" unless $CPPFLAGS.include?("_WIN32_WINNT")
     end
     ipv6lib = nil
-    class << (fmt = "unknown")
+    class << (fmt = "unknown".dup)
       def %(s) s || self end
     end
     idirs, ldirs = dir_config("inet6", %w[/usr/inet6 /usr/local/v6].find {|d| File.directory?(d)})

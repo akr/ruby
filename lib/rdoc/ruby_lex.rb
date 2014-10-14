@@ -111,7 +111,7 @@ class RDoc::RubyLex
     @space_seen = false
 
     @continue = false
-    @line = ""
+    @line = "".dup
 
     @skip_space = false
     @readed_auto_clean_up = false
@@ -187,7 +187,7 @@ class RDoc::RubyLex
   end
 
   def gets
-    l = ""
+    l = "".dup
     while c = getc
       l.concat(c)
       break if c == "\n"
@@ -287,7 +287,7 @@ class RDoc::RubyLex
     @continue = false
     prompt
 
-    @line = ""
+    @line = "".dup
     @exp_line_no = @line_no
   end
 
@@ -311,7 +311,7 @@ class RDoc::RubyLex
             yield @line, @exp_line_no
           end
           break unless l
-          @line = ''
+          @line = ''.dup
           @exp_line_no = @line_no
 
           @indent = 0
@@ -433,7 +433,7 @@ class RDoc::RubyLex
                  proc{|op, io| @prev_char_no == 0 && peek(0) =~ /\s/}) do
       |op, io|
       @ltype = "="
-      res = ''
+      res = ''.dup
       nil until getc == "\n"
 
       until ( peek_equal?("=end") && peek(4) =~ /\s/ ) do
@@ -570,6 +570,7 @@ class RDoc::RubyLex
 
     @OP.def_rules("+", "-") do
       |op, io|
+      op = op.dup
       catch(:RET) do
         if @lex_state == :EXPR_ARG
           if @space_seen and peek(0) =~ /[0-9]/
@@ -863,7 +864,7 @@ class RDoc::RubyLex
              end
 
   def identify_identifier
-    token = ""
+    token = "".dup
     if peek(0) =~ /[$@]/
       token.concat(c = getc)
       if c == "@" and peek(0) == "@"
@@ -985,7 +986,7 @@ class RDoc::RubyLex
     end
     if /['"`]/ =~ ch
       user_quote = lt = ch
-      quoted = ""
+      quoted = "".dup
       while (c = getc) && c != lt
         quoted.concat c
       end
@@ -1013,11 +1014,11 @@ class RDoc::RubyLex
     output_heredoc = reserve.join =~ /\A\r?\n\z/
 
     if output_heredoc then
-      doc = '<<'
+      doc = '<<'.dup
       doc << '-' if indent
       doc << "#{user_quote}#{quoted}#{user_quote}\n"
     else
-      doc = '"'
+      doc = '"'.dup
     end
 
     @here_header = false
@@ -1068,7 +1069,7 @@ class RDoc::RubyLex
     identify_string(lt, @quoted, type)
   end
 
-  def identify_number(op = "")
+  def identify_number(op = "".dup)
     @lex_state = :EXPR_END
 
     num = op
@@ -1184,9 +1185,9 @@ class RDoc::RubyLex
     str = if ltype == quoted and %w[" ' /].include? ltype then
             ltype.dup
           elsif RUBY_VERSION > '1.9' then
-            "%#{type or PERCENT_LTYPE.key ltype}#{PERCENT_PAREN_REV[quoted]||quoted}"
+            "%#{type or PERCENT_LTYPE.key ltype}#{PERCENT_PAREN_REV[quoted]||quoted}".dup
           else
-            "%#{type or PERCENT_LTYPE.index ltype}#{PERCENT_PAREN_REV[quoted]||quoted}"
+            "%#{type or PERCENT_LTYPE.index ltype}#{PERCENT_PAREN_REV[quoted]||quoted}".dup
           end
 
     subtype = nil
@@ -1249,7 +1250,7 @@ class RDoc::RubyLex
   end
 
   def skip_inner_expression
-    res = ""
+    res = "".dup
     nest = 0
     while ch = getc
       res << ch
@@ -1266,7 +1267,7 @@ class RDoc::RubyLex
   def identify_comment
     @ltype = "#"
 
-    comment = '#'
+    comment = '#'.dup
 
     while ch = getc
       # if ch == "\\" #"
@@ -1285,7 +1286,7 @@ class RDoc::RubyLex
   end
 
   def read_escape
-    escape = ''
+    escape = ''.dup
     ch = getc
 
     case ch

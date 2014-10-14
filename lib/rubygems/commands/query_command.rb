@@ -276,7 +276,7 @@ is too hard to use.
   end
 
   def spec_authors entry, spec
-    authors = "Author#{spec.authors.length > 1 ? 's' : ''}: "
+    authors = "Author#{spec.authors.length > 1 ? 's' : ''}: ".dup
     authors << spec.authors.join(', ')
     entry << format_text(authors, 68, 4)
   end

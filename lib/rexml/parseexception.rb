@@ -17,7 +17,7 @@ module REXML
         err << @continued_exception.backtrace.join("\n")
         err << "\n...\n"
       else
-        err = ""
+        err = "".dup
       end
 
       # Get the stack trace and error message

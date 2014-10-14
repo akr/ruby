@@ -191,8 +191,8 @@ class TestPathname < Test::Unit::TestCase
 
   if DOSISH
     defassert(:del_trailing_separator, "a", "a\\")
-    defassert(:del_trailing_separator, "\225\\".force_encoding("cp932"), "\225\\\\".force_encoding("cp932"))
-    defassert(:del_trailing_separator, "\225".force_encoding("cp437"), "\225\\\\".force_encoding("cp437"))
+    defassert(:del_trailing_separator, "\225\\".dup.force_encoding("cp932"), "\225\\\\".dup.force_encoding("cp932"))
+    defassert(:del_trailing_separator, "\225".dup.force_encoding("cp437"), "\225\\\\".dup.force_encoding("cp437"))
   end
 
   def test_plus
@@ -578,16 +578,16 @@ class TestPathname < Test::Unit::TestCase
     obj = Pathname.new("a"); assert_same(obj, obj.taint)
     obj = Pathname.new("a"); assert_same(obj, obj.untaint)
 
-    assert_equal(false, Pathname.new("a"      )           .tainted?)
-    assert_equal(false, Pathname.new("a"      )      .to_s.tainted?)
-    assert_equal(true,  Pathname.new("a"      ).taint     .tainted?)
-    assert_equal(true,  Pathname.new("a"      ).taint.to_s.tainted?)
-    assert_equal(true,  Pathname.new("a".taint)           .tainted?)
-    assert_equal(true,  Pathname.new("a".taint)      .to_s.tainted?)
-    assert_equal(true,  Pathname.new("a".taint).taint     .tainted?)
-    assert_equal(true,  Pathname.new("a".taint).taint.to_s.tainted?)
+    assert_equal(false, Pathname.new("a"          )           .tainted?)
+    assert_equal(false, Pathname.new("a"          )      .to_s.tainted?)
+    assert_equal(true,  Pathname.new("a"          ).taint     .tainted?)
+    assert_equal(true,  Pathname.new("a"          ).taint.to_s.tainted?)
+    assert_equal(true,  Pathname.new("a".dup.taint)           .tainted?)
+    assert_equal(true,  Pathname.new("a".dup.taint)      .to_s.tainted?)
+    assert_equal(true,  Pathname.new("a".dup.taint).taint     .tainted?)
+    assert_equal(true,  Pathname.new("a".dup.taint).taint.to_s.tainted?)
 
-    str = "a"
+    str = "a".dup
     path = Pathname.new(str)
     str.taint
     assert_equal(false, path     .tainted?)
@@ -600,7 +600,7 @@ class TestPathname < Test::Unit::TestCase
     assert_equal(false, Pathname.new("a").taint.untaint     .tainted?)
     assert_equal(false, Pathname.new("a").taint.untaint.to_s.tainted?)
 
-    str = "a".taint
+    str = "a".dup.taint
     path = Pathname.new(str)
     str.untaint
     assert_equal(true, path     .tainted?)

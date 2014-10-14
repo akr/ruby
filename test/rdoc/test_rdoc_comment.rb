@@ -38,7 +38,7 @@ class TestRDocComment < RDoc::TestCase
   def test_extract_call_seq
     m = RDoc::AnyMethod.new nil, 'm'
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 call-seq:
   bla => true or false
 
@@ -53,7 +53,7 @@ moar comment
   def test_extract_call_seq_blank
     m = RDoc::AnyMethod.new nil, 'm'
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 call-seq:
   bla => true or false
 
@@ -67,7 +67,7 @@ call-seq:
   def test_extract_call_seq_commented
     m = RDoc::AnyMethod.new nil, 'm'
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 # call-seq:
 #   bla => true or false
 #
@@ -82,7 +82,7 @@ call-seq:
   def test_extract_call_seq_no_blank
     m = RDoc::AnyMethod.new nil, 'm'
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 call-seq:
   bla => true or false
     COMMENT
@@ -95,7 +95,7 @@ call-seq:
   def test_extract_call_seq_undent
     m = RDoc::AnyMethod.new nil, 'm'
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 call-seq:
   bla => true or false
 moar comment
@@ -107,7 +107,7 @@ moar comment
   end
 
   def test_extract_call_seq_c
-    comment = RDoc::Comment.new <<-COMMENT
+    comment = RDoc::Comment.new <<-COMMENT.dup
 call-seq:
   commercial() -> Date <br />
   commercial(cwyear, cweek=41, cwday=5, sg=nil) -> Date [ruby 1.8] <br />
@@ -137,7 +137,7 @@ commercial(cwyear, cweek=1, cwday=1, sg=nil) -> Date [ruby 1.9]
   end
 
   def test_extract_call_seq_c_no_blank
-    comment = RDoc::Comment.new <<-COMMENT
+    comment = RDoc::Comment.new <<-COMMENT.dup
 call-seq:
   commercial() -> Date <br />
   commercial(cwyear, cweek=41, cwday=5, sg=nil) -> Date [ruby 1.8] <br />
@@ -159,7 +159,7 @@ commercial(cwyear, cweek=1, cwday=1, sg=nil) -> Date [ruby 1.9]
   end
 
   def test_extract_call_seq_c_separator
-    comment = RDoc::Comment.new <<-'COMMENT'
+    comment = RDoc::Comment.new <<-'COMMENT'.dup
 call-seq:
    ARGF.readlines(sep=$/)     -> array
    ARGF.readlines(limit)      -> array

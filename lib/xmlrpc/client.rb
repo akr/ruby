@@ -436,7 +436,7 @@ module XMLRPC # :nodoc:
       if @user.nil?
         @auth = nil
       else
-        a =  "#@user"
+        a =  "#@user".dup
         a << ":#@password" if @password != nil
         @auth = "Basic " + [a].pack("m0")
       end

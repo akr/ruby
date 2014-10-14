@@ -257,7 +257,7 @@ EOT
     state.configure(:indent => '1')
     assert_equal '1', state.indent
     state = JSON.state.new
-    foo = 'foo'
+    foo = 'foo'.dup
     assert_raise(TypeError) do
       state.configure(foo)
     end

@@ -28,7 +28,7 @@ class TestWEBrickCookie < Test::Unit::TestCase
   end
 
   def test_parse
-    data = ""
+    data = "".dup
     data << '$Version="1"; '
     data << 'Customer="WILE_E_COYOTE"; $Path="/acme"; '
     data << 'Part_Number="Rocket_Launcher_0001"; $Path="/acme"; '
@@ -99,7 +99,7 @@ class TestWEBrickCookie < Test::Unit::TestCase
   end
 
   def test_parse_set_cookies
-    data = %(Shipping="FedEx"; Version="1"; Path="/acme"; Secure)
+    data = %(Shipping="FedEx"; Version="1"; Path="/acme"; Secure).dup
     data << %(, CUSTOMER=WILE_E_COYOTE; path=/; expires=Wednesday, 09-Nov-99 23:12:40 GMT; path=/; Secure)
     data << %(, name="Aaron"; Version="1"; path="/acme")
     cookies = WEBrick::Cookie.parse_set_cookies(data)

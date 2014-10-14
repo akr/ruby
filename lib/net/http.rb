@@ -903,7 +903,7 @@ module Net   #:nodoc:
       if use_ssl?
         begin
           if proxy?
-            buf = "CONNECT #{@address}:#{@port} HTTP/#{HTTPVersion}\r\n"
+            buf = "CONNECT #{@address}:#{@port} HTTP/#{HTTPVersion}\r\n".dup
             buf << "Host: #{@address}:#{@port}\r\n"
             if proxy_user
               credential = ["#{proxy_user}:#{proxy_pass}"].pack('m')

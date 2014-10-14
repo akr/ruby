@@ -691,11 +691,11 @@ class RDoc::Markdown
       content.start_with? '^' and label.equal? content
 
     if ref = @references[label] then
-      "{#{content}}[#{ref}]"
+      "{#{content}}[#{ref}]".dup
     elsif label.equal? content then
-      "[#{content}]#{text}"
+      "[#{content}]#{text}".dup
     else
-      "[#{content}]#{text}[#{label}]"
+      "[#{content}]#{text}[#{label}]".dup
     end
   end
 
@@ -788,7 +788,7 @@ class RDoc::Markdown
         label = index + 1
         note = @footnotes[ref]
 
-        link = "{^#{label}}[rdoc-label:footmark-#{label}:foottext-#{label}] "
+        link = "{^#{label}}[rdoc-label:footmark-#{label}:foottext-#{label}] ".dup
         note.parts.unshift link
 
         doc << note
@@ -817,9 +817,9 @@ class RDoc::Markdown
 
   def strong text
     if text =~ /\A[a-z\d.\/-]+\z/i then
-      "*#{text}*"
+      "*#{text}*".dup
     else
-      "<b>#{text}</b>"
+      "<b>#{text}</b>".dup
     end
   end
 
@@ -10745,7 +10745,7 @@ class RDoc::Markdown
         self.pos = _save
         break
       end
-      @result = begin;  "{#{l}}[#{s}]" ; end
+      @result = begin;  "{#{l}}[#{s}]".dup ; end
       _tmp = true
       unless _tmp
         self.pos = _save
@@ -13658,7 +13658,7 @@ class RDoc::Markdown
         self.pos = _save
         break
       end
-      @result = begin;  "<code>#{text}</code>" ; end
+      @result = begin;  "<code>#{text}</code>".dup ; end
       _tmp = true
       unless _tmp
         self.pos = _save

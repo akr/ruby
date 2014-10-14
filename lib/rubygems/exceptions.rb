@@ -137,7 +137,7 @@ class Gem::ImpossibleDependenciesError < Gem::Exception
     requester  = requester ? requester.spec.full_name : 'The user'
     dependency = @request.dependency
 
-    message = "#{requester} requires #{dependency} but it conflicted:\n"
+    message = "#{requester} requires #{dependency} but it conflicted:\n".dup
 
     @conflicts.each do |_, conflict|
       message << conflict.explanation

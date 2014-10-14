@@ -85,7 +85,7 @@ contents of a string.
   end
 
   def test_handle
-    text = "# :main: M\n"
+    text = "# :main: M\n".dup
     out = @pp.handle text
 
     assert_same out, text
@@ -93,7 +93,7 @@ contents of a string.
   end
 
   def test_handle_comment
-    text = "# :main: M\n"
+    text = "# :main: M\n".dup
     c = comment text
 
     out = @pp.handle c
@@ -103,7 +103,7 @@ contents of a string.
   end
 
   def test_handle_markup
-    c = comment ':markup: rd'
+    c = comment ':markup: rd'.dup
 
     @pp.handle c
 
@@ -111,7 +111,7 @@ contents of a string.
   end
 
   def test_handle_markup_empty
-    c = comment ':markup:'
+    c = comment ':markup:'.dup
 
     @pp.handle c
 
@@ -127,7 +127,7 @@ contents of a string.
       :junk
     end
 
-    text = "# a b c\n"
+    text = "# a b c\n".dup
 
     out = @pp.handle text, cd
 
@@ -137,7 +137,7 @@ contents of a string.
   end
 
   def test_handle_unregistered
-    text = "# :x: y\n"
+    text = "# :x: y\n".dup
     out = @pp.handle text
 
     assert_same out, text
@@ -435,7 +435,7 @@ contents of a string.
 
   def test_handle_directive_yield
     method = RDoc::AnyMethod.new nil, 'm'
-    method.params = 'index, &block'
+    method.params = 'index, &block'.dup
 
     @pp.handle_directive '', 'yield', 'item', method
 
@@ -445,7 +445,7 @@ contents of a string.
 
   def test_handle_directive_yield_block_param
     method = RDoc::AnyMethod.new nil, 'm'
-    method.params = '&block'
+    method.params = '&block'.dup
 
     @pp.handle_directive '', 'yield', 'item', method
 

@@ -42,7 +42,7 @@ module Psych
     end
 
     def test_string_dump
-      string = "okonomiyaki"
+      string = "okonomiyaki".dup
       class << string
         def to_yaml_properties
           [:@tastes]

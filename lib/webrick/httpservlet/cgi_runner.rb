@@ -9,7 +9,7 @@
 # $IPR: cgi_runner.rb,v 1.9 2002/09/25 11:33:15 gotoyuzo Exp $
 
 def sysread(io, size)
-  buf = ""
+  buf = "".dup
   while size > 0
     tmp = io.sysread(size)
     buf << tmp

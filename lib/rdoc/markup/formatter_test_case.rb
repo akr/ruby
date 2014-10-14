@@ -58,28 +58,28 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
     @m = @RM.new
 
     @bullet_list = @RM::List.new(:BULLET,
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l1')),
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l2')))
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l1'.dup)),
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l2'.dup)))
 
     @label_list = @RM::List.new(:LABEL,
-      @RM::ListItem.new('cat', @RM::Paragraph.new('cats are cool')),
-      @RM::ListItem.new('dog', @RM::Paragraph.new('dogs are cool too')))
+      @RM::ListItem.new('cat'.dup, @RM::Paragraph.new('cats are cool'.dup)),
+      @RM::ListItem.new('dog'.dup, @RM::Paragraph.new('dogs are cool too'.dup)))
 
     @lalpha_list = @RM::List.new(:LALPHA,
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l1')),
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l2')))
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l1'.dup)),
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l2'.dup)))
 
     @note_list = @RM::List.new(:NOTE,
-      @RM::ListItem.new('cat', @RM::Paragraph.new('cats are cool')),
-      @RM::ListItem.new('dog', @RM::Paragraph.new('dogs are cool too')))
+      @RM::ListItem.new('cat'.dup, @RM::Paragraph.new('cats are cool'.dup)),
+      @RM::ListItem.new('dog'.dup, @RM::Paragraph.new('dogs are cool too'.dup)))
 
     @number_list = @RM::List.new(:NUMBER,
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l1')),
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l2')))
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l1'.dup)),
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l2'.dup)))
 
     @ualpha_list = @RM::List.new(:UALPHA,
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l1')),
-      @RM::ListItem.new(nil, @RM::Paragraph.new('l2')))
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l1'.dup)),
+      @RM::ListItem.new(nil, @RM::Paragraph.new('l2'.dup)))
   end
 
   ##
@@ -145,7 +145,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
       def test_accept_heading
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(5, 'Hello')
+        @to.accept_heading @RM::Heading.new(5, 'Hello'.dup)
 
         accept_heading
       end
@@ -156,7 +156,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
       def test_accept_heading_1
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(1, 'Hello')
+        @to.accept_heading @RM::Heading.new(1, 'Hello'.dup)
 
         accept_heading_1
       end
@@ -167,7 +167,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
       def test_accept_heading_2
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(2, 'Hello')
+        @to.accept_heading @RM::Heading.new(2, 'Hello'.dup)
 
         accept_heading_2
       end
@@ -181,7 +181,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
 
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(3, 'Hello')
+        @to.accept_heading @RM::Heading.new(3, 'Hello'.dup)
 
         accept_heading_3
       end
@@ -192,7 +192,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
       def test_accept_heading_4
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(4, 'Hello')
+        @to.accept_heading @RM::Heading.new(4, 'Hello'.dup)
 
         accept_heading_4
       end
@@ -203,7 +203,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
       def test_accept_heading_b
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(1, '*Hello*')
+        @to.accept_heading @RM::Heading.new(1, '*Hello*'.dup)
 
         accept_heading_b
       end
@@ -215,7 +215,7 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
       def test_accept_heading_suppressed_crossref # HACK to_html_crossref test
         @to.start_accepting
 
-        @to.accept_heading @RM::Heading.new(1, '\\Hello')
+        @to.accept_heading @RM::Heading.new(1, '\\Hello'.dup)
 
         accept_heading_suppressed_crossref
       end
@@ -408,8 +408,8 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
 
       def test_accept_list_item_start_note_2
         list = list(:NOTE,
-                 item('<tt>teletype</tt>',
-                   para('teletype description')))
+                 item('<tt>teletype</tt>'.dup,
+                   para('teletype description'.dup)))
 
         @to.start_accepting
 
@@ -425,9 +425,9 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
 
       def test_accept_list_item_start_note_multi_description
         list = list(:NOTE,
-                 item(%w[label],
-                   para('description one')),
-                 item(nil, para('description two')))
+                 item(%w[label].map(&:dup),
+                   para('description one'.dup)),
+                 item(nil, para('description two'.dup)))
 
         @to.start_accepting
 
@@ -443,8 +443,8 @@ class RDoc::Markup::FormatterTestCase < RDoc::TestCase
 
       def test_accept_list_item_start_note_multi_label
         list = list(:NOTE,
-                 item(%w[one two],
-                   para('two headers')))
+                 item(%w[one two].map(&:dup),
+                   para('two headers'.dup)))
 
         @to.start_accepting
 

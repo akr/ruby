@@ -5,7 +5,7 @@ module DL
   class TestCFunc < TestBase
     def setup
       super
-      @name = 'strcpy'
+      @name = 'strcpy'.dup
       @cf = CFunc.new(@libc[@name], TYPE_VOIDP, @name)
     end
 
@@ -72,7 +72,7 @@ module DL
       Thread.new do
         f = Function.new(@cf, [TYPE_VOIDP, TYPE_VOIDP])
         assert_nil CFunc.last_error
-        f.call("000", "123")
+        f.call("000".dup, "123".dup)
         assert_not_nil CFunc.last_error
       end.join
     end

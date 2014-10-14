@@ -41,10 +41,10 @@ class TestTimeTZ < Test::Unit::TestCase
 
     def format_gmtoff(gmtoff, colon=false)
       if gmtoff < 0
-        expected = "-"
+        expected = "-".dup
         gmtoff = -gmtoff
       else
-        expected = "+"
+        expected = "+".dup
       end
       gmtoff /= 60
       expected << "%02d" % [gmtoff / 60]
@@ -55,10 +55,10 @@ class TestTimeTZ < Test::Unit::TestCase
 
     def format_gmtoff2(gmtoff)
       if gmtoff < 0
-        expected = "-"
+        expected = "-".dup
         gmtoff = -gmtoff
       else
-        expected = "+"
+        expected = "+".dup
       end
       expected << "%02d:%02d:%02d" % [gmtoff / 3600, gmtoff % 3600 / 60, gmtoff % 60]
       expected
@@ -90,7 +90,7 @@ class TestTimeTZ < Test::Unit::TestCase
 
 
   def assert_time_constructor(tz, expected, method, args, message=nil)
-    m = message ? "#{message}\n" : ""
+    m = message ? "#{message}\n".dup : "".dup
     m << "TZ=#{tz} Time.#{method}(#{args.map {|arg| arg.inspect }.join(', ')})"
     real = time_to_s(Time.send(method, *args))
     assert_equal(expected, real, m)

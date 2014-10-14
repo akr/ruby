@@ -93,7 +93,7 @@ class TestEncoding < Test::Unit::TestCase
   end
 
   def test_marshal
-    str = "".force_encoding("EUC-JP")
+    str = "".dup.force_encoding("EUC-JP")
     str2 = Marshal.load(Marshal.dump(str))
     assert_equal(str, str2)
     str2 = Marshal.load(Marshal.dump(str2))
@@ -101,14 +101,14 @@ class TestEncoding < Test::Unit::TestCase
   end
 
   def test_compatible_p
-    ua = "abc".force_encoding(Encoding::UTF_8)
+    ua = "abc".dup.force_encoding(Encoding::UTF_8)
     assert_equal(Encoding::UTF_8, Encoding.compatible?(ua, :abc))
     assert_equal(nil, Encoding.compatible?(ua, 1))
-    bin = "a".force_encoding(Encoding::ASCII_8BIT)
-    asc = "b".force_encoding(Encoding::US_ASCII)
+    bin = "a".dup.force_encoding(Encoding::ASCII_8BIT)
+    asc = "b".dup.force_encoding(Encoding::US_ASCII)
     assert_equal(Encoding::ASCII_8BIT, Encoding.compatible?(bin, asc))
-    bin = "\xff".force_encoding(Encoding::ASCII_8BIT).to_sym
-    asc = "b".force_encoding(Encoding::ASCII_8BIT)
+    bin = "\xff".dup.force_encoding(Encoding::ASCII_8BIT).to_sym
+    asc = "b".dup.force_encoding(Encoding::ASCII_8BIT)
     assert_equal(Encoding::ASCII_8BIT, Encoding.compatible?(bin, asc))
     assert_equal(Encoding::UTF_8, Encoding.compatible?("\u{3042}".to_sym, ua.to_sym))
   end

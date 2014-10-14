@@ -23,7 +23,7 @@ def main
   unless ARGV.size == 1
     abort "wrong number of arguments (#{ARGV.size} for 1)"
   end
-  out = ""
+  out = "".dup
   File.open(ARGV[0]) {|f|
     prelude f, out
     grammar f, out

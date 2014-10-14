@@ -14,7 +14,7 @@ class TestCSV::DataConverters < TestCSV
 
   def setup
     super
-    @data   = "Numbers,:integer,1,:float,3.015"
+    @data   = "Numbers,:integer,1,:float,3.015".dup
     @parser = CSV.new(@data)
 
     @custom = lambda { |field| field =~ /\A:(\S.*?)\s*\Z/ ? $1.to_sym : field }

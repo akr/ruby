@@ -63,7 +63,7 @@ class Gem::Package::Old < Gem::Package
 
         destination = install_location full_name, destination_dir
 
-        file_data = ''
+        file_data = ''.dup
 
         read_until_dashes io do |line|
           file_data << line
@@ -94,7 +94,7 @@ class Gem::Package::Old < Gem::Package
   # Reads the file list section from the old-format gem +io+
 
   def file_list io # :nodoc:
-    header = ''
+    header = ''.dup
 
     read_until_dashes io do |line|
       header << line
@@ -134,7 +134,7 @@ class Gem::Package::Old < Gem::Package
 
     return @spec if @spec
 
-    yaml = ''
+    yaml = ''.dup
 
     @gem.with_read_io do |io|
       skip_ruby io

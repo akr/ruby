@@ -35,7 +35,7 @@ module Fiddle
     end
 
     def test_to_str
-      str = "hello world"
+      str = "hello world".dup
       ptr = Pointer[str]
 
       assert_equal 3, ptr.to_str(3).length
@@ -46,7 +46,7 @@ module Fiddle
     end
 
     def test_to_s
-      str = "hello world"
+      str = "hello world".dup
       ptr = Pointer[str]
 
       assert_equal 3, ptr.to_s(3).length
@@ -57,14 +57,14 @@ module Fiddle
     end
 
     def test_minus
-      str = "hello world"
+      str = "hello world".dup
       ptr = Pointer[str]
       assert_equal ptr.to_s, (ptr + 3 - 3).to_s
     end
 
     # TODO: what if the pointer size is 0?  raise an exception? do we care?
     def test_plus
-      str = "hello world"
+      str = "hello world".dup
       ptr = Pointer[str]
       new_str = ptr + 3
       assert_equal 'lo world', new_str.to_s
@@ -79,7 +79,7 @@ module Fiddle
     end
 
     def test_to_ptr_string
-      str = "hello world"
+      str = "hello world".dup
       ptr = Pointer[str]
       assert ptr.tainted?, 'pointer should be tainted'
       assert_equal str.length, ptr.size
@@ -202,7 +202,7 @@ module Fiddle
         assert_equal(str[0].ord, ptr[0])
         assert_equal(str[1].ord, ptr[1])
       }
-      str = 'abc'
+      str = 'abc'.dup
       ptr = Pointer[str]
       check.call(str, ptr)
 

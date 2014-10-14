@@ -116,7 +116,7 @@ class TestJSONAddition < Test::Unit::TestCase
   end
 
   def test_raw_strings
-    raw = ''
+    raw = ''.dup
     raw.respond_to?(:encode!) and raw.encode!(Encoding::ASCII_8BIT)
     raw_array = []
     for i in 0..255

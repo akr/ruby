@@ -32,7 +32,7 @@ class MultiPart
 
   def initialize(boundary=nil)
     @boundary = boundary || create_boundary()
-    @buf = ''
+    @buf = ''.dup
     @buf.force_encoding(::Encoding::ASCII_8BIT) if defined?(::Encoding)
   end
   attr_reader :boundary
@@ -53,7 +53,7 @@ class MultiPart
 
   def close
     buf = @buf
-    @buf = ''
+    @buf = ''.dup
     return buf << "--#{boundary}--\r\n"
   end
 
@@ -203,7 +203,7 @@ class CGIMultipartTest < Test::Unit::TestCase
       {:name=>'image1',  :value=>_read('small.png'),
        :filename=>'small.png',  :content_type=>'image/png'},  # small image
     ]
-    @data[1][:value].force_encoding(::Encoding::UTF_8) if defined?(::Encoding)
+    @data[1][:value] = @data[1][:value].dup.force_encoding(::Encoding::UTF_8) if defined?(::Encoding)
     @expected_class = StringIO
     _test_multipart()
   end
@@ -219,7 +219,7 @@ class CGIMultipartTest < Test::Unit::TestCase
       {:name=>'image1',  :value=>_read('large.png'),
        :filename=>'large.png',  :content_type=>'image/png'},  # large image
     ]
-    @data[1][:value].force_encoding(::Encoding::UTF_8) if defined?(::Encoding)
+    @data[1][:value] = @data[1][:value].dup.force_encoding(::Encoding::UTF_8) if defined?(::Encoding)
     @expected_class = Tempfile
     _test_multipart()
   end
@@ -324,7 +324,7 @@ class CGIMultipartTest < Test::Unit::TestCase
       {:name=>'image1',  :value=>_read('small.png'),
        :filename=>'small.png',  :content_type=>'image/png'},  # small image
     ]
-    @data[1][:value].force_encoding("UTF-8")
+    @data[1][:value] = @data[1][:value].dup.force_encoding("UTF-8")
     _prepare(@data)
     cgi = CGI.new(:accept_charset=>"UTF-8")
     assert_equal('file1.html', cgi['file1'].original_filename)
@@ -350,7 +350,7 @@ class CGIMultipartTest < Test::Unit::TestCase
       require 'stringio'
       ENV['REQUEST_METHOD'] = 'POST'
       ENV['CONTENT_TYPE'] = 'multipart/form-data; boundary=foobar1234'
-      body = <<-BODY
+      body = <<-BODY.dup
 --foobar1234
 Content-Disposition: form-data: name=\"name1\"
 

@@ -57,7 +57,7 @@ class TestPrime < Test::Unit::TestCase
   def test_new
     orig_stderr, orig_verbose = $stderr, $VERBOSE
 
-    $stderr = buf = StringIO.new('', 'w')
+    $stderr = buf = StringIO.new(''.dup, 'w')
     $VERBOSE = false
 
     enum = Prime.new

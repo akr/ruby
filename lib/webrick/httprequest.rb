@@ -169,7 +169,7 @@ module WEBrick
       @accept_charset = []
       @accept_encoding = []
       @accept_language = []
-      @body = ""
+      @body = "".dup
 
       @addr = @peeraddr = nil
       @attributes = {}

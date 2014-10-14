@@ -60,11 +60,11 @@ class TestCommon < Test::Unit::TestCase
                  "AZ%5B%5C%5D%5E_%60az%7B%7C%7D%7E",
                  URI.encode_www_form_component("\x00 !\"\#$%&'()*+,-./09:;<=>?@AZ[\\]^_`az{|}~"))
     assert_equal("%95A", URI.encode_www_form_component(
-                   "\x95\x41".force_encoding(Encoding::Shift_JIS)))
+                   "\x95\x41".dup.force_encoding(Encoding::Shift_JIS)))
     assert_equal("0B", URI.encode_www_form_component(
-                   "\x30\x42".force_encoding(Encoding::UTF_16BE)))
+                   "\x30\x42".dup.force_encoding(Encoding::UTF_16BE)))
     assert_equal("%1B%24B%24%22%1B%28B", URI.encode_www_form_component(
-                   "\e$B$\"\e(B".force_encoding(Encoding::ISO_2022_JP)))
+                   "\e$B$\"\e(B".dup.force_encoding(Encoding::ISO_2022_JP)))
 
     assert_equal("%E3%81%82", URI.encode_www_form_component(
                    "\u3042", Encoding::ASCII_8BIT))
@@ -86,7 +86,7 @@ class TestCommon < Test::Unit::TestCase
     assert_equal("%EF%BF%BD%EF%BF%BD", URI.encode_www_form_component(
                    "\xE3\x81\xFF", "utf-8"))
     assert_equal("%E6%9F%8A%EF%BF%BD%EF%BF%BD", URI.encode_www_form_component(
-                   "\x95\x41\xff\xff".force_encoding(Encoding::Shift_JIS), "utf-8"))
+                   "\x95\x41\xff\xff".dup.force_encoding(Encoding::Shift_JIS), "utf-8"))
   end
 
   def test_decode_www_form_component
@@ -94,10 +94,10 @@ class TestCommon < Test::Unit::TestCase
                  URI.decode_www_form_component(
                    "%20+%21%22%23%24%25%26%27%28%29*%2B%2C-.%2F09%3A%3B%3C%3D%3E%3F%40" \
                    "AZ%5B%5C%5D%5E_%60az%7B%7C%7D%7E"))
-    assert_equal("\xA1\xA2".force_encoding(Encoding::EUC_JP),
+    assert_equal("\xA1\xA2".dup.force_encoding(Encoding::EUC_JP),
                  URI.decode_www_form_component("%A1%A2", "EUC-JP"))
-    assert_equal("\xE3\x81\x82\xE3\x81\x82".force_encoding("UTF-8"),
-                 URI.decode_www_form_component("\xE3\x81\x82%E3%81%82".force_encoding("UTF-8")))
+    assert_equal("\xE3\x81\x82\xE3\x81\x82".dup.force_encoding("UTF-8"),
+                 URI.decode_www_form_component("\xE3\x81\x82%E3%81%82".dup.force_encoding("UTF-8")))
 
     assert_raise(ArgumentError){URI.decode_www_form_component("%")}
     assert_raise(ArgumentError){URI.decode_www_form_component("%a")}
@@ -168,7 +168,7 @@ class TestCommon < Test::Unit::TestCase
   end
 
   private
-  def s(str) str.force_encoding(Encoding::Windows_31J); end
+  def s(str) str.dup.force_encoding(Encoding::Windows_31J); end
 end
 
 

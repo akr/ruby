@@ -133,7 +133,7 @@ class RDoc::Comment
   # HACK dubious
 
   def force_encoding encoding
-    @text.force_encoding encoding
+    @text = @text.dup.force_encoding encoding
   end
 
   ##
@@ -198,7 +198,7 @@ class RDoc::Comment
 
   def remove_private
     # Workaround for gsub encoding for Ruby 1.9.2 and earlier
-    empty = ''
+    empty = ''.dup
     empty.force_encoding @text.encoding if Object.const_defined? :Encoding
 
     @text = @text.gsub(%r%^\s*([#*]?)--.*?^\s*(\1)\+\+\n?%m, empty)

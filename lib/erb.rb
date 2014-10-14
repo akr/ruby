@@ -548,7 +548,7 @@ class ERB
       def initialize(compiler, enc=nil)
         @compiler = compiler
         @line = []
-        @script = enc ? "#coding:#{enc}\n" : ""
+        @script = enc ? "#coding:#{enc}\n".dup : "".dup
         @compiler.pre_cmd.each do |x|
           push(x)
         end
@@ -601,7 +601,7 @@ class ERB
       enc = detect_magic_comment(s) || enc
       out = Buffer.new(self, enc)
 
-      content = ''
+      content = ''.dup
       scanner = make_scanner(s)
       scanner.scan do |token|
         next if token.nil?
@@ -610,7 +610,7 @@ class ERB
           case token
           when PercentLine
             add_put_cmd(out, content) if content.size > 0
-            content = ''
+            content = ''.dup
             out.push(token.to_s)
             out.cr
           when :cr
@@ -618,11 +618,11 @@ class ERB
           when '<%', '<%=', '<%#'
             scanner.stag = token
             add_put_cmd(out, content) if content.size > 0
-            content = ''
+            content = ''.dup
           when "\n"
             content << "\n"
             add_put_cmd(out, content)
-            content = ''
+            content = ''.dup
           when '<%%'
             content << '<%'
           else
@@ -646,7 +646,7 @@ class ERB
               # out.push("# #{content_dump(content)}")
             end
             scanner.stag = nil
-            content = ''
+            content = ''.dup
           when '%%>'
             content << '%>'
           else
@@ -823,7 +823,7 @@ class ERB
   def set_eoutvar(compiler, eoutvar = '_erbout')
     compiler.put_cmd = "#{eoutvar}.concat"
     compiler.insert_cmd = "#{eoutvar}.concat"
-    compiler.pre_cmd = ["#{eoutvar} = ''"]
+    compiler.pre_cmd = ["#{eoutvar} = ''.dup"]
     compiler.post_cmd = ["#{eoutvar}.force_encoding(__ENCODING__)"]
   end
 

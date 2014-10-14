@@ -831,8 +831,8 @@ module FileUtils
   #
   def compare_stream(a, b)
     bsize = fu_stream_blksize(a, b)
-    sa = ""
-    sb = ""
+    sa = "".dup
+    sb = "".dup
     begin
       a.read(bsize, sa)
       b.read(bsize, sb)

@@ -46,7 +46,7 @@ module RSS
       @channel_nodes = make_element("#{@prefix}:favicon",
                                     @favicon_attrs,
                                     @favicon_contents)
-      items = ""
+      items = "".dup
       @items.each do |attrs, contents|
         image_item = make_element("#{@prefix}:item", attrs, contents)
         items << make_item(image_item)

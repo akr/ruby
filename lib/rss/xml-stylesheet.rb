@@ -53,7 +53,7 @@ module RSS
     end
 
     def to_s
-      rv = ""
+      rv = "".dup
       if @href
         rv << %Q[<?xml-stylesheet]
         ATTRIBUTES.each do |name|

@@ -88,7 +88,7 @@ class TestArray < Test::Unit::TestCase
   end
 
   def test_split_0
-    x = "The Book of Mormon"
+    x = "The Book of Mormon".dup
     assert_equal(x.reverse, x.split(//).reverse!.join)
     assert_equal(x.reverse, x.reverse!)
     assert_equal("g:n:i:r:t:s: :e:t:y:b: :1", "1 byte string".split(//).reverse.join(":"))
@@ -974,7 +974,7 @@ class TestArray < Test::Unit::TestCase
     assert_equal(true, s.tainted?)
 
     bug5902 = '[ruby-core:42161]'
-    sep = ":".taint
+    sep = ":".dup.taint
 
     s = @cls[].join(sep)
     assert_equal(false, s.tainted?, bug5902)
@@ -983,8 +983,8 @@ class TestArray < Test::Unit::TestCase
     s = @cls[1, 2].join(sep)
     assert_equal(true, s.tainted?, bug5902)
 
-    e = ''.force_encoding('EUC-JP')
-    u = ''.force_encoding('UTF-8')
+    e = ''.dup.force_encoding('EUC-JP')
+    u = ''.dup.force_encoding('UTF-8')
     assert_equal(Encoding::US_ASCII, [[]].join.encoding)
     assert_equal(Encoding::US_ASCII, [1, [u]].join.encoding)
     assert_equal(Encoding::UTF_8, [u, [e]].join.encoding)
@@ -1518,7 +1518,7 @@ class TestArray < Test::Unit::TestCase
 
     assert_equal(@cls[1, 2, 3], @cls[1, 2, 3].uniq)
 
-    a = %w(a a)
+    a = %w(a a).map(&:dup)
     b = a.uniq
     assert_equal(%w(a a), a)
     assert(a.none?(&:frozen?))
@@ -1550,7 +1550,7 @@ class TestArray < Test::Unit::TestCase
     assert_equal([1], b)
     assert_not_same(a, b)
 
-    a = %w(a a)
+    a = %w(a a).map(&:dup)
     b = a.uniq {|v| v }
     assert_equal(%w(a a), a)
     assert(a.none?(&:frozen?))
@@ -1603,7 +1603,7 @@ class TestArray < Test::Unit::TestCase
       a.uniq!   {|e| e[:c]}
     end
 
-    a = %w(a a)
+    a = %w(a a).map(&:dup)
     b = a.uniq
     assert_equal(%w(a a), a)
     assert(a.none?(&:frozen?))
@@ -1631,7 +1631,7 @@ class TestArray < Test::Unit::TestCase
     assert_equal([1,2], a)
     assert_equal(nil, b)
 
-    a = %w(a a)
+    a = %w(a a).map(&:dup)
     b = a.uniq! {|v| v }
     assert_equal(%w(a), b)
     assert_same(a, b)
@@ -1665,8 +1665,8 @@ class TestArray < Test::Unit::TestCase
     assert_equal(@cls[1,2], @cls[1, 1] | @cls[2, 2])
     assert_equal(@cls[1,2], @cls[1, 2] | @cls[1, 2])
 
-    a = %w(a b c)
-    b = %w(a b c d e)
+    a = %w(a b c).map(&:dup)
+    b = %w(a b c d e).map(&:dup)
     c = a | b
     assert_equal(c, b)
     assert_not_same(c, b)

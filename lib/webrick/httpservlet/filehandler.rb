@@ -96,7 +96,7 @@ module WEBrick
           if ranges.size > 1
             time = Time.now
             boundary = "#{time.sec}_#{time.usec}_#{Process::pid}"
-            body = ''
+            body = ''.dup
             ranges.each{|range|
               first, last = prepare_range(range, filesize)
               next if first < 0
@@ -450,9 +450,9 @@ module WEBrick
         elsif !namewidth or (namewidth = namewidth.to_i) < 2
           namewidth = 25
         end
-        query = query.inject('') {|s, (k, v)| s << '&' << HTMLUtils::escape("#{k}=#{v}")}
+        query = query.inject(''.dup) {|s, (k, v)| s << '&' << HTMLUtils::escape("#{k}=#{v}")}
 
-        type = "text/html"
+        type = "text/html".dup
         case enc = Encoding.find('filesystem')
         when Encoding::US_ASCII, Encoding::ASCII_8BIT
         else
@@ -461,7 +461,7 @@ module WEBrick
         res['content-type'] = type
 
         title = "Index of #{HTMLUtils::escape(req.path)}"
-        res.body = <<-_end_of_html_
+        res.body = <<-_end_of_html_.dup
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML>
   <HEAD>
@@ -497,7 +497,7 @@ module WEBrick
           else
             dname = name
           end
-          s =  "<TR><TD class=\"name\"><A HREF=\"#{HTTPUtils::escape(name)}#{query if name.end_with?('/')}\">#{HTMLUtils::escape(dname)}</A></TD>"
+          s =  "<TR><TD class=\"name\"><A HREF=\"#{HTTPUtils::escape(name)}#{query if name.end_with?('/')}\">#{HTMLUtils::escape(dname)}</A></TD>".dup
           s << "<TD class=\"mtime\">" << (time ? time.strftime("%Y/%m/%d %H:%M") : "") << "</TD>"
           s << "<TD class=\"size\">" << (size >= 0 ? size.to_s : "-") << "</TD></TR>\n"
           res.body << s

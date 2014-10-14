@@ -50,7 +50,7 @@ class RDoc::Parser::Simple < RDoc::Parser
 
   def remove_private_comment comment
     # Workaround for gsub encoding for Ruby 1.9.2 and earlier
-    empty = ''
+    empty = ''.dup
     empty.force_encoding comment.encoding if Object.const_defined? :Encoding
 
     comment = comment.gsub(%r%^--\n.*?^\+\+\n?%m, empty)

@@ -96,7 +96,7 @@ end
 def parse inline
   @inline = inline
   @src = StringScanner.new inline
-  @pre = ""
+  @pre = "".dup
   @yydebug = true
   do_parse.to_s
 end
@@ -761,7 +761,7 @@ end
 
 def _reduce_13(val, _values, result)
       content = val[1]
-      result = inline "<em>#{content}</em>", content
+      result = inline "<em>#{content}</em>".dup, content
 
     result
 end

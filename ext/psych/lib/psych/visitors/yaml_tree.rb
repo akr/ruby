@@ -333,7 +333,7 @@ module Psych
           end
           @emitter.scalar str, nil, tag, plain, quote, style
         else
-          maptag = '!ruby/string'
+          maptag = '!ruby/string'.dup
           maptag << ":#{o.class}" unless o.class == ::String
 
           register o, @emitter.start_mapping(nil, maptag, false, Nodes::Mapping::BLOCK)

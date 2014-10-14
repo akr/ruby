@@ -2,7 +2,7 @@ require "test/unit"
 
 class TestGBK < Test::Unit::TestCase
   def s(s)
-    s.force_encoding("gbk")
+    s.dup.force_encoding("gbk")
   end
 
   def test_mbc_enc_len

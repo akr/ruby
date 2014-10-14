@@ -44,7 +44,7 @@ module Digest
     # returns self.
     def file(name)
       File.open(name, "rb") {|f|
-        buf = ""
+        buf = "".dup
         while f.read(16384, buf)
           update buf
         end

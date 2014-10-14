@@ -25,7 +25,7 @@ class CGI
     #   - O EMPTY
     def nOE_element(element, attributes = {})
       attributes={attributes=>nil} if attributes.kind_of?(String)
-      s = "<#{element.upcase}"
+      s = "<#{element.upcase}".dup
       attributes.each do|name, value|
         next unless value
         s << " "
@@ -324,6 +324,7 @@ class CGI
       else
         body = ""
       end
+      body = body.dup
       if @output_hidden
         body << @output_hidden.collect{|k,v|
           "<INPUT TYPE=\"HIDDEN\" NAME=\"#{k}\" VALUE=\"#{v}\">"
@@ -407,7 +408,7 @@ class CGI
       end
       pretty = attributes.delete("PRETTY")
       pretty = "  " if true == pretty
-      buf = ""
+      buf = "".dup
 
       if attributes.has_key?("DOCTYPE")
         if attributes["DOCTYPE"]

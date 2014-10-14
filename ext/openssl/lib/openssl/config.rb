@@ -52,6 +52,7 @@ module OpenSSL
         begin
           parse_config_lines(io)
         rescue ConfigError => e
+          p e.message
           e.message.replace("error in line #{io.lineno}: " + e.message)
           raise
         end

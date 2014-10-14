@@ -2,7 +2,7 @@ require "test/unit"
 
 class TestEucKr < Test::Unit::TestCase
   def s(s)
-    s.force_encoding("euc-kr")
+    s.dup.force_encoding("euc-kr")
   end
 
   def test_mbc_enc_len

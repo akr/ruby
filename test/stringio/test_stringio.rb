@@ -5,7 +5,7 @@ require_relative '../ruby/ut_eof'
 class TestStringIO < Test::Unit::TestCase
   include TestEOF
   def open_file(content)
-    f = StringIO.new(content)
+    f = StringIO.new(content.dup)
     yield f
   end
   alias open_file_rw open_file
@@ -13,7 +13,7 @@ class TestStringIO < Test::Unit::TestCase
   include TestEOF::Seek
 
   def test_truncate
-    io = StringIO.new("")
+    io = StringIO.new("".dup)
     io.puts "abc"
     io.truncate(0)
     io.puts "def"
@@ -68,7 +68,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_write
-    s = ""
+    s = "".dup
     f = StringIO.new(s, "w")
     f.print("foo")
     f.close
@@ -90,7 +90,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_write_nonblock_no_exceptions
-    s = ""
+    s = "".dup
     f = StringIO.new(s, "w")
     f.write_nonblock("foo", exception: false)
     f.close
@@ -98,7 +98,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_write_nonblock
-    s = ""
+    s = "".dup
     f = StringIO.new(s, "w")
     f.write_nonblock("foo")
     f.close
@@ -121,9 +121,9 @@ class TestStringIO < Test::Unit::TestCase
 
   def test_write_infection
     bug9769 = '[ruby-dev:48118] [Bug #9769]'
-    s = "".untaint
+    s = "".dup.untaint
     f = StringIO.new(s, "w")
-    f.print("bar".taint)
+    f.print("bar".dup.taint)
     f.close
     assert_predicate(s, :tainted?, bug9769)
   ensure
@@ -131,7 +131,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_write_encoding
-    s = "".force_encoding(Encoding::UTF_8)
+    s = "".dup.force_encoding(Encoding::UTF_8)
     f = StringIO.new(s)
     f.print("\u{3053 3093 306b 3061 306f ff01}".b)
     assert_equal(Encoding::UTF_8, s.encoding, "honor the original encoding over ASCII-8BIT")
@@ -142,7 +142,7 @@ class TestStringIO < Test::Unit::TestCase
     f = StringIO.new()
     f.set_encoding(Encoding::ASCII_8BIT)
     f.write("quz \x83 mat".b)
-    s = "foo \x97 bar".force_encoding(Encoding::WINDOWS_1252)
+    s = "foo \x97 bar".dup.force_encoding(Encoding::WINDOWS_1252)
     assert_nothing_raised(Encoding::CompatibilityError, bug10285) {
       f.write(s)
     }
@@ -153,11 +153,11 @@ class TestStringIO < Test::Unit::TestCase
     f = StringIO.new("", "r")
     assert_raise(IOError) { f.write("foo") }
 
-    f = StringIO.new("", "w")
+    f = StringIO.new("".dup, "w")
     assert_raise(IOError) { f.read }
 
     assert_raise(Errno::EACCES) { StringIO.new("".freeze, "w") }
-    s = ""
+    s = "".dup
     f = StringIO.new(s, "w")
     s.freeze
     assert_raise(IOError) { f.write("foo") }
@@ -195,7 +195,7 @@ class TestStringIO < Test::Unit::TestCase
     f.close
     assert_raise(IOError) { f.close }
 
-    f = StringIO.new("")
+    f = StringIO.new("".dup)
     f.close_read
     f.close_write
     assert_raise(IOError) { f.close }
@@ -204,13 +204,13 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_close_read
-    f = StringIO.new("")
+    f = StringIO.new("".dup)
     f.close_read
     assert_raise(IOError) { f.read }
     assert_raise(IOError) { f.close_read }
     f.close
 
-    f = StringIO.new("", "w")
+    f = StringIO.new("".dup, "w")
     assert_raise(IOError) { f.close_read }
     f.close
   ensure
@@ -218,7 +218,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_close_write
-    f = StringIO.new("")
+    f = StringIO.new("".dup)
     f.close_write
     assert_raise(IOError) { f.write("foo") }
     assert_raise(IOError) { f.close_write }
@@ -232,7 +232,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_closed
-    f = StringIO.new("")
+    f = StringIO.new("".dup)
     assert_equal(false, f.closed?)
     f.close
     assert_equal(true, f.closed?)
@@ -241,7 +241,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_closed_read
-    f = StringIO.new("")
+    f = StringIO.new("".dup)
     assert_equal(false, f.closed_read?)
     f.close_write
     assert_equal(false, f.closed_read?)
@@ -252,7 +252,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_closed_write
-    f = StringIO.new("")
+    f = StringIO.new("".dup)
     assert_equal(false, f.closed_write?)
     f.close_read
     assert_equal(false, f.closed_write?)
@@ -349,7 +349,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_ungetbyte
-    s = "foo\nbar\n"
+    s = "foo\nbar\n".dup
     t = StringIO.new(s, "r")
     t.ungetbyte(0x41)
     assert_equal(0x41, t.getbyte)
@@ -365,13 +365,13 @@ class TestStringIO < Test::Unit::TestCase
 
   def test_ungetc
     s = "1234"
-    f = StringIO.new(s, "r")
+    f = StringIO.new(s.dup, "r")
     assert_nothing_raised { f.ungetc("x") }
     assert_equal("x", f.getc) # bug? -> it's a feature from 1.9.
     assert_equal("1", f.getc)
 
     s = "1234"
-    f = StringIO.new(s, "r")
+    f = StringIO.new(s.dup, "r")
     assert_equal("1", f.getc)
     f.ungetc("y".ord)
     assert_equal("y", f.getc)
@@ -382,7 +382,7 @@ class TestStringIO < Test::Unit::TestCase
 
   def test_readchar
     f = StringIO.new("1234")
-    a = ""
+    a = "".dup
     assert_raise(EOFError) { loop { a << f.readchar } }
     assert_equal("1234", a)
   end
@@ -432,7 +432,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_putc
-    s = ""
+    s = "".dup
     f = StringIO.new(s, "w")
     f.putc("1")
     f.putc("2")
@@ -440,7 +440,7 @@ class TestStringIO < Test::Unit::TestCase
     f.close
     assert_equal("123", s)
 
-    s = "foo"
+    s = "foo".dup
     f = StringIO.new(s, "a")
     f.putc("1")
     f.putc("2")
@@ -450,14 +450,14 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_putc_nonascii
-    s = ""
+    s = "".dup
     f = StringIO.new(s, "w")
     f.putc("\u{3042}")
     f.putc(0x3044)
     f.close
     assert_equal("\u{3042}D", s)
 
-    s = "foo"
+    s = "foo".dup
     f = StringIO.new(s, "a")
     f.putc("\u{3042}")
     f.putc(0x3044)
@@ -471,18 +471,18 @@ class TestStringIO < Test::Unit::TestCase
     assert_raise(ArgumentError) { f.read(1, 2, 3) }
     assert_equal("\u3042\u3044", f.read)
     f.rewind
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.read(f.size))
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.read(f.size))
 
     bug5207 = '[ruby-core:39026]'
     f.rewind
     assert_equal("\u3042\u3044", f.read(nil, nil), bug5207)
     f.rewind
-    s = ""
+    s = "".dup
     f.read(nil, s)
     assert_equal("\u3042\u3044", s, bug5207)
     f.rewind
     # not empty buffer
-    s = "0123456789"
+    s = "0123456789".dup
     f.read(nil, s)
     assert_equal("\u3042\u3044", s)
   end
@@ -491,23 +491,23 @@ class TestStringIO < Test::Unit::TestCase
     f = StringIO.new("\u3042\u3044")
     assert_raise(ArgumentError) { f.readpartial(-1) }
     assert_raise(ArgumentError) { f.readpartial(1, 2, 3) }
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.readpartial(100))
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.readpartial(100))
     f.rewind
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.readpartial(f.size))
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.readpartial(f.size))
     f.rewind
     # not empty buffer
-    s = '0123456789'
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.readpartial(f.size, s))
+    s = '0123456789'.dup
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.readpartial(f.size, s))
   end
 
   def test_read_nonblock
     f = StringIO.new("\u3042\u3044")
     assert_raise(ArgumentError) { f.read_nonblock(-1) }
     assert_raise(ArgumentError) { f.read_nonblock(1, 2, 3) }
-    assert_equal("\u3042\u3044".force_encoding("BINARY"), f.read_nonblock(100))
+    assert_equal("\u3042\u3044".dup.force_encoding("BINARY"), f.read_nonblock(100))
     assert_raise(EOFError) { f.read_nonblock(10) }
     f.rewind
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(f.size))
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(f.size))
   end
 
   def test_read_nonblock_no_exceptions
@@ -515,14 +515,14 @@ class TestStringIO < Test::Unit::TestCase
     assert_raise(ArgumentError) { f.read_nonblock(-1, exception: false) }
     assert_raise(ArgumentError) { f.read_nonblock(1, 2, 3, exception: false) }
     assert_raise(ArgumentError) { f.read_nonblock }
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(100, exception: false))
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(100, exception: false))
     assert_equal(nil, f.read_nonblock(10, exception: false))
     f.rewind
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(f.size))
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(f.size))
     f.rewind
     # not empty buffer
-    s = '0123456789'
-    assert_equal("\u3042\u3044".force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(f.size, s))
+    s = '0123456789'.dup
+    assert_equal("\u3042\u3044".dup.force_encoding(Encoding::ASCII_8BIT), f.read_nonblock(f.size, s))
   end
 
   def test_size
@@ -547,7 +547,7 @@ class TestStringIO < Test::Unit::TestCase
   end
 
   def test_ungetc_pos
-    b = '\\b00010001 \\B00010001 \\b1 \\B1 \\b000100011'
+    b = '\\b00010001 \\B00010001 \\b1 \\B1 \\b000100011'.dup
     s = StringIO.new( b )
     expected_pos = 0
     while n = s.getc

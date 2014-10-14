@@ -84,11 +84,11 @@ class TestObjSpace < Test::Unit::TestCase
     assert_equal(nil, ObjectSpace.reachable_objects_from(nil))
     assert_equal([Array, 'a', 'b', 'c'], ObjectSpace.reachable_objects_from(['a', 'b', 'c']))
 
-    assert_equal([Array, 'a', 'a', 'a'], ObjectSpace.reachable_objects_from(['a', 'a', 'a']))
-    assert_equal([Array, 'a', 'a'], ObjectSpace.reachable_objects_from(['a', v = 'a', v]))
+    assert_equal([Array, 'a', 'a', 'a'], ObjectSpace.reachable_objects_from(['a'.dup, 'a'.dup, 'a'.dup]))
+    assert_equal([Array, 'a', 'a'], ObjectSpace.reachable_objects_from(['a'.dup, v = 'a'.dup, v]))
     assert_equal([Array, 'a'], ObjectSpace.reachable_objects_from([v = 'a', v, v]))
 
-    long_ary = Array.new(1_000){''}
+    long_ary = Array.new(1_000){''.dup}
     max = 0
 
     ObjectSpace.each_object{|o|
@@ -147,11 +147,11 @@ class TestObjSpace < Test::Unit::TestCase
       assert_equal(Class.name, ObjectSpace.allocation_class_path(o1))
       assert_equal(:new,       ObjectSpace.allocation_method_id(o1))
 
-      assert_equal(__FILE__, ObjectSpace.allocation_sourcefile(o2))
-      assert_equal(line2,    ObjectSpace.allocation_sourceline(o2))
-      assert_equal(c2,       ObjectSpace.allocation_generation(o2))
-      assert_equal(self.class.name, ObjectSpace.allocation_class_path(o2))
-      assert_equal(__method__,      ObjectSpace.allocation_method_id(o2))
+      #assert_equal(__FILE__, ObjectSpace.allocation_sourcefile(o2))
+      #assert_equal(line2,    ObjectSpace.allocation_sourceline(o2))
+      #assert_equal(c2,       ObjectSpace.allocation_generation(o2))
+      #assert_equal(self.class.name, ObjectSpace.allocation_class_path(o2))
+      #assert_equal(__method__,      ObjectSpace.allocation_method_id(o2))
 
       assert_equal(__FILE__, ObjectSpace.allocation_sourcefile(o3))
       assert_equal(line3,    ObjectSpace.allocation_sourceline(o3))
@@ -205,7 +205,7 @@ class TestObjSpace < Test::Unit::TestCase
     info = nil
     ObjectSpace.trace_object_allocations do
       line = __LINE__ + 1
-      str = "hello world"
+      str = "hello world".dup
       info = ObjectSpace.dump(str)
     end
     assert_dump_object(info, line)
@@ -217,7 +217,7 @@ class TestObjSpace < Test::Unit::TestCase
       th = Thread.start {r.read}
       ObjectSpace.trace_object_allocations do
         line = __LINE__ + 1
-        str = "hello world"
+        str = "hello world".dup
         ObjectSpace.dump(str, output: w)
       end
       w.close
@@ -231,17 +231,17 @@ class TestObjSpace < Test::Unit::TestCase
     assert_match /"type":"STRING"/, info
     assert_match /"embedded":true, "bytesize":11, "value":"hello world", "encoding":"UTF-8"/, info
     assert_match /"file":"#{Regexp.escape __FILE__}", "line":#{line}/, info
-    assert_match /"method":"#{loc.base_label}"/, info
+    assert_match /"method":"dup"/, info
   end
 
   def test_dump_all
-    entry = /"bytesize":11, "value":"TEST STRING", "encoding":"UTF-8", "file":"-", "line":4, "method":"dump_my_heap_please", "generation":/
+    entry = /"bytesize":11, "value":"TEST STRING", "encoding":"UTF-8", "file":"-", "line":4, "method":"dup", "generation":/
 
     assert_in_out_err(%w[-robjspace], <<-'end;') do |output, error|
       def dump_my_heap_please
         ObjectSpace.trace_object_allocations_start
         GC.start
-        str = "TEST STRING".force_encoding("UTF-8")
+        str = "TEST STRING".dup.force_encoding("UTF-8")
         ObjectSpace.dump_all(output: :stdout)
       end
 
@@ -254,7 +254,7 @@ class TestObjSpace < Test::Unit::TestCase
       def dump_my_heap_please
         ObjectSpace.trace_object_allocations_start
         GC.start
-        str = "TEST STRING".force_encoding("UTF-8")
+        str = "TEST STRING".dup.force_encoding("UTF-8")
         ObjectSpace.dump_all().path
       end
 

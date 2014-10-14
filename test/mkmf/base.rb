@@ -16,7 +16,7 @@ class TestMkmf < Test::Unit::TestCase
   class Capture
     attr_accessor :origin
     def initialize
-      @buffer = ""
+      @buffer = "".dup
       @filter = nil
       @out = true
       @origin = nil

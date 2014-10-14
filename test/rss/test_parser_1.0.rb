@@ -95,7 +95,7 @@ EOR
 
       1.step(15, 3) do |i|
         rss = make_RDF() do
-          res = make_channel
+          res = make_channel.dup
           i.times { res << make_item }
           res
         end

@@ -38,7 +38,7 @@ class RDoc::Generator::POT::POEntry
   # Returns the PO entry in PO format.
 
   def to_s
-    entry = ''
+    entry = ''.dup
     entry << format_translator_comment
     entry << format_extracted_comment
     entry << format_references
@@ -72,7 +72,7 @@ msgstr #{format_message(@msgstr)}
     return '' unless comment
     return '' if comment.empty?
 
-    formatted_comment = ''
+    formatted_comment = ''.dup
     comment.each_line do |line|
       formatted_comment << "#{mark} #{line}"
     end
@@ -91,7 +91,7 @@ msgstr #{format_message(@msgstr)}
   def format_references
     return '' if @references.empty?
 
-    formatted_references = ''
+    formatted_references = ''.dup
     @references.sort.each do |file, line|
       formatted_references << "\#: #{file}:#{line}\n"
     end
@@ -108,7 +108,7 @@ msgstr #{format_message(@msgstr)}
   def format_message message
     return "\"#{escape(message)}\"" unless message.include?("\n")
 
-    formatted_message = '""'
+    formatted_message = '""'.dup
     message.each_line do |line|
       formatted_message << "\n"
       formatted_message << "\"#{escape(line)}\""

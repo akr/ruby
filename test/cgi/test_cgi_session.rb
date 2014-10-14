@@ -25,7 +25,7 @@ class CGISessionTest < Test::Unit::TestCase
       'SERVER_PROTOCOL' => 'HTTP/1.1',
     }
     value1="value1"
-    value2="\x8F\xBC\x8D]"
+    value2="\x8F\xBC\x8D]".dup
     value2.force_encoding("SJIS") if defined?(::Encoding)
     ENV.update(@environ)
     cgi = CGI.new
@@ -63,7 +63,7 @@ class CGISessionTest < Test::Unit::TestCase
       'SERVER_PROTOCOL' => 'HTTP/1.1',
     }
     value1="value1"
-    value2="\x8F\xBC\x8D]"
+    value2="\x8F\xBC\x8D]".dup
     value2.force_encoding("SJIS") if defined?(::Encoding)
     ENV.update(@environ)
     cgi = CGI.new
@@ -100,7 +100,7 @@ class CGISessionTest < Test::Unit::TestCase
       'SERVER_PROTOCOL' => 'HTTP/1.1',
     }
     value1="value1"
-    value2="\x8F\xBC\x8D]"
+    value2="\x8F\xBC\x8D]".dup
     value2.force_encoding("SJIS") if defined?(::Encoding)
     ENV.update(@environ)
     cgi = CGI.new
@@ -140,7 +140,7 @@ class CGISessionTest < Test::Unit::TestCase
       'SERVER_PROTOCOL' => 'HTTP/1.1',
     }
     value1="value1"
-    value2="\x8F\xBC\x8D]"
+    value2="\x8F\xBC\x8D]".dup
     value2.force_encoding("SJIS") if defined?(::Encoding)
     ENV.update(@environ)
     cgi = CGI.new

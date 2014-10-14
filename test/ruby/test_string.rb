@@ -147,7 +147,7 @@ class TestString < Test::Unit::TestCase
 
     o = Object.new
     def o.to_int; 2; end
-    s = "foo"
+    s = "foo".dup
     s[o] = "bar"
     assert_equal("fobar", s)
 
@@ -213,23 +213,23 @@ class TestString < Test::Unit::TestCase
     assert_equal(S("world!"), S("world") << 33)
     assert_equal(S("world!"), S("world") << S("!"))
 
-    s = "a"
+    s = "a".dup
     10.times {|i|
       s << s
       assert_equal("a" * (2 << i), s)
     }
 
-    s = ["foo"].pack("p")
+    s = ["foo".dup].pack("p")
     l = s.size
     s << "bar"
     assert_equal(l + 3, s.size)
 
     bug = '[ruby-core:27583]'
-    assert_raise(RangeError, bug) {S("a".force_encoding(Encoding::UTF_8)) << -3}
-    assert_raise(RangeError, bug) {S("a".force_encoding(Encoding::UTF_8)) << -2}
-    assert_raise(RangeError, bug) {S("a".force_encoding(Encoding::UTF_8)) << -1}
-    assert_raise(RangeError, bug) {S("a".force_encoding(Encoding::UTF_8)) << 0x81308130}
-    assert_nothing_raised {S("a".force_encoding(Encoding::GB18030)) << 0x81308130}
+    assert_raise(RangeError, bug) {S("a".dup.force_encoding(Encoding::UTF_8)) << -3}
+    assert_raise(RangeError, bug) {S("a".dup.force_encoding(Encoding::UTF_8)) << -2}
+    assert_raise(RangeError, bug) {S("a".dup.force_encoding(Encoding::UTF_8)) << -1}
+    assert_raise(RangeError, bug) {S("a".dup.force_encoding(Encoding::UTF_8)) << 0x81308130}
+    assert_nothing_raised {S("a".dup.force_encoding(Encoding::GB18030)) << 0x81308130}
   end
 
   def test_MATCH # '=~'
@@ -385,7 +385,7 @@ class TestString < Test::Unit::TestCase
     a.chomp!
     assert_equal(S("hello"), a)
 
-    a="hello!"
+    a="hello!".dup
     a.chomp!
     assert_equal(S("hello"), a)
 
@@ -396,19 +396,19 @@ class TestString < Test::Unit::TestCase
     assert_equal(S("hello"), a.chomp!)
     assert_equal(S("hello\n"), b)
 
-    s = "foo\r\n"
+    s = "foo\r\n".dup
     s.chomp!
     assert_equal("foo", s)
 
-    s = "foo\r"
+    s = "foo\r".dup
     s.chomp!
     assert_equal("foo", s)
 
-    s = "foo\r\n"
+    s = "foo\r\n".dup
     s.chomp!("")
     assert_equal("foo", s)
 
-    s = "foo\r"
+    s = "foo\r".dup
     s.chomp!("")
     assert_equal("foo\r", s)
 
@@ -1061,7 +1061,7 @@ class TestString < Test::Unit::TestCase
     s.replace(s2)
     assert_equal(s2, s)
 
-    s2 = ["foo"].pack("p")
+    s2 = ["foo".dup].pack("p")
     s.replace(s2)
     assert_equal(s2, s)
 
@@ -1160,7 +1160,7 @@ class TestString < Test::Unit::TestCase
     a.scan('x')
     assert_nil($~)
 
-    assert_equal(3, S("hello hello hello").scan("hello".taint).count(&:tainted?))
+    assert_equal(3, S("hello hello hello").scan("hello".dup.taint).count(&:tainted?))
   end
 
   def test_size
@@ -1342,7 +1342,7 @@ class TestString < Test::Unit::TestCase
     bug6206 = '[ruby-dev:45441]'
     Encoding.list.each do |enc|
       next unless enc.ascii_compatible?
-      s = S("a:".force_encoding(enc))
+      s = S("a:".dup.force_encoding(enc))
       assert_equal([enc]*2, s.split(":", 2).map(&:encoding), bug6206)
     end
 
@@ -1396,10 +1396,10 @@ class TestString < Test::Unit::TestCase
     assert_equal(S("x"), S("      x        ").strip)
     assert_equal(S("x"), S(" \n\r\t     x  \t\r\n\n      ").strip)
 
-    assert_equal("0b0 ".force_encoding("UTF-16BE"),
-                 "\x00 0b0 ".force_encoding("UTF-16BE").strip)
-    assert_equal("0\x000b0 ".force_encoding("UTF-16BE"),
-                 "0\x000b0 ".force_encoding("UTF-16BE").strip)
+    assert_equal("0b0 ".dup.force_encoding("UTF-16BE"),
+                 "\x00 0b0 ".dup.force_encoding("UTF-16BE").strip)
+    assert_equal("0\x000b0 ".dup.force_encoding("UTF-16BE"),
+                 "0\x000b0 ".dup.force_encoding("UTF-16BE").strip)
   end
 
   def test_strip!
@@ -1573,8 +1573,8 @@ class TestString < Test::Unit::TestCase
     assert_equal(S("No.10"), a.succ!)
     assert_equal(S("No.10"), a)
 
-    assert_equal("aaaaaaaaaaaa", "zzzzzzzzzzz".succ!)
-    assert_equal("aaaaaaaaaaaaaaaaaaaaaaaa", "zzzzzzzzzzzzzzzzzzzzzzz".succ!)
+    assert_equal("aaaaaaaaaaaa", "zzzzzzzzzzz".dup.succ!)
+    assert_equal("aaaaaaaaaaaaaaaaaaaaaaaa", "zzzzzzzzzzzzzzzzzzzzzzz".dup.succ!)
   end
 
   def test_sum
@@ -1704,7 +1704,7 @@ class TestString < Test::Unit::TestCase
     assert_equal(S("*e**o"), S("hello").tr(S("^aeiou"), S("*")))
     assert_equal(S("hal"),   S("ibm").tr(S("b-z"), S("a-z")))
 
-    a = "abc".force_encoding(Encoding::US_ASCII)
+    a = "abc".dup.force_encoding(Encoding::US_ASCII)
     assert_equal(Encoding::US_ASCII, a.tr(S("z"), S("\u0101")).encoding, '[ruby-core:22326]')
 
     assert_equal("a".hash, "a".tr("a", "\u0101").tr("\u0101", "a").hash, '[ruby-core:22328]')
@@ -1736,7 +1736,7 @@ class TestString < Test::Unit::TestCase
     assert_nil(a.tr!(S("B-Z"), S("A-Z")))
     assert_equal(S("ibm"), a)
 
-    a = "abc".force_encoding(Encoding::US_ASCII)
+    a = "abc".dup.force_encoding(Encoding::US_ASCII)
     assert_nil(a.tr!(S("z"), S("\u0101")), '[ruby-core:22326]')
     assert_equal(Encoding::US_ASCII, a.encoding, '[ruby-core:22326]')
   end
@@ -1944,7 +1944,7 @@ class TestString < Test::Unit::TestCase
     s = "a" * 100
     s.succ!
     assert_equal("a" * 99 + "b", s)
-    s = ""
+    s = "".dup
     s.succ!
     assert_equal("", s)
   end
@@ -1963,7 +1963,7 @@ class TestString < Test::Unit::TestCase
   end
 
   def test_times2
-    s1 = ''
+    s1 = ''.dup
     100.times {|n|
       s2 = "a" * n
       assert_equal(s1, s2)
@@ -2026,7 +2026,7 @@ class TestString < Test::Unit::TestCase
     bug6206 = '[ruby-dev:45441]'
     Encoding.list.each do |enc|
       next unless enc.ascii_compatible?
-      s = S("a:".force_encoding(enc))
+      s = S("a:".dup.force_encoding(enc))
       assert_equal([enc]*3, s.partition("|").map(&:encoding), bug6206)
     end
 
@@ -2044,7 +2044,7 @@ class TestString < Test::Unit::TestCase
     bug6206 = '[ruby-dev:45441]'
     Encoding.list.each do |enc|
       next unless enc.ascii_compatible?
-      s = S("a:".force_encoding(enc))
+      s = S("a:".dup.force_encoding(enc))
       assert_equal([enc]*3, s.rpartition("|").map(&:encoding), bug6206)
     end
 
@@ -2102,8 +2102,8 @@ class TestString < Test::Unit::TestCase
 
 =begin
   def test_compare_different_encoding_string
-    s1 = "\xff".force_encoding("UTF-8")
-    s2 = "\xff".force_encoding("ISO-2022-JP")
+    s1 = "\xff".dup.force_encoding("UTF-8")
+    s2 = "\xff".dup.force_encoding("ISO-2022-JP")
     assert_equal([-1, 1], [s1 <=> s2, s2 <=> s1].sort)
   end
 =end
@@ -2159,7 +2159,7 @@ class TestString < Test::Unit::TestCase
       ext = Encoding.default_external
       Encoding.default_external = "us-ascii"
       $VERBOSE = verbose
-      i = "abc\"\\".force_encoding("utf-8").inspect
+      i = "abc\"\\".dup.force_encoding("utf-8").inspect
     ensure
       $VERBOSE = nil
       Encoding.default_external = ext
@@ -2174,13 +2174,13 @@ class TestString < Test::Unit::TestCase
   end
 
   def test_prepend
-    assert_equal(S("hello world!"), "world!".prepend("hello "))
+    assert_equal(S("hello world!"), "world!".dup.prepend("hello "))
 
     foo = Object.new
     def foo.to_str
       "b"
     end
-    assert_equal(S("ba"), "a".prepend(foo))
+    assert_equal(S("ba"), "a".dup.prepend(foo))
 
     a = S("world")
     b = S("hello ")
@@ -2190,7 +2190,7 @@ class TestString < Test::Unit::TestCase
   end
 
   def u(str)
-    str.force_encoding(Encoding::UTF_8)
+    str.dup.force_encoding(Encoding::UTF_8)
   end
 
   def test_byteslice

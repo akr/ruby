@@ -16,7 +16,7 @@ class TestRDocTomDoc < RDoc::TestCase
 
     pp = RDoc::Markup::PreProcess.new __FILE__, []
 
-    text = "# Public: Do some stuff\n"
+    text = "# Public: Do some stuff\n".dup
 
     comment = RDoc::Comment.new text, nil
     comment.format = 'tomdoc'
@@ -119,7 +119,7 @@ here - something
   end
 
   def test_parse_paragraph
-    text = "Public: Do some stuff\n"
+    text = "Public: Do some stuff\n".dup
 
     expected =
       @RM::Document.new(
@@ -129,7 +129,7 @@ here - something
   end
 
   def test_parse_multiline_paragraph
-    text = "Public: Do some stuff\n"
+    text = "Public: Do some stuff\n".dup
     text << "On a new line\n"
 
     expected =
@@ -140,7 +140,7 @@ here - something
   end
 
   def test_parse_arguments
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Create new Arg object.
 
 name        - name of argument
@@ -161,7 +161,7 @@ description - arguments description
   end
 
   def test_parse_arguments_array
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Create new Arg object.
 
 names[] - names of arguments
@@ -179,7 +179,7 @@ names[] - names of arguments
   end
 
   def test_parse_arguments_multiline
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 foo - A comment goes here
@@ -198,7 +198,7 @@ foo - A comment goes here
   end
 
   def test_parse_arguments_nested
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 foo - A comment goes here
@@ -220,7 +220,7 @@ foo - A comment goes here
   end
 
   def test_parse_examples
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 Examples
@@ -245,7 +245,7 @@ Examples
   end
 
   def test_parse_examples_signature
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 Examples
@@ -279,7 +279,7 @@ Signature
   end
 
   def test_parse_returns
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 Returns a thing
@@ -301,7 +301,7 @@ Returns another thing
   end
 
   def test_parse_returns_multiline
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 Returns a thing
@@ -320,7 +320,7 @@ Returns a thing
   end
 
   def test_parse_signature
-    text = <<-TEXT
+    text = <<-TEXT.dup
 Do some stuff
 
 Signature
@@ -340,7 +340,7 @@ Signature
   end
 
   def test_tokenize_paragraph
-    @td.tokenize "Public: Do some stuff\n"
+    @td.tokenize "Public: Do some stuff\n".dup
 
     expected = [
       [:TEXT,    "Do some stuff",  0, 0],
@@ -351,7 +351,7 @@ Signature
   end
 
   def test_tokenize_multiline_paragraph
-    text = "Public: Do some stuff\n"
+    text = "Public: Do some stuff\n".dup
     text << "On a new line\n"
 
     @td.tokenize text
@@ -367,7 +367,7 @@ Signature
   end
 
   def test_tokenize_arguments
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Create new Arg object.
 
 name        - name of argument
@@ -390,7 +390,7 @@ description - arguments description
   end
 
   def test_tokenize_arguments_array
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Create new Arg object.
 
 names[stuff] - names of arguments
@@ -409,7 +409,7 @@ names[stuff] - names of arguments
   end
 
   def test_tokenize_arguments_multiline
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Do some stuff
 
 foo - A comment goes here
@@ -431,7 +431,7 @@ foo - A comment goes here
   end
 
   def test_tokenize_arguments_nested
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Do some stuff
 
 foo - A comment goes here
@@ -454,7 +454,7 @@ foo - A comment goes here
   end
 
   def test_tokenize_examples
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Do some stuff
 
 Examples
@@ -478,7 +478,7 @@ Examples
   end
 
   def test_tokenize_returns
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Do some stuff
 
 Returns a thing
@@ -496,7 +496,7 @@ Returns a thing
   end
 
   def test_tokenize_returns_multiline
-    @td.tokenize <<-TEXT
+    @td.tokenize <<-TEXT.dup
 Do some stuff
 
 Returns a thing

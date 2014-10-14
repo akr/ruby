@@ -328,7 +328,7 @@ class TestKeywordArguments < Test::Unit::TestCase
   end
 
   def test_required_keyword_with_newline
-    bug9669 = '[ruby-core:61658] [Bug #9669]'
+    bug9669 = '[ruby-core:61658] [Bug #9669]'.dup
     assert_nothing_raised(SyntaxError, bug9669) do
       eval(<<-'end;', nil, __FILE__, __LINE__)
         def bug9669.foo a:

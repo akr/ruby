@@ -443,7 +443,7 @@ class TestArgf < Test::Unit::TestCase
 
   def test_read2
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
-      s = ""
+      s = "".dup
       ARGF.read(8, s)
       p s
     SRC
@@ -453,7 +453,7 @@ class TestArgf < Test::Unit::TestCase
 
   def test_read2_with_not_empty_buffer
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
-      s = "0123456789"
+      s = "0123456789".dup
       ARGF.read(8, s)
       p s
     SRC
@@ -465,7 +465,7 @@ class TestArgf < Test::Unit::TestCase
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
       nil while ARGF.gets
       p ARGF.read
-      p ARGF.read(0, "")
+      p ARGF.read(0, "".dup)
     SRC
       assert_equal("nil\n\"\"\n", f.read)
     end
@@ -473,13 +473,13 @@ class TestArgf < Test::Unit::TestCase
 
   def test_readpartial
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
-      s = ""
+      s = "".dup
       begin
         loop do
           s << ARGF.readpartial(1)
-          t = ""; ARGF.readpartial(1, t); s << t
+          t = "".dup; ARGF.readpartial(1, t); s << t
           # not empty buffer
-          u = "abcdef"; ARGF.readpartial(1, u); s << u
+          u = "abcdef".dup; ARGF.readpartial(1, u); s << u
         end
       rescue EOFError
         puts s
@@ -491,11 +491,11 @@ class TestArgf < Test::Unit::TestCase
 
   def test_readpartial2
     ruby('-e', <<-SRC) do |f|
-      s = ""
+      s = "".dup
       begin
         loop do
           s << ARGF.readpartial(1)
-          t = ""; ARGF.readpartial(1, t); s << t
+          t = "".dup; ARGF.readpartial(1, t); s << t
         end
       rescue EOFError
         $stdout.binmode
@@ -513,7 +513,7 @@ class TestArgf < Test::Unit::TestCase
 
   def test_getc
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
-      s = ""
+      s = "".dup
       while c = ARGF.getc
         s << c
       end
@@ -537,7 +537,7 @@ class TestArgf < Test::Unit::TestCase
 
   def test_readchar
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
-      s = ""
+      s = "".dup
       begin
         while c = ARGF.readchar
           s << c
@@ -592,7 +592,7 @@ class TestArgf < Test::Unit::TestCase
 
   def test_each_char
     ruby('-e', <<-SRC, @t1.path, @t2.path, @t3.path) do |f|
-      s = ""
+      s = "".dup
       ARGF.each_char {|c| s << c }
       puts s
     SRC

@@ -517,7 +517,7 @@ class Gem::TestCase < MiniTest::Unit::TestCase
   # Enables pretty-print for all tests
 
   def mu_pp(obj)
-    s = ''
+    s = ''.dup
     s = PP.pp obj, s
     s = s.force_encoding(Encoding.default_external) if defined? Encoding
     s.chomp

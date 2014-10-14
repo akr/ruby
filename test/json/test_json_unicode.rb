@@ -56,12 +56,12 @@ class TestJSONUnicode < Test::Unit::TestCase
       end
       assert_equal i, JSON.parse(json).first[0]
       if i == ?\b
-        generated = JSON.generate(["" << i])
+        generated = JSON.generate(["".dup << i])
         assert '["\b"]' == generated || '["\10"]' == generated
       elsif [?\n, ?\r, ?\t, ?\f].include?(i)
-        assert_equal '[' << ('' << i).dump << ']', JSON.generate(["" << i])
+        assert_equal '['.dup << (''.dup << i).dump << ']', JSON.generate(["".dup << i])
       elsif i.chr < 0x20.chr
-        assert_equal json, JSON.generate(["" << i])
+        assert_equal json, JSON.generate(["".dup << i])
       end
     end
     assert_raise(JSON::GeneratorError) do

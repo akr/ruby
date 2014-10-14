@@ -388,6 +388,8 @@ static NODE *new_evstr_gen(struct parser_params*,NODE*);
 #define new_evstr(n) new_evstr_gen(parser,(n))
 static NODE *evstr2dstr_gen(struct parser_params*,NODE*);
 #define evstr2dstr(n) evstr2dstr_gen(parser,(n))
+static NODE *str_transform_gen(struct parser_params*, NODE*);
+#define str_transform(n) str_transform_gen(parser,(n))
 static NODE *splat_array(NODE*);
 
 static NODE *call_bin_op_gen(struct parser_params*,NODE*,ID,NODE*);
@@ -3831,6 +3833,7 @@ strings		: string
 			else {
 			    node = evstr2dstr(node);
 			}
+                        node = str_transform(node);
 			$$ = node;
 		    /*%
 			$$ = $1;
@@ -8593,6 +8596,20 @@ evstr2dstr_gen(struct parser_params *parser, NODE *node)
 }
 
 static NODE *
+str_transform_gen(struct parser_params *parser, NODE *node)
+{
+    if (nd_type(node) == NODE_STR) {
+        OBJ_FREEZE(node->nd_lit);
+        node->nd_lit = rb_fstring(node->nd_lit);
+        nd_set_type(node, NODE_LIT);
+    }
+    else {
+        node = NEW_CALL(node, rb_intern("freeze"), 0);
+    }
+    return node;
+}
+
+static NODE *
 new_evstr_gen(struct parser_params *parser, NODE *node)
 {
     NODE *head = node;
@@ -8601,6 +8618,12 @@ new_evstr_gen(struct parser_params *parser, NODE *node)
 	switch (nd_type(node)) {
 	  case NODE_STR: case NODE_DSTR: case NODE_EVSTR:
 	    return node;
+          case NODE_LIT:
+	    if (RB_TYPE_P(node->nd_lit, T_STRING)) {
+              nd_set_type(node, NODE_STR);
+              node->nd_lit = rb_str_dup(node->nd_lit);
+              return node;
+            }
 	}
     }
     return NEW_EVSTR(head);

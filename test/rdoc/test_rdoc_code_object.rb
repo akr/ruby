@@ -53,7 +53,7 @@ class TestRDocCodeObject < XrefTestCase
 
     refute_equal Encoding::UTF_8, ''.encoding, 'Encoding sanity check'
 
-    input = 'text'
+    input = 'text'.dup
     input.force_encoding Encoding::UTF_8
 
     @co.comment = input
@@ -67,7 +67,7 @@ class TestRDocCodeObject < XrefTestCase
 
     refute_equal Encoding::UTF_8, ''.encoding, 'Encoding sanity check'
 
-    input = ''
+    input = ''.dup
     input.force_encoding Encoding::UTF_8
 
     @co.comment = input

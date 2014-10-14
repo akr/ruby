@@ -193,7 +193,7 @@ class TestSuper < Test::Unit::TestCase
           super
         end
       end
-      overlaid.call(str = "123")
+      overlaid.call(str = "123".dup)
       overlaid.call([1,2,3])
       str.reverse
     end

@@ -25,7 +25,7 @@ module DL
     end
 
     def test_to_str
-      str = "hello world"
+      str = "hello world".dup
       ptr = CPtr[str]
 
       assert_equal 3, ptr.to_str(3).length
@@ -36,7 +36,7 @@ module DL
     end
 
     def test_to_s
-      str = "hello world"
+      str = "hello world".dup
       ptr = CPtr[str]
 
       assert_equal 3, ptr.to_s(3).length
@@ -47,7 +47,7 @@ module DL
     end
 
     def test_minus
-      str = "hello world"
+      str = "hello world".dup
       ptr = CPtr[str]
       assert_equal ptr.to_s, (ptr + 3 - 3).to_s
     end
@@ -190,7 +190,7 @@ module DL
         assert_equal(str[0].ord, ptr[0])
         assert_equal(str[1].ord, ptr[1])
       }
-      str = 'abc'
+      str = 'abc'.dup
       ptr = CPtr[str]
       check.call(str, ptr)
 

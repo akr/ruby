@@ -110,7 +110,7 @@ if File.exist?(depend = File.join($srcdir, "depend"))
   erb = ERB.new(File.read(depend), nil, '%')
   erb.filename = depend
   tmp = erb.result(binding)
-  dep = "\n#### depend ####\n\n" << depend_rules(tmp).join
+  dep = "\n#### depend ####\n\n".dup << depend_rules(tmp).join
 else
   dep = ""
 end

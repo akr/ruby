@@ -132,7 +132,7 @@ module REXMLTests
       string = "This is a new comment!"
       source = "<!--#{string}-->"
       comment = Comment.new string
-      REXML::Formatters::Default.new.write( comment, out = "" )
+      REXML::Formatters::Default.new.write( comment, out = "".dup )
       assert_equal(source, out)
 
       comment2 = Comment.new comment
@@ -164,7 +164,7 @@ module REXMLTests
         :respect_whitespace => %w{ a c }
       } )
       assert_equal text, doc.elements["//c"].text
-      string = ""
+      string = "".dup
       doc.root.each { |n| string << n.to_s if n.kind_of? Text }
       assert_equal text+text, string
 
@@ -178,7 +178,7 @@ module REXMLTests
       doc = Document.new source, { :respect_whitespace => :all }
       doc.root.add_element("d").text = string
       assert_equal text, doc.root.text
-      nxt = ""
+      nxt = "".dup
       doc.root.each { |n| nxt << n.to_s if n.kind_of? Text }
       assert_equal text+text, nxt
       assert_equal text, doc.root.elements["b"].text
@@ -192,7 +192,7 @@ module REXMLTests
       correct = "<!DOCTYPE something>"
       doc = DocType.new(string)
       assert_equal(string, doc.name)
-      doc.write(out="")
+      doc.write(out="".dup)
       assert_equal(correct, out)
 
       doc2 = DocType.new(doc)
@@ -205,7 +205,7 @@ module REXMLTests
       doc = Document.new( one_line_source )
       doc = doc[0]
       assert(doc)
-      doc.write(test="")
+      doc.write(test="".dup)
       assert_equal(correct, test)
 
       multi_line_source = '<!DOCTYPE xsa PUBLIC
@@ -215,7 +215,7 @@ module REXMLTests
       d = Document.new( multi_line_source )
       doc = d[0]
       assert(doc)
-      doc.write(test="")
+      doc.write(test="".dup)
       assert_equal(correct, test)
 
       odd_space_source = '  <!DOCTYPE
@@ -223,14 +223,14 @@ module REXMLTests
       "http://www.garshol.priv.no/download/xsa/xsa.dtd">   <a/>'
       d = Document.new( odd_space_source )
       dt = d.doctype
-      dt.write(test="")
+      dt.write(test="".dup)
       assert_equal(correct, test)
 
       # OK, the BIG doctype test, numba wun
       doc = File.open(fixture_path("doctype_test.xml")) do |docin|
         Document.new(docin)
       end
-      doc.write(test="")
+      doc.write(test="".dup)
       assert_equal(31, doc.doctype.size)
     end
 
@@ -255,13 +255,13 @@ module REXMLTests
 
     def test_instruction
       target = "use"
-      content = "ruby"
+      content = "ruby".dup
       source = "<?#{target} #{content}?>"
 
       instruction = Instruction.new target, content
       instruction2 = Instruction.new instruction
       assert_equal(instruction, instruction2)
-      REXML::Formatters::Default.new.write( instruction, out = "" )
+      REXML::Formatters::Default.new.write( instruction, out = "".dup )
       assert_equal(source, out)
 
       d = Document.new( source )
@@ -289,7 +289,7 @@ module REXMLTests
       three = doc.root.elements["three"]
       doc.root.insert_before( three, Element.new("two") )
       nxt = doc.root.elements["one"]
-      string = ""
+      string = "".dup
       while nxt
         string << nxt.name
         nxt = nxt.next_sibling
@@ -298,11 +298,11 @@ module REXMLTests
 
 
       doc.root.insert_after( three, Element.new("four") )
-      string = ""
+      string = "".dup
       doc.root.each { |element| string << element.name }
       assert_equal "onetwothreefourfive", string
 
-      string = ""
+      string = "".dup
       nxt = doc.root.elements["five"]
       while nxt
         string << nxt.name
@@ -326,7 +326,7 @@ module REXMLTests
 
       doc = Document.new "<a><one/><three/></a>"
       doc.root[1,0] = Element.new "two"
-      string = ""
+      string = "".dup
       doc.root.each { |el| string << el.name }
       assert_equal "onetwothree", string
     end
@@ -354,7 +354,7 @@ module REXMLTests
       string = "0 < ( 1 & 1 )"
       correct = "0 &lt; ( 1 &amp; 1 )"
       text = Text.new(string, true)
-      f.write(text,out="")
+      f.write(text,out="".dup)
       assert_equal(correct, out)
 
       string = "Cats &amp; dogs"
@@ -365,7 +365,7 @@ module REXMLTests
       doc = Document.new( string2, {
         :raw => %w{ a b }
       } )
-      f.write(doc,out="")
+      f.write(doc,out="".dup)
       assert_equal(string2, out)
       b = doc.root.add_element( "b" )
       b.text = string
@@ -528,7 +528,7 @@ module REXMLTests
 
     def test_no_format
       source = "<a><b><c>blah</c><d/></b></a>"
-      out = ""
+      out = "".dup
       doc = Document.new( source )
       doc.write(out)
       assert_equal(source, out)
@@ -583,7 +583,7 @@ module REXMLTests
       doc = Document.new
       doc.add_element "sean:blah"
       doc.root.text = "Some text"
-      out = ""
+      out = "".dup
       doc.write(out)
       assert_equal "<sean:blah>Some text</sean:blah>", out
     end
@@ -603,13 +603,13 @@ module REXMLTests
     def test_big_documentation
       d = File.open(fixture_path("documentation.xml")) {|f| Document.new f }
       assert_equal "Sean Russell", d.elements["documentation/head/author"].text.tr("\n\t", " ").squeeze(" ")
-      out = ""
+      out = "".dup
       d.write out
     end
 
     def test_tutorial
       doc = File.open(fixture_path("tutorial.xml")) {|f| Document.new f }
-      out = ""
+      out = "".dup
       doc.write out
     end
 
@@ -643,7 +643,7 @@ module REXMLTests
       val = "a'b\"c"
       el = Element.new("a")
       el.attributes["x"] = val
-      REXML::Formatters::Default.new.write(el, out="")
+      REXML::Formatters::Default.new.write(el, out="".dup)
 
       nel = Document.new( out)
       assert_equal( val, nel.root.attributes["x"] )
@@ -675,10 +675,10 @@ module REXMLTests
     end
 
     def test_iso_8859_1_output_function
-      out = ""
+      out = "".dup
       output = Output.new( out )
-      koln_iso_8859_1 = "K\xF6ln"
-      koln_utf8 = "K\xc3\xb6ln"
+      koln_iso_8859_1 = "K\xF6ln".dup
+      koln_utf8 = "K\xc3\xb6ln".dup
       source = Source.new( koln_iso_8859_1, 'iso-8859-1' )
       results = source.scan(/.*/)[0]
       koln_utf8.force_encoding('UTF-8') if koln_utf8.respond_to?(:force_encoding)
@@ -754,7 +754,7 @@ module REXMLTests
     end
 
     def test_element_parse_stream
-      s = Source.new( "<a>some text</a>" )
+      s = Source.new( "<a>some text</a>".dup )
       l = Listener.new
       class << l
         def tag_start name, attributes
@@ -786,20 +786,20 @@ module REXMLTests
   </blo>
 EOL
       d = Document.new(a)
-      b = ""
+      b = "".dup
       d.write( b )
       assert_equal a,b
     end
 
     def test_entities
       a = Document.new( '<a>&#101;&#x65;&#252;</a>' )
-      assert_equal('eeü'.force_encoding("UTF-8"), a.root.text)
+      assert_equal('eeü'.dup.force_encoding("UTF-8"), a.root.text)
     end
 
     def test_element_decl
       element_decl = Source.new("<!DOCTYPE foo [
 <!ELEMENT bar (#PCDATA)>
-]>")
+]>".dup)
       doc = Document.new( element_decl )
       d = doc[0]
       assert_equal("<!ELEMENT bar (#PCDATA)>", d.to_s.split(/\n/)[1].strip)
@@ -841,7 +841,7 @@ EOL
 
     def test_attlist_write
       doc = File.open(fixture_path("foo.xml")) {|file| Document.new file }
-      out = ''
+      out = ''.dup
       doc.write(out)
     end
 
@@ -990,11 +990,11 @@ EOL
       document = REXML::Document.new
       xmldecl = REXML::XMLDecl.new("1.0", "UTF-8")
       document.add(xmldecl)
-      s = ""
+      s = "".dup
       document.write(s)
 
       ## XML Doctype
-      str = '<!DOCTYPE foo "bar">'
+      str = '<!DOCTYPE foo "bar">'.dup
       source  = REXML::Source.new(str)
       doctype = REXML::DocType.new(source)
       document.add(doctype)
@@ -1010,13 +1010,13 @@ EOL
     def test_write_cdata
       src = "<a>A</a>"
       doc = REXML::Document.new( src )
-      out = ""
+      out = "".dup
       doc.write( out )
       assert_equal( src, out )
 
       src = "<a><![CDATA[A]]></a>"
       doc = REXML::Document.new( src )
-      out = ""
+      out = "".dup
       doc.write( out )
       assert_equal( src, out )
     end
@@ -1095,7 +1095,7 @@ EOL
 
     def test_transitive
     doc = REXML::Document.new( "<a/>")
-    s = ""
+    s = "".dup
     doc.write( s, 0, true )
     end
 
@@ -1116,19 +1116,19 @@ EOL
       xmldoc = REXML::Document.new( a )
       a_andre = xmldoc.elements['//image'].attributes['caption']
 
-      f.write(xmldoc,b="")
+      f.write(xmldoc,b="".dup)
 
       xmldoc = REXML::Document.new(b)
       b_andre = xmldoc.elements['//image'].attributes['caption']
       assert_equal( a_andre, b_andre )
 
-      f.write(xmldoc,c="")
+      f.write(xmldoc,c="".dup)
 
       xmldoc = REXML::Document.new(c)
       c_andre = xmldoc.elements['//image'].attributes['caption']
       assert_equal( b_andre, c_andre )
 
-      o = Output.new(d="","UTF-8")
+      o = Output.new(d="".dup,"UTF-8")
       f.write(xmldoc,o)
       assert_not_equal( c, d )
     end
@@ -1148,7 +1148,7 @@ EOL
           "will be raised on the system. See also [ruby-dev:42599]."
         return skip_message
       end
-      output = ""
+      output = "".dup
       formatter.write(document, output)
       assert_equal("<doc>\n" +
                    ((" " + (" aaaa" * 15) + "\n") * (n / 15)) +
@@ -1159,7 +1159,7 @@ EOL
 
     def test_pretty_format_deep_indent
       n = 6
-      elements = ""
+      elements = "".dup
       n.times do |i|
         elements << "<element#{i}>"
         elements << "element#{i} " * 5
@@ -1171,7 +1171,7 @@ EOL
       document = REXML::Document.new(xml)
       formatter = REXML::Formatters::Pretty.new
       formatter.width = 20
-      output = ""
+      output = "".dup
       formatter.write(document, output)
       assert_equal(<<-XML.strip, output)
 <doc>
@@ -1223,7 +1223,7 @@ EOL
       doc << REXML::XMLDecl.default
       doc << REXML::Element.new("a")
 
-      str = ""
+      str = "".dup
       doc.write(str)
 
       assert_equal("<a/>", str)
@@ -1232,7 +1232,7 @@ EOL
       doc << REXML::XMLDecl.new("1.0", "UTF-8")
       doc << REXML::Element.new("a")
 
-      str = ""
+      str = "".dup
       doc.write(str)
 
       assert_equal("<?xml version='1.0' encoding='UTF-8'?><a/>", str)
@@ -1254,13 +1254,13 @@ EOL
     def test_ticket_52
       source = "<!-- this is a single line comment -->"
       d = REXML::Document.new(source)
-      d.write(k="")
+      d.write(k="".dup)
       assert_equal( source, k )
 
       source = "<a><!-- Comment --></a>"
       target = "<a>\n    <!-- Comment -->\n</a>"
       d = REXML::Document.new(source)
-      REXML::Formatters::Pretty.new(4).write(d,k="")
+      REXML::Formatters::Pretty.new(4).write(d,k="".dup)
       assert_equal( target, k )
     end
 
@@ -1339,22 +1339,22 @@ ENDXML
       # The pretty printer ignores all whitespace, anyway so output1 == output2
       f = REXML::Formatters::Pretty.new( 2 )
       d = Document.new( xml, :ignore_whitespace_nodes=>:all )
-      f.write( d, output1="" )
+      f.write( d, output1="".dup )
 
       d = Document.new( xml )
-      f.write( d, output2="" )
+      f.write( d, output2="".dup )
 
       # Output directives should override whitespace directives.
       assert_equal( output1, output2 )
 
       # The base case.
       d = Document.new(yml)
-      f.write( d, output3="" )
+      f.write( d, output3="".dup )
 
       assert_equal( output3.strip, output2.strip )
 
       d = Document.new(yml)
-      f.write( d, output4="" )
+      f.write( d, output4="".dup )
 
       assert_equal( output3.strip, output4.strip )
     end
@@ -1375,15 +1375,15 @@ ENDXML
       d.root.add_element( "bah" )
       p=REXML::Formatters::Pretty.new(2)
       p.compact = true    # Don't add whitespace to text nodes unless necessary
-      p.write(d,out="")
+      p.write(d,out="".dup)
       assert_equal( expected, out )
     end
 
     def test_ticket_95
       testd = REXML::Document.new "<a><b><c/><c/><c/></b></a>"
-      testd.write(out1="")
+      testd.write(out1="".dup)
       testd.elements["//c[2]"].xpath
-      testd.write(out2="")
+      testd.write(out2="".dup)
       assert_equal(out1,out2)
     end
 
@@ -1433,7 +1433,7 @@ ENDXML
       doc = REXML::Document.new
       doc.add_element(bean_element)
 
-      REXML::Formatters::Pretty.new(3).write( doc, out = "" )
+      REXML::Formatters::Pretty.new(3).write( doc, out = "".dup )
 
       assert_equal "<bean>\n   <prop key='filter'>\n      (&amp;#38;(|(memberof=CN=somegroupabcdefgh,OU=OUsucks,DC=hookemhorns,DC=com)(mail=*someco.com))(acct=%u)(!(extraparameter:2.2.222.222222.2.2.222:=2)))\n   </prop>\n</bean>", out
     end

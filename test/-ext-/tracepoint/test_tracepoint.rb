@@ -13,7 +13,7 @@ class TestTracepointObj < Test::Unit::TestCase
     result = Bug.tracepoint_track_objspace_events{
       99
       'abc'
-      _="foobar"
+      _="foobar".dup
       Object.new
       nil
     }
@@ -35,7 +35,7 @@ class TestTracepointObj < Test::Unit::TestCase
     GC.stat(stat1)
     result = Bug.tracepoint_track_objspace_events{
       GC.enable
-      1_000_000.times{''}
+      1_000_000.times{''.dup}
       GC.disable
     }
     GC.stat(stat2)

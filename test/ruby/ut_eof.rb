@@ -15,12 +15,12 @@ module TestEOF
       assert_nil(f.read(1))
     }
     open_file("") {|f|
-      s = "x"
+      s = "x".dup
       assert_equal("", f.read(nil, s))
       assert_equal("", s)
     }
     open_file("") {|f|
-      s = "x"
+      s = "x".dup
       assert_nil(f.read(10, s))
       assert_equal("", s)
     }
@@ -72,12 +72,12 @@ module TestEOF
       assert_equal("", f.read(0))
     }
     open_file("a") {|f|
-      s = "x"
+      s = "x".dup
       assert_equal("a", f.read(nil, s))
       assert_equal("a", s)
     }
     open_file("a") {|f|
-      s = "x"
+      s = "x".dup
       assert_equal("a", f.read(10, s))
       assert_equal("a", s)
     }

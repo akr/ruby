@@ -152,7 +152,7 @@ module RSS
     attr_reader :tag, :value, :attribute
     def initialize(tag, value, attribute=nil)
       @tag, @value, @attribute = tag, value, attribute
-      message = "value <#{value}> of "
+      message = "value <#{value}> of ".dup
       message << "attribute <#{attribute}> of " if attribute
       message << "tag <#{tag}> is not available."
       super(message)
@@ -262,7 +262,7 @@ EOC
           content = @#{n}
         end
         if content
-          rv = "\#{indent}<#{elem_name}>"
+          rv = "\#{indent}<#{elem_name}>".dup
           value = html_escape(content)
           if need_convert
             rv << convert(value)
@@ -293,7 +293,7 @@ EOC
       install_element(name) do |n, elem_name|
         <<-EOC
         if @#{n}
-          rv = "\#{indent}<#{elem_name}>"
+          rv = "\#{indent}<#{elem_name}>".dup
           value = html_escape(@#{n}.#{type})
           if need_convert
             rv << convert(value)
@@ -315,7 +315,7 @@ EOC
       elem_name = name.sub('_', ':')
       method_name = "#{name}_element#{postfix}"
       add_to_element_method(method_name)
-      module_eval(<<-EOC, *get_file_and_line_from_caller(2))
+      module_eval(<<-EOC, *get_file_and_line_from_caller(1))
       def #{method_name}(need_convert=true, indent='')
         #{yield(name, elem_name)}
       end
@@ -942,7 +942,7 @@ EOC
 
     def set_next_element(tag_name, next_element)
       klass = next_element.class
-      prefix = ""
+      prefix = "".dup
       prefix << "#{klass.required_prefix}_" if klass.required_prefix
       key = "#{prefix}#{tag_name.gsub(/-/, '_')}"
       if self.class.plural_forms.has_key?(key)
@@ -1327,7 +1327,7 @@ EOC
     end
 
     def xmldecl
-      rv = %Q[<?xml version="#{@version}"]
+      rv = %Q[<?xml version="#{@version}"].dup
       if @output_encoding or @encoding
         rv << %Q[ encoding="#{@output_encoding or @encoding}"]
       end

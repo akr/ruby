@@ -90,7 +90,7 @@ class TestPack < Test::Unit::TestCase
       fmt += mod
       nuls = [0].pack(fmt)
       v = 0
-      s = "".force_encoding("ascii-8bit")
+      s = "".dup.force_encoding("ascii-8bit")
       nuls.bytesize.times {|i|
         j = i + 40
         v = v * 256 + j
@@ -123,7 +123,7 @@ class TestPack < Test::Unit::TestCase
       fmt += mod
       nuls = [0].pack(fmt)
       v = 0
-      s = "".force_encoding("ascii-8bit")
+      s = "".dup.force_encoding("ascii-8bit")
       nuls.bytesize.times {|i|
         j = i+40
         v = v * 256 + j
@@ -160,15 +160,15 @@ class TestPack < Test::Unit::TestCase
     assert_raise(RangeError) { [-0x40000000].pack("U") }
     assert_raise(RangeError) { [-1].pack("U") }
     assert_equal "\000", [0].pack("U")
-    assert_equal "\374\277\277\277\277\277".force_encoding(Encoding::UTF_8), [0x3fffffff].pack("U")
-    assert_equal "\375\200\200\200\200\200".force_encoding(Encoding::UTF_8), [0x40000000].pack("U")
-    assert_equal "\375\277\277\277\277\277".force_encoding(Encoding::UTF_8), [0x7fffffff].pack("U")
+    assert_equal "\374\277\277\277\277\277".dup.force_encoding(Encoding::UTF_8), [0x3fffffff].pack("U")
+    assert_equal "\375\200\200\200\200\200".dup.force_encoding(Encoding::UTF_8), [0x40000000].pack("U")
+    assert_equal "\375\277\277\277\277\277".dup.force_encoding(Encoding::UTF_8), [0x7fffffff].pack("U")
     assert_raise(RangeError) { [0x80000000].pack("U") }
     assert_raise(RangeError) { [0x100000000].pack("U") }
   end
 
   def test_pack_P
-    a = ["abc"]
+    a = ["abc".dup]
     assert_equal a, a.pack("P").unpack("P*")
     assert_equal "a", a.pack("P").unpack("P")[0]
     assert_equal a, a.pack("P").freeze.unpack("P*")
@@ -176,7 +176,7 @@ class TestPack < Test::Unit::TestCase
   end
 
   def test_pack_p
-    a = ["abc"]
+    a = ["abc".dup]
     assert_equal a, a.pack("p").unpack("p*")
     assert_equal a[0], a.pack("p").unpack("p")[0]
     assert_equal a, a.pack("p").freeze.unpack("p*")

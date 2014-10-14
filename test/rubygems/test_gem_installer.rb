@@ -830,7 +830,7 @@ gem 'other', version
 
     exe = File.join @gemhome, 'bin', 'executable'
 
-    extra_arg = "\xE4pfel".force_encoding("UTF-8")
+    extra_arg = "\xE4pfel".dup.force_encoding("UTF-8")
     ARGV.unshift extra_arg
 
     begin

@@ -20,7 +20,7 @@ module TestWEBrick
     CGIRunner = "\"#{Ruby}\" \"#{WEBrick::Config::LIBDIR}/httpservlet/cgi_runner.rb\"" # :nodoc:
   end
 
-  RubyBin = "\"#{EnvUtil.rubybin}\""
+  RubyBin = "\"#{EnvUtil.rubybin}\"".dup
   RubyBin << " --disable-gems"
   RubyBin << " \"-I#{File.expand_path("../..", File.dirname(__FILE__))}/lib\""
   RubyBin << " \"-I#{File.dirname(EnvUtil.rubybin)}/.ext/common\""
@@ -29,7 +29,7 @@ module TestWEBrick
   module_function
 
   def start_server(klass, config={}, &block)
-    log_string = ""
+    log_string = "".dup
     logger = Object.new
     logger.instance_eval do
       define_singleton_method(:<<) {|msg| log_string << msg }

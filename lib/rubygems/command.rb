@@ -153,7 +153,7 @@ class Gem::Command
 
   def show_lookup_failure(gem_name, version, errors, domain)
     if errors and !errors.empty?
-      msg = "Could not find a valid gem '#{gem_name}' (#{version}), here is why:\n"
+      msg = "Could not find a valid gem '#{gem_name}' (#{version}), here is why:\n".dup
       errors.each { |x| msg << "          #{x.wordy}\n" }
       alert_error msg
     else

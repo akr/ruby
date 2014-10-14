@@ -207,7 +207,7 @@ def next_token # :nodoc:
       if @in_verbatim
         [:STRINGLINE, line]
       else
-        @indent_stack.push("\s" << newIndent)
+        @indent_stack.push("\s" + newIndent)
         [:ITEMLISTLINE, rest]
       end
     end

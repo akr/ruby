@@ -378,7 +378,7 @@ EOT
          proc do |r|
            r2 = r.dup
            begin
-             assert_equal("\xA4\xA2".force_encoding("euc-jp"), r2.read)
+             assert_equal("\xA4\xA2".dup.force_encoding("euc-jp"), r2.read)
            ensure
              r2.close
            end
@@ -420,10 +420,10 @@ EOT
     with_tmpdir {
       generate_file('tmp', "before \u00FF after")
       s = open("tmp", "r:utf-8:iso-8859-1") {|f|
-        f.gets("\xFF".force_encoding("iso-8859-1"))
+        f.gets("\xFF".dup.force_encoding("iso-8859-1"))
       }
       assert_equal(Encoding.find("iso-8859-1"), s.encoding)
-      assert_str_equal("before \xFF".force_encoding("iso-8859-1"), s, '[ruby-core:14288]')
+      assert_str_equal("before \xFF".dup.force_encoding("iso-8859-1"), s, '[ruby-core:14288]')
     }
   end
 
@@ -431,19 +431,19 @@ EOT
     with_tmpdir {
       generate_file('tmp', "before \xA1\xA2\xA2\xA3 after")
       s = open("tmp", "r:euc-jp:utf-8") {|f|
-        f.gets("\xA2\xA2".force_encoding("euc-jp").encode("utf-8"))
+        f.gets("\xA2\xA2".dup.force_encoding("euc-jp").encode("utf-8"))
       }
       assert_equal(Encoding.find("utf-8"), s.encoding)
-      assert_str_equal("before \xA1\xA2\xA2\xA3 after".force_encoding("euc-jp").encode("utf-8"), s, '[ruby-core:14319]')
+      assert_str_equal("before \xA1\xA2\xA2\xA3 after".dup.force_encoding("euc-jp").encode("utf-8"), s, '[ruby-core:14319]')
     }
   end
 
   def test_terminator_stateful_conversion
     with_tmpdir {
-      src = "before \e$B\x23\x30\x23\x31\e(B after".force_encoding("iso-2022-jp")
+      src = "before \e$B\x23\x30\x23\x31\e(B after".dup.force_encoding("iso-2022-jp")
       generate_file('tmp', src)
       s = open("tmp", "r:iso-2022-jp:euc-jp") {|f|
-        f.gets("0".force_encoding("euc-jp"))
+        f.gets("0".dup.force_encoding("euc-jp"))
       }
       assert_equal(Encoding.find("euc-jp"), s.encoding)
       assert_str_equal(src.encode("euc-jp"), s)
@@ -455,7 +455,7 @@ EOT
       generate_file('tmp', "before \xA2\xA2 after")
       open("tmp", "r:euc-jp") {|f|
         assert_raise(ArgumentError) {
-          f.gets("\xA2\xA2".force_encoding("utf-8"))
+          f.gets("\xA2\xA2".dup.force_encoding("utf-8"))
         }
       }
     }
@@ -506,18 +506,18 @@ EOT
          end,
          proc do |r|
            err = assert_raise(Encoding::InvalidByteSequenceError) { r.getc }
-           assert_equal("\xA1".force_encoding("ascii-8bit"), err.error_bytes)
+           assert_equal("\xA1".dup.force_encoding("ascii-8bit"), err.error_bytes)
            assert_equal("xyz", r.read(10))
          end)
   end
 
   def test_getc_stateful_conversion
     with_tmpdir {
-      src = "\e$B\x23\x30\x23\x31\e(B".force_encoding("iso-2022-jp")
+      src = "\e$B\x23\x30\x23\x31\e(B".dup.force_encoding("iso-2022-jp")
       generate_file('tmp', src)
       open("tmp", "r:iso-2022-jp:euc-jp") {|f|
-        assert_equal("\xa3\xb0".force_encoding("euc-jp"), f.getc)
-        assert_equal("\xa3\xb1".force_encoding("euc-jp"), f.getc)
+        assert_equal("\xa3\xb0".dup.force_encoding("euc-jp"), f.getc)
+        assert_equal("\xa3\xb1".dup.force_encoding("euc-jp"), f.getc)
       }
     }
   end
@@ -544,10 +544,10 @@ EOT
         open("tmp", "rt") {|f|
           s = f.getc
           assert_equal(false, s.valid_encoding?)
-          assert_equal("\xE3".force_encoding("UTF-8"), s)
+          assert_equal("\xE3".dup.force_encoding("UTF-8"), s)
           s = f.getc
           assert_equal(false, s.valid_encoding?)
-          assert_equal("\x81".force_encoding("UTF-8"), s)
+          assert_equal("\x81".dup.force_encoding("UTF-8"), s)
         }
       end
     }
@@ -579,10 +579,10 @@ EOT
 
   def test_ungetc_stateful_conversion
     with_tmpdir {
-      src = "before \e$B\x23\x30\x23\x31\e(B after".force_encoding("iso-2022-jp")
+      src = "before \e$B\x23\x30\x23\x31\e(B after".dup.force_encoding("iso-2022-jp")
       generate_file('tmp', src)
       s = open("tmp", "r:iso-2022-jp:euc-jp") {|f|
-        f.ungetc("0".force_encoding("euc-jp"))
+        f.ungetc("0".dup.force_encoding("euc-jp"))
         f.read
       }
       assert_equal(Encoding.find("euc-jp"), s.encoding)
@@ -592,10 +592,10 @@ EOT
 
   def test_ungetc_stateful_conversion2
     with_tmpdir {
-      src =    "before \e$B\x23\x30\x23\x31\e(B after".force_encoding("iso-2022-jp")
-      former = "before \e$B\x23\x30\e(B".force_encoding("iso-2022-jp")
-      rs =            "\e$B\x23\x30\e(B".force_encoding("iso-2022-jp")
-      latter =                "\e$B\x23\x31\e(B after".force_encoding("iso-2022-jp")
+      src =    "before \e$B\x23\x30\x23\x31\e(B after".dup.force_encoding("iso-2022-jp")
+      former = "before \e$B\x23\x30\e(B".dup.force_encoding("iso-2022-jp")
+      rs =            "\e$B\x23\x30\e(B".dup.force_encoding("iso-2022-jp")
+      latter =                "\e$B\x23\x31\e(B after".dup.force_encoding("iso-2022-jp")
       generate_file('tmp', src)
       s = open("tmp", "r:iso-2022-jp:euc-jp") {|f|
         assert_equal(former.encode("euc-jp", "iso-2022-jp"),
@@ -635,7 +635,7 @@ EOT
 
   def test_read_encoding
     with_tmpdir {
-      src = "\xc2\xa1\n".force_encoding("ASCII-8BIT")
+      src = "\xc2\xa1\n".dup.force_encoding("ASCII-8BIT")
       generate_file('tmp', "\xc2\xa1\n")
       ENCS.each {|enc|
         content = src.dup.force_encoding(enc)
@@ -697,7 +697,7 @@ EOT
   end
 
   def test_write_noenc
-    src = "\xc2\xa1\n".force_encoding("ascii-8bit")
+    src = "\xc2\xa1\n".dup.force_encoding("ascii-8bit")
     with_tmpdir {
       open('tmp', "w") {|f|
         ENCS.each {|enc|
@@ -712,7 +712,7 @@ EOT
 
   def test_write_conversion
     utf8 = "\u6666"
-    eucjp = "\xb3\xa2".force_encoding("EUC-JP")
+    eucjp = "\xb3\xa2".dup.force_encoding("EUC-JP")
     with_tmpdir {
       open('tmp', "w:EUC-JP") {|f|
         assert_equal(Encoding::EUC_JP, f.external_encoding)
@@ -730,7 +730,7 @@ EOT
 
   def test_pipe
     utf8 = "\u6666"
-    eucjp = "\xb3\xa2".force_encoding("EUC-JP")
+    eucjp = "\xb3\xa2".dup.force_encoding("EUC-JP")
 
     pipe(proc do |w|
       w << utf8
@@ -839,36 +839,36 @@ EOT
   def test_gets_limit
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.gets(1)) })
+         proc {|r| assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.gets(1)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.gets(2)) })
+         proc {|r| assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.gets(2)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4".force_encoding("euc-jp"), r.gets(3)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4".dup.force_encoding("euc-jp"), r.gets(3)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4".force_encoding("euc-jp"), r.gets(4)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4".dup.force_encoding("euc-jp"), r.gets(4)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6".force_encoding("euc-jp"), r.gets(5)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6".dup.force_encoding("euc-jp"), r.gets(5)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6".force_encoding("euc-jp"), r.gets(6)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6".dup.force_encoding("euc-jp"), r.gets(6)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6\n".force_encoding("euc-jp"), r.gets(7)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6\n".dup.force_encoding("euc-jp"), r.gets(7)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6\n".force_encoding("euc-jp"), r.gets(8)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6\n".dup.force_encoding("euc-jp"), r.gets(8)) })
     pipe("euc-jp",
          proc {|w| w << "\xa4\xa2\xa4\xa4\xa4\xa6\n\xa4\xa8\xa4\xaa"; w.close },
-         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6\n".force_encoding("euc-jp"), r.gets(9)) })
+         proc {|r| assert_equal("\xa4\xa2\xa4\xa4\xa4\xa6\n".dup.force_encoding("euc-jp"), r.gets(9)) })
   end
 
   def test_gets_invalid
     before = "\u{3042}\u{3044}"
-    invalid = "\x80".force_encoding("utf-8")
+    invalid = "\x80".dup.force_encoding("utf-8")
     after = "\u{3046}\u{3048}"
     pipe("utf-8:euc-jp",
          proc do |w|
@@ -885,7 +885,7 @@ EOT
   def test_getc_invalid2
     before1 = "\u{3042}"
     before2 = "\u{3044}"
-    invalid = "\x80".force_encoding("utf-8")
+    invalid = "\x80".dup.force_encoding("utf-8")
     after1 = "\u{3046}"
     after2 = "\u{3048}"
     pipe("utf-8:euc-jp",
@@ -904,11 +904,11 @@ EOT
   end
 
   def test_getc_invalid3
-    before1 = "\x42\x30".force_encoding("utf-16le")
-    before2 = "\x44\x30".force_encoding("utf-16le")
-    invalid = "\x00\xd8".force_encoding("utf-16le")
-    after1 = "\x46\x30".force_encoding("utf-16le")
-    after2 = "\x48\x30".force_encoding("utf-16le")
+    before1 = "\x42\x30".dup.force_encoding("utf-16le")
+    before2 = "\x44\x30".dup.force_encoding("utf-16le")
+    invalid = "\x00\xd8".dup.force_encoding("utf-16le")
+    after1 = "\x46\x30".dup.force_encoding("utf-16le")
+    after2 = "\x48\x30".dup.force_encoding("utf-16le")
     pipe("utf-16le:euc-jp", { :binmode => true },
          proc do |w|
            w << before1 + before2 + invalid + after1 + after2
@@ -938,7 +938,7 @@ EOT
 
   def test_read_all_invalid
     before = "\u{3042}\u{3044}"
-    invalid = "\x80".force_encoding("utf-8")
+    invalid = "\x80".dup.force_encoding("utf-8")
     after = "\u{3046}\u{3048}"
     pipe("utf-8:euc-jp",
       proc do |w|
@@ -964,60 +964,60 @@ EOT
   def test_set_encoding
     pipe("utf-8:euc-jp",
          proc do |w|
-           s = "\u3042".force_encoding("ascii-8bit")
-           s << "\x82\xa0".force_encoding("ascii-8bit")
+           s = "\u3042".dup.force_encoding("ascii-8bit")
+           s << "\x82\xa0".dup.force_encoding("ascii-8bit")
            w << s
            w.close
          end,
          proc do |r|
-           assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.getc)
+           assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.getc)
            r.set_encoding("shift_jis:euc-jp")
-           assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.getc)
+           assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.getc)
          end)
   end
 
   def test_set_encoding2
     pipe("utf-8:euc-jp",
          proc do |w|
-           s = "\u3042".force_encoding("ascii-8bit")
-           s << "\x82\xa0".force_encoding("ascii-8bit")
+           s = "\u3042".dup.force_encoding("ascii-8bit")
+           s << "\x82\xa0".dup.force_encoding("ascii-8bit")
            w << s
            w.close
          end,
          proc do |r|
-           assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.getc)
+           assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.getc)
            r.set_encoding("shift_jis", "euc-jp")
-           assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.getc)
+           assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.getc)
          end)
   end
 
   def test_set_encoding_nil
     pipe("utf-8:euc-jp",
          proc do |w|
-           s = "\u3042".force_encoding("ascii-8bit")
-           s << "\x82\xa0".force_encoding("ascii-8bit")
+           s = "\u3042".dup.force_encoding("ascii-8bit")
+           s << "\x82\xa0".dup.force_encoding("ascii-8bit")
            w << s
            w.close
          end,
          proc do |r|
-           assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.getc)
+           assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.getc)
            r.set_encoding(nil)
-           assert_equal("\x82\xa0".force_encoding(Encoding.default_external), r.read)
+           assert_equal("\x82\xa0".dup.force_encoding(Encoding.default_external), r.read)
          end)
   end
 
   def test_set_encoding_enc
     pipe("utf-8:euc-jp",
          proc do |w|
-           s = "\u3042".force_encoding("ascii-8bit")
-           s << "\x82\xa0".force_encoding("ascii-8bit")
+           s = "\u3042".dup.force_encoding("ascii-8bit")
+           s << "\x82\xa0".dup.force_encoding("ascii-8bit")
            w << s
            w.close
          end,
          proc do |r|
-           assert_equal("\xa4\xa2".force_encoding("euc-jp"), r.getc)
+           assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), r.getc)
            r.set_encoding(Encoding::Shift_JIS)
-           assert_equal("\x82\xa0".force_encoding(Encoding::Shift_JIS), r.getc)
+           assert_equal("\x82\xa0".dup.force_encoding(Encoding::Shift_JIS), r.getc)
          end)
   end
 
@@ -1167,7 +1167,7 @@ EOT
              w.close
          end,
          proc do |r|
-           assert_equal("\e$B$\"$$\e(B".force_encoding("ascii-8bit"),
+           assert_equal("\e$B$\"$$\e(B".dup.force_encoding("ascii-8bit"),
                         r.read.force_encoding("ascii-8bit"))
          end)
   end
@@ -1176,11 +1176,11 @@ EOT
     pipe(proc do |w|
            w.set_encoding("iso-2022-jp")
            w << "\u3042"
-           w << "\x82\xa2".force_encoding("sjis")
+           w << "\x82\xa2".dup.force_encoding("sjis")
            w.close
          end,
          proc do |r|
-           assert_equal("\e$B$\"$$\e(B".force_encoding("ascii-8bit"),
+           assert_equal("\e$B$\"$$\e(B".dup.force_encoding("ascii-8bit"),
                         r.read.force_encoding("ascii-8bit"))
          end)
   end
@@ -1189,11 +1189,11 @@ EOT
     pipe(proc do |w|
            w.set_encoding("euc-jp")
            w << "\u3042"
-           w << "\x82\xa2".force_encoding("sjis")
+           w << "\x82\xa2".dup.force_encoding("sjis")
            w.close
          end,
          proc do |r|
-           assert_equal("\xa4\xa2\xa4\xa4".force_encoding("ascii-8bit"),
+           assert_equal("\xa4\xa2\xa4\xa4".dup.force_encoding("ascii-8bit"),
                         r.read.force_encoding("ascii-8bit"))
          end)
   end
@@ -1203,11 +1203,11 @@ EOT
            w.sync = false
            w.set_encoding("iso-2022-jp")
            w << "\u3042"
-           w << "\x82\xa2".force_encoding("sjis")
+           w << "\x82\xa2".dup.force_encoding("sjis")
            w.close
          end,
          proc do |r|
-           assert_equal("\e$B$\"$$\e(B".force_encoding("ascii-8bit"),
+           assert_equal("\e$B$\"$$\e(B".dup.force_encoding("ascii-8bit"),
                         r.read.force_encoding("ascii-8bit"))
          end)
   end
@@ -1219,7 +1219,7 @@ EOT
            w.close
          end,
          proc do |r|
-           assert_equal("\e$B$\"\e(B".force_encoding("iso-2022-jp"), r.read)
+           assert_equal("\e$B$\"\e(B".dup.force_encoding("iso-2022-jp"), r.read)
          end)
   end
 
@@ -1237,7 +1237,7 @@ EOT
         Process.wait pid
         f.rewind
         result = f.read.force_encoding("ascii-8bit")
-        assert_equal("\u3042".force_encoding("ascii-8bit"), result)
+        assert_equal("\u3042".dup.force_encoding("ascii-8bit"), result)
       }
     }
   end
@@ -1248,7 +1248,7 @@ EOT
       assert_equal(nil, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::ASCII_8BIT, s.encoding)
-      assert_equal("\xff".force_encoding("ascii-8bit"), s)
+      assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
     }
   end
 
@@ -1258,7 +1258,7 @@ EOT
       assert_equal(nil, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::ASCII_8BIT, s.encoding)
-      assert_equal("\xff".force_encoding("ascii-8bit"), s)
+      assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
     }
   end
 
@@ -1268,7 +1268,7 @@ EOT
       assert_equal(nil, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::ASCII_8BIT, s.encoding)
-      assert_equal("\xff".force_encoding("ascii-8bit"), s)
+      assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
     }
   end
 
@@ -1278,7 +1278,7 @@ EOT
       assert_equal(Encoding::EUC_JP, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::EUC_JP, s.encoding)
-      assert_equal("\x8e\xa1".force_encoding("euc-jp"), s)
+      assert_equal("\x8e\xa1".dup.force_encoding("euc-jp"), s)
     }
   end
 
@@ -1288,7 +1288,7 @@ EOT
       assert_equal(Encoding::EUC_JP, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::EUC_JP, s.encoding)
-      assert_equal("\x8e\xa1".force_encoding("euc-jp"), s)
+      assert_equal("\x8e\xa1".dup.force_encoding("euc-jp"), s)
     }
   end
 
@@ -1298,7 +1298,7 @@ EOT
       assert_equal(Encoding::EUC_JP, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::EUC_JP, s.encoding)
-      assert_equal("\x8e\xa1".force_encoding("euc-jp"), s)
+      assert_equal("\x8e\xa1".dup.force_encoding("euc-jp"), s)
     }
   end
 
@@ -1308,7 +1308,7 @@ EOT
       assert_equal(Encoding::EUC_JP, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::EUC_JP, s.encoding)
-      assert_equal("\x8e\xa1".force_encoding("euc-jp"), s)
+      assert_equal("\x8e\xa1".dup.force_encoding("euc-jp"), s)
     }
   end
 
@@ -1318,7 +1318,7 @@ EOT
       assert_equal(nil, f.internal_encoding)
       s = f.read
       assert_equal(Encoding::ASCII_8BIT, s.encoding)
-      assert_equal("\xff".force_encoding("ascii-8bit"), s)
+      assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
     }
   end
 
@@ -1337,7 +1337,7 @@ EOT
       generate_file("t", "\xff")
       IO.foreach("t", :mode => "r:ascii-8bit") {|s|
         assert_equal(Encoding::ASCII_8BIT, s.encoding)
-        assert_equal("\xff".force_encoding("ascii-8bit"), s)
+        assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
       }
     }
   end
@@ -1347,7 +1347,7 @@ EOT
       generate_file("t", "\xff")
       IO.foreach("t", :encoding => "ascii-8bit") {|s|
         assert_equal(Encoding::ASCII_8BIT, s.encoding)
-        assert_equal("\xff".force_encoding("ascii-8bit"), s)
+        assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
       }
     }
   end
@@ -1357,7 +1357,7 @@ EOT
       generate_file("t", "\xff")
       IO.foreach("t", :external_encoding => "ascii-8bit") {|s|
         assert_equal(Encoding::ASCII_8BIT, s.encoding)
-        assert_equal("\xff".force_encoding("ascii-8bit"), s)
+        assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
       }
     }
   end
@@ -1367,7 +1367,7 @@ EOT
       generate_file("t", "\u3042")
       IO.foreach("t", :mode => "r:utf-8:euc-jp") {|s|
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xa4\xa2".force_encoding("euc-jp"), s)
+        assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), s)
       }
     }
   end
@@ -1377,7 +1377,7 @@ EOT
       generate_file("t", "\u3042")
       IO.foreach("t", :mode => "r", :encoding => "utf-8:euc-jp") {|s|
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xa4\xa2".force_encoding("euc-jp"), s)
+        assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), s)
       }
     }
   end
@@ -1387,7 +1387,7 @@ EOT
       generate_file("t", "\u3042")
       IO.foreach("t", :mode => "r", :external_encoding => "utf-8", :internal_encoding => "euc-jp") {|s|
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xa4\xa2".force_encoding("euc-jp"), s)
+        assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), s)
       }
     }
   end
@@ -1397,7 +1397,7 @@ EOT
       generate_file("t", "\xff")
       IO.foreach("t", :open_args => ["r:ascii-8bit"]) {|s|
         assert_equal(Encoding::ASCII_8BIT, s.encoding)
-        assert_equal("\xff".force_encoding("ascii-8bit"), s)
+        assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
       }
     }
   end
@@ -1407,7 +1407,7 @@ EOT
       generate_file("t", "\xff")
       IO.foreach("t", :open_args => ["r", encoding: "ascii-8bit"]) {|s|
         assert_equal(Encoding::ASCII_8BIT, s.encoding)
-        assert_equal("\xff".force_encoding("ascii-8bit"), s)
+        assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
       }
     }
   end
@@ -1417,7 +1417,7 @@ EOT
       generate_file("t", "\xff")
       IO.foreach("t", :open_args => ["r", external_encoding: "ascii-8bit"]) {|s|
         assert_equal(Encoding::ASCII_8BIT, s.encoding)
-        assert_equal("\xff".force_encoding("ascii-8bit"), s)
+        assert_equal("\xff".dup.force_encoding("ascii-8bit"), s)
       }
     }
   end
@@ -1427,7 +1427,7 @@ EOT
       generate_file("t", "\u3042")
       IO.foreach("t", :open_args => ["r:utf-8:euc-jp"]) {|s|
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xa4\xa2".force_encoding("euc-jp"), s)
+        assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), s)
       }
     }
   end
@@ -1437,7 +1437,7 @@ EOT
       generate_file("t", "\u3042")
       IO.foreach("t", :open_args => ["r", encoding: "utf-8:euc-jp"]) {|s|
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xa4\xa2".force_encoding("euc-jp"), s)
+        assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), s)
       }
     }
   end
@@ -1447,7 +1447,7 @@ EOT
       generate_file("t", "\u3042")
       IO.foreach("t", :open_args => ["r", external_encoding: "utf-8", internal_encoding: "euc-jp"]) {|s|
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xa4\xa2".force_encoding("euc-jp"), s)
+        assert_equal("\xa4\xa2".dup.force_encoding("euc-jp"), s)
       }
     }
   end
@@ -1613,18 +1613,18 @@ EOT
       generate_file("t.utf8.crlf", "a\r\nb\r\n")
       open("t.utf8.crlf", "rb:utf-8:utf-16be") {|f|
         content = f.read
-        assert_equal("\0a\0\r\0\n\0b\0\r\0\n".force_encoding("UTF-16BE"), content)
+        assert_equal("\0a\0\r\0\n\0b\0\r\0\n".dup.force_encoding("UTF-16BE"), content)
       }
       open("t.utf8.crlf", "rt:utf-8:utf-16be") {|f|
         content = f.read
-        assert_equal("\0a\0\n\0b\0\n".force_encoding("UTF-16BE"), content)
+        assert_equal("\0a\0\n\0b\0\n".dup.force_encoding("UTF-16BE"), content)
       }
       open("t.utf8.crlf", "r:utf-8:utf-16be") {|f|
         content = f.read
         if system_newline == "\n"
-          assert_equal("\0a\0\r\0\n\0b\0\r\0\n".force_encoding("UTF-16BE"), content)
+          assert_equal("\0a\0\r\0\n\0b\0\r\0\n".dup.force_encoding("UTF-16BE"), content)
         else
-          assert_equal("\0a\0\n\0b\0\n".force_encoding("UTF-16BE"), content)
+          assert_equal("\0a\0\n\0b\0\n".dup.force_encoding("UTF-16BE"), content)
         end
       }
     }
@@ -1635,7 +1635,7 @@ EOT
       generate_file("t.utf16.crlf", "\0a\0\r\0\n\0b\0\r\0\n")
       open("t.utf16.crlf", "rb:utf-16be") {|f|
         content = f.read
-        assert_equal("\0a\0\r\0\n\0b\0\r\0\n".force_encoding("UTF-16BE"),
+        assert_equal("\0a\0\r\0\n\0b\0\r\0\n".dup.force_encoding("UTF-16BE"),
                      content)
       }
     }
@@ -1666,43 +1666,43 @@ EOT
       #   0xC2A2        0xE894B5        U+8535
       #   0xA1F1        0xC2A2          U+00A2
 
-      open("t","rt") {|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding(Encoding.default_external), f.read) }
-      open("t","rb") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding(Encoding::ASCII_8BIT), f.read) }
+      open("t","rt") {|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding(Encoding.default_external), f.read) }
+      open("t","rb") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding(Encoding::ASCII_8BIT), f.read) }
 
-      open("t","rt:euc-jp") {|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding("EUC-JP"), f.read) }
-      open("t","rb:euc-jp") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("EUC-JP"), f.read) }
-      open("t","rt:utf-8") {|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding("UTF-8"), f.read) }
-      open("t","rb:utf-8") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("UTF-8"), f.read) }
+      open("t","rt:euc-jp") {|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding("EUC-JP"), f.read) }
+      open("t","rb:euc-jp") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("EUC-JP"), f.read) }
+      open("t","rt:utf-8") {|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding("UTF-8"), f.read) }
+      open("t","rb:utf-8") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("UTF-8"), f.read) }
       assert_raise(ArgumentError) { open("t", "rt:iso-2022-jp") {|f| } }
-      open("t","rb:iso-2022-jp") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("ISO-2022-JP"), f.read) }
+      open("t","rb:iso-2022-jp") {|f| assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("ISO-2022-JP"), f.read) }
 
       open("t","rt:euc-jp:utf-8") {|f| assert_equal("a\nb\nc\n\u8535", f.read) }
-      open("t","rt:utf-8:euc-jp") {|f| assert_equal("a\nb\nc\n\xa1\xf1".force_encoding("EUC-JP"), f.read) }
+      open("t","rt:utf-8:euc-jp") {|f| assert_equal("a\nb\nc\n\xa1\xf1".dup.force_encoding("EUC-JP"), f.read) }
       open("t","rb:euc-jp:utf-8") {|f| assert_equal("a\rb\r\nc\n\u8535", f.read) }
-      open("t","rb:utf-8:euc-jp") {|f| assert_equal("a\rb\r\nc\n\xa1\xf1".force_encoding("EUC-JP"), f.read) }
+      open("t","rb:utf-8:euc-jp") {|f| assert_equal("a\rb\r\nc\n\xa1\xf1".dup.force_encoding("EUC-JP"), f.read) }
 
-      open("t","rt:euc-jp:iso-2022-jp"){|f| assert_equal("a\nb\nc\n\e$B\x42\x22\e(B".force_encoding("ISO-2022-JP"), f.read) }
-      open("t","rt:utf-8:iso-2022-jp"){|f| assert_equal("a\nb\nc\n\e$B\x21\x71\e(B".force_encoding("ISO-2022-JP"), f.read) }
-      open("t","rt:euc-jp:utf-16be"){|f| assert_equal("\0a\0\n\0b\0\n\0c\0\n\x85\x35".force_encoding("UTF-16BE"), f.read) }
-      open("t","rt:utf-8:utf-16be"){|f| assert_equal("\0a\0\n\0b\0\n\0c\0\n\0\xa2".force_encoding("UTF-16BE"), f.read) }
-      open("t","rb:euc-jp:iso-2022-jp"){|f|assert_equal("a\rb\r\nc\n\e$B\x42\x22\e(B".force_encoding("ISO-2022-JP"),f.read)}
-      open("t","rb:utf-8:iso-2022-jp"){|f|assert_equal("a\rb\r\nc\n\e$B\x21\x71\e(B".force_encoding("ISO-2022-JP"),f.read)}
-      open("t","rb:euc-jp:utf-16be"){|f|assert_equal("\0a\0\r\0b\0\r\0\n\0c\0\n\x85\x35".force_encoding("UTF-16BE"),f.read)}
-      open("t","rb:utf-8:utf-16be"){|f|assert_equal("\0a\0\r\0b\0\r\0\n\0c\0\n\0\xa2".force_encoding("UTF-16BE"),f.read)}
+      open("t","rt:euc-jp:iso-2022-jp"){|f| assert_equal("a\nb\nc\n\e$B\x42\x22\e(B".dup.force_encoding("ISO-2022-JP"), f.read) }
+      open("t","rt:utf-8:iso-2022-jp"){|f| assert_equal("a\nb\nc\n\e$B\x21\x71\e(B".dup.force_encoding("ISO-2022-JP"), f.read) }
+      open("t","rt:euc-jp:utf-16be"){|f| assert_equal("\0a\0\n\0b\0\n\0c\0\n\x85\x35".dup.force_encoding("UTF-16BE"), f.read) }
+      open("t","rt:utf-8:utf-16be"){|f| assert_equal("\0a\0\n\0b\0\n\0c\0\n\0\xa2".dup.force_encoding("UTF-16BE"), f.read) }
+      open("t","rb:euc-jp:iso-2022-jp"){|f|assert_equal("a\rb\r\nc\n\e$B\x42\x22\e(B".dup.force_encoding("ISO-2022-JP"),f.read)}
+      open("t","rb:utf-8:iso-2022-jp"){|f|assert_equal("a\rb\r\nc\n\e$B\x21\x71\e(B".dup.force_encoding("ISO-2022-JP"),f.read)}
+      open("t","rb:euc-jp:utf-16be"){|f|assert_equal("\0a\0\r\0b\0\r\0\n\0c\0\n\x85\x35".dup.force_encoding("UTF-16BE"),f.read)}
+      open("t","rb:utf-8:utf-16be"){|f|assert_equal("\0a\0\r\0b\0\r\0\n\0c\0\n\0\xa2".dup.force_encoding("UTF-16BE"),f.read)}
 
-      open("ie","rt:iso-2022-jp:euc-jp"){|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding("EUC-JP"), f.read) }
-      open("iu","rt:iso-2022-jp:utf-8"){|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding("UTF-8"), f.read) }
-      open("be","rt:utf-16be:euc-jp"){|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding("EUC-JP"), f.read) }
-      open("bu","rt:utf-16be:utf-8"){|f| assert_equal("a\nb\nc\n\xc2\xa2".force_encoding("UTF-8"), f.read) }
-      open("ie","rb:iso-2022-jp:euc-jp"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("EUC-JP"),f.read)}
-      open("iu","rb:iso-2022-jp:utf-8"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("UTF-8"),f.read)}
-      open("be","rb:utf-16be:euc-jp"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("EUC-JP"),f.read)}
-      open("bu","rb:utf-16be:utf-8"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".force_encoding("UTF-8"),f.read)}
+      open("ie","rt:iso-2022-jp:euc-jp"){|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding("EUC-JP"), f.read) }
+      open("iu","rt:iso-2022-jp:utf-8"){|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding("UTF-8"), f.read) }
+      open("be","rt:utf-16be:euc-jp"){|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding("EUC-JP"), f.read) }
+      open("bu","rt:utf-16be:utf-8"){|f| assert_equal("a\nb\nc\n\xc2\xa2".dup.force_encoding("UTF-8"), f.read) }
+      open("ie","rb:iso-2022-jp:euc-jp"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("EUC-JP"),f.read)}
+      open("iu","rb:iso-2022-jp:utf-8"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("UTF-8"),f.read)}
+      open("be","rb:utf-16be:euc-jp"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("EUC-JP"),f.read)}
+      open("bu","rb:utf-16be:utf-8"){|f|assert_equal("a\rb\r\nc\n\xc2\xa2".dup.force_encoding("UTF-8"),f.read)}
 
-      open("ie","rt:iso-2022-jp:utf-16be"){|f|assert_equal("\0a\0\n\0b\0\n\0c\0\n\x85\x35".force_encoding("UTF-16BE"),f.read)}
-      open("be","rt:utf-16be:iso-2022-jp"){|f|assert_equal("a\nb\nc\n\e$B\x42\x22\e(B".force_encoding("ISO-2022-JP"),f.read)}
-      open("ie","rb:iso-2022-jp:utf-16be"){|f|assert_equal("\0a\0\r\0b\0\r\0\n\0c\0\n\x85\x35".force_encoding("UTF-16BE"),f.read)}
-      open("be","rb:utf-16be:iso-2022-jp"){|f|assert_equal("a\rb\r\nc\n\e$B\x42\x22\e(B".force_encoding("ISO-2022-JP"),f.read)}
+      open("ie","rt:iso-2022-jp:utf-16be"){|f|assert_equal("\0a\0\n\0b\0\n\0c\0\n\x85\x35".dup.force_encoding("UTF-16BE"),f.read)}
+      open("be","rt:utf-16be:iso-2022-jp"){|f|assert_equal("a\nb\nc\n\e$B\x42\x22\e(B".dup.force_encoding("ISO-2022-JP"),f.read)}
+      open("ie","rb:iso-2022-jp:utf-16be"){|f|assert_equal("\0a\0\r\0b\0\r\0\n\0c\0\n\x85\x35".dup.force_encoding("UTF-16BE"),f.read)}
+      open("be","rb:utf-16be:iso-2022-jp"){|f|assert_equal("a\rb\r\nc\n\e$B\x42\x22\e(B".dup.force_encoding("ISO-2022-JP"),f.read)}
     }
   end
 
@@ -1723,10 +1723,10 @@ EOT
     #   0xC2A2        0xE894B5        U+8535
     #   0xA1F1        0xC2A2          U+00A2
     a = "a\rb\r\nc\n"
-    e = "\xc2\xa2".force_encoding("euc-jp")
-    u8 = "\xc2\xa2".force_encoding("utf-8")
-    u16 = "\x85\x35\0\r\x00\xa2\0\r\0\n\0\n".force_encoding("utf-16be")
-    i = "\e$B\x42\x22\e(B\r\e$B\x21\x71\e(B\r\n\n".force_encoding("iso-2022-jp")
+    e = "\xc2\xa2".dup.force_encoding("euc-jp")
+    u8 = "\xc2\xa2".dup.force_encoding("utf-8")
+    u16 = "\x85\x35\0\r\x00\xa2\0\r\0\n\0\n".dup.force_encoding("utf-16be")
+    i = "\e$B\x42\x22\e(B\r\e$B\x21\x71\e(B\r\n\n".dup.force_encoding("iso-2022-jp")
     n = system_newline
     n.encode("utf-16be").force_encoding("ascii-8bit")
 
@@ -1753,10 +1753,10 @@ EOT
     #   0xC2A2        0xE894B5        U+8535
     #   0xA1F1        0xC2A2          U+00A2
     a = "a\rb\r\nc\n"
-    e = "\xc2\xa2".force_encoding("euc-jp")
-    u8 = "\xc2\xa2".force_encoding("utf-8")
-    u16 = "\x85\x35\0\r\x00\xa2\0\r\0\n\0\n".force_encoding("utf-16be")
-    i = "\e$B\x42\x22\e(B\r\e$B\x21\x71\e(B\r\n\n".force_encoding("iso-2022-jp")
+    e = "\xc2\xa2".dup.force_encoding("euc-jp")
+    u8 = "\xc2\xa2".dup.force_encoding("utf-8")
+    u16 = "\x85\x35\0\r\x00\xa2\0\r\0\n\0\n".dup.force_encoding("utf-16be")
+    i = "\e$B\x42\x22\e(B\r\e$B\x21\x71\e(B\r\n\n".dup.force_encoding("iso-2022-jp")
     n = system_newline
     un = n.encode("utf-16be").force_encoding("ascii-8bit")
 
@@ -1801,7 +1801,7 @@ EOT
     return if system_newline == "\n"
     with_tmpdir {
       open("t", "wt") {|f|
-        assert_raise(ArgumentError) { f.print "\0\r\0\r\0\n\0\n".force_encoding("utf-16be") }
+        assert_raise(ArgumentError) { f.print "\0\r\0\r\0\n\0\n".dup.force_encoding("utf-16be") }
       }
     }
   end
@@ -1820,13 +1820,13 @@ EOT
   def test_binmode_write_ascii_incompat_internal
     with_tmpdir {
       open("t.utf8.lf", "wb:utf-8:utf-16be") {|f|
-        f.print "\0a\0\n\0b\0\n".force_encoding("UTF-16BE")
+        f.print "\0a\0\n\0b\0\n".dup.force_encoding("UTF-16BE")
       }
       content = File.read("t.utf8.lf", :mode=>"rb:ascii-8bit")
       assert_equal("a\nb\n", content)
 
       open("t.utf8.lf", "wb:utf-16be") {|f|
-        f.print "\0a\0\n\0b\0\n".force_encoding("UTF-16BE")
+        f.print "\0a\0\n\0b\0\n".dup.force_encoding("UTF-16BE")
       }
       content = File.read("t.utf8.lf", :mode=>"rb:ascii-8bit")
       assert_equal("\0a\0\n\0b\0\n", content)
@@ -1945,7 +1945,7 @@ EOT
 
   def test_invalid_w
     with_tmpdir {
-      invalid_utf8 = "a\x80b".force_encoding("utf-8")
+      invalid_utf8 = "a\x80b".dup.force_encoding("utf-8")
       open("t.txt", "w:euc-jp", :invalid => :replace) {|f|
         assert_nothing_raised { f.write invalid_utf8 }
       }
@@ -2009,37 +2009,37 @@ EOT
     with_tmpdir {
       open("raw.txt", "wb", xml: :attr) {|f| f.print '&<>"\''; f.puts "\u4E02\u3042" }
       content = File.read("raw.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\"&amp;&lt;&gt;&quot;'\u4E02\u3042\n\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\"&amp;&lt;&gt;&quot;'\u4E02\u3042\n\"".dup.force_encoding("ascii-8bit"), content)
 
       open("ascii.txt", "wb:us-ascii", xml: :attr) {|f| f.print '&<>"\''; f.puts "\u4E02\u3042" }
       content = File.read("ascii.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\"&amp;&lt;&gt;&quot;'&#x4E02;&#x3042;\n\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\"&amp;&lt;&gt;&quot;'&#x4E02;&#x3042;\n\"".dup.force_encoding("ascii-8bit"), content)
 
       open("iso-2022-jp.txt", "wb:iso-2022-jp", xml: :attr) {|f| f.print '&<>"\''; f.puts "\u4E02\u3042" }
       content = File.read("iso-2022-jp.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\"&amp;&lt;&gt;&quot;'&#x4E02;\e$B$\"\e(B\n\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\"&amp;&lt;&gt;&quot;'&#x4E02;\e$B$\"\e(B\n\"".dup.force_encoding("ascii-8bit"), content)
 
       open("utf-16be.txt", "wb:utf-16be", xml: :attr) {|f| f.print '&<>"\''; f.puts "\u4E02\u3042" }
       content = File.read("utf-16be.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\0\"\0&\0a\0m\0p\0;\0&\0l\0t\0;\0&\0g\0t\0;\0&\0q\0u\0o\0t\0;\0'\x4E\x02\x30\x42\0\n\0\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\0\"\0&\0a\0m\0p\0;\0&\0l\0t\0;\0&\0g\0t\0;\0&\0q\0u\0o\0t\0;\0'\x4E\x02\x30\x42\0\n\0\"".dup.force_encoding("ascii-8bit"), content)
 
       open("eucjp.txt", "w:euc-jp:utf-8", xml: :attr) {|f|
         f.print "\u4E02" # U+4E02 is 0x3021 in JIS X 0212
       }
       content = File.read("eucjp.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\"\x8F\xB0\xA1\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\"\x8F\xB0\xA1\"".dup.force_encoding("ascii-8bit"), content)
 
       open("sjis.txt", "w:sjis:utf-8", xml: :attr) {|f|
         f.print "\u4E02" # U+4E02 is 0x3021 in JIS X 0212
       }
       content = File.read("sjis.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\"&#x4E02;\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\"&#x4E02;\"".dup.force_encoding("ascii-8bit"), content)
 
       open("iso-2022-jp.txt", "w:iso-2022-jp:utf-8", xml: :attr) {|f|
         f.print "\u4E02" # U+4E02 is 0x3021 in JIS X 0212
       }
       content = File.read("iso-2022-jp.txt", :mode=>"rb:ascii-8bit")
-      assert_equal("\"&#x4E02;\"".force_encoding("ascii-8bit"), content)
+      assert_equal("\"&#x4E02;\"".dup.force_encoding("ascii-8bit"), content)
     }
   end
 
@@ -2065,7 +2065,7 @@ EOT
       assert_equal("a", result.force_encoding("ascii-8bit"), bug3407)
 
       bug8323 = '[ruby-core:54563] [Bug #8323]'
-      expected = "a\xff".force_encoding("utf-8")
+      expected = "a\xff".dup.force_encoding("utf-8")
       open(path, 'ab') {|f| f.write("\xff")}
       result = File.read(path, encoding: 'BOM|UTF-8')
       assert_not_predicate(result, :valid_encoding?, bug8323)

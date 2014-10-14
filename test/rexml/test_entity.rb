@@ -100,13 +100,13 @@ module REXMLTests
       source = "<!DOCTYPE blah [\n<!ENTITY foo \"bar\">\n]><a>&foo;</a>"
       doc = REXML::Document.new(source)
       assert_equal 'bar', doc.root.text
-      out = ''
+      out = ''.dup
       doc.write out
       assert_equal source, out
     end
 
     def test_entity_string_limit
-      template = '<!DOCTYPE bomb [ <!ENTITY a "^" > ]> <bomb>$</bomb>'
+      template = '<!DOCTYPE bomb [ <!ENTITY a "^" > ]> <bomb>$</bomb>'.dup
       len      = 5120 # 5k per entity
       template.sub!(/\^/, "B" * len)
 

@@ -78,12 +78,12 @@ class OpenSSL::TestSSL < OpenSSL::SSLTestCase
         ITERATIONS.times{|i|
           str = "x" * 100 + "\n"
           ssl.syswrite(str)
-          newstr = ''
+          newstr = ''.dup
           newstr << ssl.sysread(str.size - newstr.size) until newstr.size == str.size
           assert_equal(str, newstr)
 
           str = "x" * i * 100 + "\n"
-          buf = ""
+          buf = "".dup
           ssl.syswrite(str)
           assert_equal(buf.object_id, ssl.sysread(str.size, buf).object_id)
           newstr = buf
@@ -110,7 +110,7 @@ class OpenSSL::TestSSL < OpenSSL::SSLTestCase
           assert_equal(str, ssl.read(str.size))
 
           str = "x" * i * 100 + "\n"
-          buf = ""
+          buf = "".dup
           ssl.write(str)
           assert_equal(buf.object_id, ssl.read(str.size, buf).object_id)
           assert_equal(str, buf)

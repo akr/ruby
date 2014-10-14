@@ -1406,7 +1406,7 @@ class Resolv
 
       class MessageEncoder # :nodoc:
         def initialize
-          @data = ''
+          @data = ''.dup
           @names = {}
           yield self
         end

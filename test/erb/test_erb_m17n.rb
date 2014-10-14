@@ -10,14 +10,14 @@ class TestERB < Test::Unit::TestCase
     erb = ERB.new("こんにちは".encode("EUC-JP"))
     assert_equal Encoding::EUC_JP, erb.result.encoding
 
-    erb = ERB.new("\xC4\xE3\xBA\xC3".force_encoding("EUC-CN"))
+    erb = ERB.new("\xC4\xE3\xBA\xC3".dup.force_encoding("EUC-CN"))
     assert_equal Encoding::EUC_CN, erb.result.encoding
 
     erb = ERB.new("γεια σας".encode("ISO-8859-7"))
     assert_equal Encoding::ISO_8859_7, erb.result.encoding
 
     assert_raise(ArgumentError, /ASCII compatible/) {
-      ERB.new("こんにちは".force_encoding("ISO-2022-JP")) # dummy encoding
+      ERB.new("こんにちは".dup.force_encoding("ISO-2022-JP")) # dummy encoding
     }
   end
 
@@ -25,10 +25,10 @@ class TestERB < Test::Unit::TestCase
     erb = ERB.new("hello")
     assert_match(/#coding:UTF-8/, erb.src)
 
-    erb = ERB.new("hello".force_encoding("EUC-JP"))
+    erb = ERB.new("hello".dup.force_encoding("EUC-JP"))
     assert_match(/#coding:EUC-JP/, erb.src)
 
-    erb = ERB.new("hello".force_encoding("ISO-8859-9"))
+    erb = ERB.new("hello".dup.force_encoding("ISO-8859-9"))
     assert_match(/#coding:ISO-8859-9/, erb.src)
   end
 
@@ -39,7 +39,7 @@ class TestERB < Test::Unit::TestCase
     erb = ERB.new("literal encoding is <%= 'こんにちは'.encoding  %>".encode("EUC-JP"))
     assert_match(/literal encoding is EUC-JP/, erb.result)
 
-    erb = ERB.new("literal encoding is <%= '\xC4\xE3\xBA\xC3'.encoding %>".force_encoding("EUC-CN"))
+    erb = ERB.new("literal encoding is <%= '\xC4\xE3\xBA\xC3'.encoding %>".dup.force_encoding("EUC-CN"))
     assert_match(/literal encoding is GB2312/, erb.result)
   end
 
@@ -47,10 +47,10 @@ class TestERB < Test::Unit::TestCase
     erb = ERB.new("__ENCODING__ is <%= __ENCODING__ %>")
     assert_match(/__ENCODING__ is UTF-8/, erb.result)
 
-    erb = ERB.new("__ENCODING__ is <%= __ENCODING__ %>".force_encoding("EUC-JP"))
+    erb = ERB.new("__ENCODING__ is <%= __ENCODING__ %>".dup.force_encoding("EUC-JP"))
     assert_match(/__ENCODING__ is EUC-JP/, erb.result)
 
-    erb = ERB.new("__ENCODING__ is <%= __ENCODING__ %>".force_encoding("Big5"))
+    erb = ERB.new("__ENCODING__ is <%= __ENCODING__ %>".dup.force_encoding("Big5"))
     assert_match(/__ENCODING__ is Big5/, erb.result)
   end
 

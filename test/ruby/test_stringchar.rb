@@ -30,7 +30,7 @@ class TestStringchar < Test::Unit::TestCase
     assert(/(\s+\d+){2}/ =~ " 1 2"); assert_equal(" 1 2", $&)
     assert(/(?:\s+\d+){2}/ =~ " 1 2"); assert_equal(" 1 2", $&)
 
-    x = <<END;
+    x = <<END.dup;
 ABCD
 ABCD
 END
@@ -71,12 +71,12 @@ END
     assert_equal("\1", ?\C-a)
     assert_equal("\341", ?\M-a)
     assert_equal("\201", ?\M-\C-a)
-    assert_equal(?A, "a".upcase![0])
-    assert_equal(?a, "A".downcase![0])
-    assert_equal("ABC", "abc".tr!("a-z", "A-Z"))
-    assert_equal("ABC", "aabbcccc".tr_s!("a-z", "A-Z"))
-    assert_equal("abc", "abcc".squeeze!("a-z"))
-    assert_equal("ad", "abcd".delete!("bc"))
+    assert_equal(?A, "a".dup.upcase![0])
+    assert_equal(?a, "A".dup.downcase![0])
+    assert_equal("ABC", "abc".dup.tr!("a-z", "A-Z"))
+    assert_equal("ABC", "aabbcccc".dup.tr_s!("a-z", "A-Z"))
+    assert_equal("abc", "abcc".dup.squeeze!("a-z"))
+    assert_equal("ad", "abcd".dup.delete!("bc"))
 
     x = "abcdef"
     y = [ ?a, ?b, ?c, ?d, ?e, ?f ]
@@ -89,7 +89,7 @@ END
     }
     assert(!bad)
 
-    s = "a string"
+    s = "a string".dup
     s[0..s.size]="another string"
     assert_equal("another string", s)
 
@@ -115,49 +115,49 @@ EOS
   end
 
   def test_bang
-    s = "aBc"
+    s = "aBc".dup
     s.upcase
     assert_equal("aBc", s)
     s.upcase!
     assert_equal("ABC", s)
 
-    s = "aBc"
+    s = "aBc".dup
     s.downcase
     assert_equal("aBc", s)
     s.downcase!
     assert_equal("abc", s)
 
-    s = "aBc"
+    s = "aBc".dup
     s.swapcase
     assert_equal("aBc", s)
     s.swapcase!
     assert_equal("AbC", s)
 
-    s = "aBc"
+    s = "aBc".dup
     s.capitalize
     assert_equal("aBc", s)
     s.capitalize!
     assert_equal("Abc", s)
 
-    s = "aBc"
+    s = "aBc".dup
     s.tr("a-z", "A-Z")
     assert_equal("aBc", s)
     s.tr!("a-z", "A-Z")
     assert_equal("ABC", s)
 
-    s = "aaBBcc"
+    s = "aaBBcc".dup
     s.tr_s("a-z", "A-Z")
     assert_equal("aaBBcc", s)
     s.tr_s!("a-z", "A-Z")
     assert_equal("ABBC", s)
 
-    s = "aaBBcc"
+    s = "aaBBcc".dup
     s.squeeze("a-z")
     assert_equal("aaBBcc", s)
     s.squeeze!("a-z")
     assert_equal("aBBc", s)
 
-    s = "aaBBcc"
+    s = "aaBBcc".dup
     s.delete("a-z")
     assert_equal("aaBBcc", s)
     s.delete!("a-z")

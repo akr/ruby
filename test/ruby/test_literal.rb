@@ -72,7 +72,7 @@ class TestRubyLiteral < Test::Unit::TestCase
           str = "#{qopen}\\#{pre}\\#{open}\u201c#{close}#{qclose}".encode("iso-8859-13")
           assert_raise(SyntaxError, "#{bug5262} eval(#{str})") {eval(str)}
 
-          str = "#{qopen}\\#{pre}\\#{open}\xe2\x7f#{close}#{qclose}".force_encoding("utf-8")
+          str = "#{qopen}\\#{pre}\\#{open}\xe2\x7f#{close}#{qclose}".dup.force_encoding("utf-8")
           assert_raise(SyntaxError, "#{bug5262} eval(#{str})") {eval(str)}
         end
       end
@@ -98,7 +98,7 @@ class TestRubyLiteral < Test::Unit::TestCase
     s = "string"
     assert_equal s, "#{s}"
     a = 'Foo'
-    b = "#{a}" << 'Bar'
+    b = "#{a}" + 'Bar'
     assert_equal('Foo', a, 'r3842')
     assert_equal('FooBar', b, 'r3842')
   end

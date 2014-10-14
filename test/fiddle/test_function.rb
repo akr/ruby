@@ -62,13 +62,13 @@ module Fiddle
       func = Function.new(@libc['strcpy'], [TYPE_VOIDP, TYPE_VOIDP], TYPE_VOIDP)
 
       assert_nil Fiddle.last_error
-      func.call("000", "123")
+      func.call("000".dup, "123")
       refute_nil Fiddle.last_error
     end
 
     def test_strcpy
       f = Function.new(@libc['strcpy'], [TYPE_VOIDP, TYPE_VOIDP], TYPE_VOIDP)
-      buff = "000"
+      buff = "000".dup
       str = f.call(buff, "123")
       assert_equal("123", buff)
       assert_equal("123", str.to_s)

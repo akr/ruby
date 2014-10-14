@@ -13,7 +13,7 @@ module RSS
     # in +element+.  If a block is given the return value of
     # the block ends up in the error message.
     def initialize(line=nil, element=nil)
-      message = "This is not well formed XML"
+      message = "This is not well formed XML".dup
       if element or line
         message << "\nerror occurred"
         message << " in #{element}" if element
@@ -26,14 +26,14 @@ module RSS
 
   class XMLParserNotFound < Error
     def initialize
-      super("available XML parser was not found in " <<
+      super("available XML parser was not found in ".dup <<
             "#{AVAILABLE_PARSER_LIBRARIES.inspect}.")
     end
   end
 
   class NotValidXMLParser < Error
     def initialize(parser)
-      super("#{parser} is not an available XML parser. " <<
+      super("#{parser} is not an available XML parser. ".dup <<
             "Available XML parser" <<
             (AVAILABLE_PARSERS.size > 1 ? "s are " : " is ") <<
             "#{AVAILABLE_PARSERS.inspect}.")
@@ -44,7 +44,7 @@ module RSS
     attr_reader :tag, :prefix, :uri
     def initialize(tag, prefix, require_uri)
       @tag, @prefix, @uri = tag, prefix, require_uri
-      super("prefix <#{prefix}> doesn't associate uri " <<
+      super("prefix <#{prefix}> doesn't associate uri ".dup <<
             "<#{require_uri}> in tag <#{tag}>")
     end
   end
@@ -270,7 +270,7 @@ module RSS
       @do_validate = true
       @ns_stack = [{"xml" => :xml}]
       @tag_stack = [[]]
-      @text_stack = ['']
+      @text_stack = [''.dup]
       @proc_stack = []
       @last_element = nil
       @version = @encoding = @standalone = nil
@@ -295,7 +295,7 @@ module RSS
     end
 
     def tag_start(name, attributes)
-      @text_stack.push('')
+      @text_stack.push(''.dup)
 
       ns = @ns_stack.last.dup
       attrs = {}

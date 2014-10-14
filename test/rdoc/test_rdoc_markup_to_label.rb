@@ -71,41 +71,41 @@ class TestRDocMarkupToLabel < RDoc::Markup::FormatterTestCase
   alias start_accepting                               empty
 
   def test_convert_bold
-    assert_equal 'bold', @to.convert('<b>bold</b>')
-    assert_equal 'bold', @to.convert('*bold*')
+    assert_equal 'bold', @to.convert('<b>bold</b>'.dup)
+    assert_equal 'bold', @to.convert('*bold*'.dup)
   end
 
   def test_convert_crossref
-    assert_equal 'SomeClass', @to.convert('SomeClass')
-    assert_equal 'SomeClass', @to.convert('\\SomeClass')
+    assert_equal 'SomeClass', @to.convert('SomeClass'.dup)
+    assert_equal 'SomeClass', @to.convert('\\SomeClass'.dup)
 
-    assert_equal 'some_method', @to.convert('some_method')
-    assert_equal 'some_method', @to.convert('\\some_method')
+    assert_equal 'some_method', @to.convert('some_method'.dup)
+    assert_equal 'some_method', @to.convert('\\some_method'.dup)
 
-    assert_equal '%23some_method', @to.convert('#some_method')
-    assert_equal '%23some_method', @to.convert('\\#some_method')
+    assert_equal '%23some_method', @to.convert('#some_method'.dup)
+    assert_equal '%23some_method', @to.convert('\\#some_method'.dup)
   end
 
   def test_convert_em
-    assert_equal 'em', @to.convert('<em>em</em>')
-    assert_equal 'em', @to.convert('*em*')
+    assert_equal 'em', @to.convert('<em>em</em>'.dup)
+    assert_equal 'em', @to.convert('*em*'.dup)
   end
 
   def test_convert_em_dash # for HTML conversion
-    assert_equal '--', @to.convert('--')
+    assert_equal '--', @to.convert('--'.dup)
   end
 
   def test_convert_escape
-    assert_equal 'a+%3E+b', @to.convert('a > b')
+    assert_equal 'a+%3E+b', @to.convert('a > b'.dup)
   end
 
   def test_convert_tidylink
-    assert_equal 'text', @to.convert('{text}[stuff]')
-    assert_equal 'text', @to.convert('text[stuff]')
+    assert_equal 'text', @to.convert('{text}[stuff]'.dup)
+    assert_equal 'text', @to.convert('text[stuff]'.dup)
   end
 
   def test_convert_tt
-    assert_equal 'tt', @to.convert('<tt>tt</tt>')
+    assert_equal 'tt', @to.convert('<tt>tt</tt>'.dup)
   end
 
 end

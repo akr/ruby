@@ -40,7 +40,7 @@ if defined? Zlib
     end
 
     def test_deflate_chunked
-      original = ''
+      original = ''.dup
       chunks = []
       r = Random.new 0
 
@@ -311,7 +311,7 @@ if defined? Zlib
 
       z = Zlib::Inflate.new
 
-      inflated = ""
+      inflated = "".dup
 
       deflated.each_char do |byte|
         inflated << z.inflate(byte)
@@ -599,7 +599,7 @@ if defined? Zlib
           assert_equal(t.path, f.path)
         end
 
-        s = ""
+        s = "".dup
         sio = StringIO.new(s)
         gz = Zlib::GzipWriter.new(sio)
         gz.print("foo")
@@ -621,7 +621,7 @@ if defined? Zlib
     end
 
     def test_ungetc
-      s = ""
+      s = "".dup
       w = Zlib::GzipWriter.new(StringIO.new(s))
       w << (1...1000).to_a.inspect
       w.close
@@ -636,7 +636,7 @@ if defined? Zlib
     end
 
     def test_ungetc_paragraph
-      s = ""
+      s = "".dup
       w = Zlib::GzipWriter.new(StringIO.new(s))
       w << "abc"
       w.close
@@ -774,7 +774,7 @@ if defined? Zlib
         end
 
         Zlib::GzipReader.open(t.path) do |f|
-          s = ""
+          s = "".dup
           f.readpartial(3, s)
           assert("foo".start_with?(s))
 
@@ -934,7 +934,7 @@ if defined? Zlib
     end
 
     def test_corrupted_header
-      gz = Zlib::GzipWriter.new(StringIO.new(s = ""))
+      gz = Zlib::GzipWriter.new(StringIO.new(s = "".dup))
       gz.orig_name = "X"
       gz.comment = "Y"
       gz.print("foo")
@@ -1081,7 +1081,7 @@ if defined? Zlib
     def test_deflate_stream
       r = Random.new 0
 
-      deflated = ''
+      deflated = ''.dup
 
       Zlib.deflate(r.bytes(20000)) do |chunk|
         deflated << chunk

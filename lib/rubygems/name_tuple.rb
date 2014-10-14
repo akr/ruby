@@ -50,9 +50,9 @@ class Gem::NameTuple
   def full_name
     case @platform
     when nil, 'ruby', ''
-      "#{@name}-#{@version}"
+      "#{@name}-#{@version}".dup
     else
-      "#{@name}-#{@version}-#{@platform}"
+      "#{@name}-#{@version}-#{@platform}".dup
     end.untaint
   end
 

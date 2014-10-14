@@ -1254,8 +1254,8 @@ class TestMiniTestUnitTestCase < MiniTest::Unit::TestCase
       @tc.assert_same 1, 2
     end
 
-    s1 = "blah"
-    s2 = "blah"
+    s1 = "blah".dup
+    s2 = "blah".dup
 
     util_assert_triggered 'Expected "blah" (oid=N) to be the same as "blah" (oid=N).' do
       @tc.assert_same s1, s2

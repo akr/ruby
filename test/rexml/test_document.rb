@@ -89,7 +89,7 @@ EOF
     def test_tag_in_cdata_with_not_ascii_only_but_ascii8bit_encoding_source
       tag = "<b>...</b>"
       message = "こんにちは、世界！" # Hello world! in Japanese
-      xml = <<EOX
+      xml = <<EOX.dup
 <?xml version="1.0" encoding="UTF-8"?>
 <message><![CDATA[#{tag}#{message}]]></message>
 EOX
@@ -118,7 +118,7 @@ EOX
 
       class ArgumentsTest < self
         def test_output
-          output = ""
+          output = "".dup
           @document.write(output)
           assert_equal(<<-EOX, output)
 <?xml version='1.0' encoding='UTF-8'?>
@@ -127,7 +127,7 @@ EOX
         end
 
         def test_indent
-          output = ""
+          output = "".dup
           indent = 2
           @document.write(output, indent)
           assert_equal(<<-EOX.chomp, output)
@@ -139,7 +139,7 @@ EOX
         end
 
         def test_transitive
-          output = ""
+          output = "".dup
           indent = 2
           transitive = true
           @document.write(output, indent, transitive)
@@ -152,7 +152,7 @@ EOX
         end
 
         def test_ie_hack
-          output = ""
+          output = "".dup
           indent = -1
           transitive = false
           ie_hack = true
@@ -162,7 +162,7 @@ EOX
         end
 
         def test_encoding
-          output = ""
+          output = "".dup
           indent = -1
           transitive = false
           ie_hack = false
@@ -181,7 +181,7 @@ EOX
 
       class OptionsTest < self
         def test_output
-          output = ""
+          output = "".dup
           @document.write(:output => output)
           assert_equal(<<-EOX, output)
 <?xml version='1.0' encoding='UTF-8'?>
@@ -190,7 +190,7 @@ EOX
         end
 
         def test_indent
-          output = ""
+          output = "".dup
           @document.write(:output => output, :indent => 2)
           assert_equal(<<-EOX.chomp, output)
 <?xml version='1.0' encoding='UTF-8'?>
@@ -201,7 +201,7 @@ EOX
         end
 
         def test_transitive
-          output = ""
+          output = "".dup
           @document.write(:output => output, :indent => 2, :transitive => true)
           assert_equal(<<-EOX, output)
 <?xml version='1.0' encoding='UTF-8'?>
@@ -212,14 +212,14 @@ EOX
         end
 
         def test_ie_hack
-          output = ""
+          output = "".dup
           document = REXML::Document.new("<empty/>")
           document.write(:output => output, :ie_hack => true)
           assert_equal("<empty />", output)
         end
 
         def test_encoding
-          output = ""
+          output = "".dup
           encoding = "Windows-31J"
           @document.xml_decl.encoding = "Shift_JIS"
           japanese_text = "こんにちは"
@@ -236,11 +236,11 @@ EOX
     class BomTest < self
       class HaveEncodingTest < self
         def test_utf_8
-          xml = <<-EOX.force_encoding("ASCII-8BIT")
+          xml = <<-EOX.dup.force_encoding("ASCII-8BIT")
 <?xml version="1.0" encoding="UTF-8"?>
 <message>Hello world!</message>
 EOX
-          bom = "\ufeff".force_encoding("ASCII-8BIT")
+          bom = "\ufeff".dup.force_encoding("ASCII-8BIT")
           document = REXML::Document.new(bom + xml)
           assert_equal("UTF-8", document.encoding)
         end
@@ -268,11 +268,11 @@ EOX
 
       class NoEncodingTest < self
         def test_utf_8
-          xml = <<-EOX.force_encoding("ASCII-8BIT")
+          xml = <<-EOX.dup.force_encoding("ASCII-8BIT")
 <?xml version="1.0"?>
 <message>Hello world!</message>
 EOX
-          bom = "\ufeff".force_encoding("ASCII-8BIT")
+          bom = "\ufeff".dup.force_encoding("ASCII-8BIT")
           document = REXML::Document.new(bom + xml)
           assert_equal("UTF-8", document.encoding)
         end
@@ -307,7 +307,7 @@ EOX
           bom = "\ufeff".encode("UTF-16LE").force_encoding("ASCII-8BIT")
           document = REXML::Document.new(bom + xml)
 
-          actual_xml = ""
+          actual_xml = "".dup
           document.write(actual_xml)
           expected_xml = <<-EOX.encode("UTF-16BE")
 \ufeff<?xml version='1.0' encoding='UTF-16'?>

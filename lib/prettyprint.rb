@@ -40,7 +40,7 @@ class PrettyPrint
   #     output
   #   end
   #
-  def PrettyPrint.format(output='', maxwidth=79, newline="\n", genspace=lambda {|n| ' ' * n})
+  def PrettyPrint.format(output=''.dup, maxwidth=79, newline="\n", genspace=lambda {|n| ' ' * n})
     q = PrettyPrint.new(output, maxwidth, newline, &genspace)
     yield q
     q.flush
@@ -54,7 +54,7 @@ class PrettyPrint
   # The invocation of +breakable+ in the block doesn't break a line and is
   # treated as just an invocation of +text+.
   #
-  def PrettyPrint.singleline_format(output='', maxwidth=nil, newline=nil, genspace=nil)
+  def PrettyPrint.singleline_format(output=''.dup, maxwidth=nil, newline=nil, genspace=nil)
     q = SingleLine.new(output)
     yield q
     output
@@ -77,7 +77,7 @@ class PrettyPrint
   # The block is used to generate spaces. {|width| ' ' * width} is used if it
   # is not given.
   #
-  def initialize(output='', maxwidth=79, newline="\n", &genspace)
+  def initialize(output=''.dup, maxwidth=79, newline="\n", &genspace)
     @output = output
     @maxwidth = maxwidth
     @newline = newline

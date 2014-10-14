@@ -617,7 +617,7 @@ class IO
 
     start_position = pos rescue 0
     matched_so_far = 0
-    source_buffer = ""
+    source_buffer = "".dup
     result_buffer = []
     final_result = []
 

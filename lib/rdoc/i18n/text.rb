@@ -41,7 +41,7 @@ class RDoc::I18n::Text
 
   # Translates raw text into +locale+.
   def translate(locale)
-    translated_text = ''
+    translated_text = ''.dup
     parse do |part|
       case part[:type]
       when :paragraph
@@ -57,7 +57,7 @@ class RDoc::I18n::Text
 
   private
   def parse(&block)
-    paragraph = ''
+    paragraph = ''.dup
     paragraph_start_line = 0
     line_no = 0
 
@@ -71,7 +71,7 @@ class RDoc::I18n::Text
           paragraph << line
           emit_paragraph_event(paragraph, paragraph_start_line, line_no,
                                &block)
-          paragraph = ''
+          paragraph = ''.dup
         end
       else
         paragraph_start_line = line_no if paragraph.empty?

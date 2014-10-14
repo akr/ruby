@@ -48,7 +48,7 @@ class TestRegexp < Test::Unit::TestCase
 
   def test_yoshidam_net_20041111_2
     assert_raise(RegexpError) do
-      s = "[\xFF-\xFF]".force_encoding("utf-8")
+      s = "[\xFF-\xFF]".dup.force_encoding("utf-8")
       Regexp.new(s, nil, "u")
     end
   end
@@ -78,8 +78,8 @@ class TestRegexp < Test::Unit::TestCase
     assert_equal :ok, begin
       Regexp.union(
         "a",
-        Regexp.new("\xc2\xa1".force_encoding("euc-jp")),
-        Regexp.new("\xc2\xa1".force_encoding("utf-8")))
+        Regexp.new("\xc2\xa1".dup.force_encoding("euc-jp")),
+        Regexp.new("\xc2\xa1".dup.force_encoding("utf-8")))
       :ng
     rescue ArgumentError
       :ok
@@ -137,7 +137,7 @@ class TestRegexp < Test::Unit::TestCase
 
     assert_equal("o", "foo"[/(?<bar>o)/, "bar"])
 
-    s = "foo"
+    s = "foo".dup
     s[/(?<bar>o)/, "bar"] = "baz"
     assert_equal("fbazo", s)
   end
@@ -161,7 +161,7 @@ class TestRegexp < Test::Unit::TestCase
   def test_named_capture_nonascii
     bug9903 = '[ruby-dev:48278] [Bug #9903]'
 
-    key = "\xb1\xb2".force_encoding(Encoding::EUC_JP)
+    key = "\xb1\xb2".dup.force_encoding(Encoding::EUC_JP)
     m = /(?<#{key}>.*)/.match("xxx")
     assert_equal("xxx", m[key])
     assert_raise(IndexError, bug9903) {m[key.dup.force_encoding(Encoding::Shift_JIS)]}
@@ -438,7 +438,7 @@ class TestRegexp < Test::Unit::TestCase
 
     assert_raise(SyntaxError) { eval("/\u3042/n") }
 
-    s = ".........."
+    s = "..........".dup
     5.times { s.sub!(".", "") }
     assert_equal(".....", s)
   end
@@ -511,18 +511,18 @@ class TestRegexp < Test::Unit::TestCase
   end
 
   def test_regsub
-    assert_equal("fooXXXbaz", "foobarbaz".sub!(/bar/, "XXX"))
+    assert_equal("fooXXXbaz", "foobarbaz".dup.sub!(/bar/, "XXX"))
     s = [0xff].pack("C")
-    assert_equal(s, "X".sub!(/./, s))
-    assert_equal('\\' + s, "X".sub!(/./, '\\' + s))
-    assert_equal('\k', "foo".sub!(/.../, '\k'))
-    assert_raise(RuntimeError) { "foo".sub!(/(?<x>o)/, '\k<x') }
-    assert_equal('foo[bar]baz', "foobarbaz".sub!(/(b..)/, '[\0]'))
-    assert_equal('foo[foo]baz', "foobarbaz".sub!(/(b..)/, '[\`]'))
-    assert_equal('foo[baz]baz', "foobarbaz".sub!(/(b..)/, '[\\\']'))
-    assert_equal('foo[r]baz', "foobarbaz".sub!(/(b)(.)(.)/, '[\+]'))
-    assert_equal('foo[\\]baz', "foobarbaz".sub!(/(b..)/, '[\\\\]'))
-    assert_equal('foo[\z]baz', "foobarbaz".sub!(/(b..)/, '[\z]'))
+    assert_equal(s, "X".dup.sub!(/./, s))
+    assert_equal('\\' + s, "X".dup.sub!(/./, '\\' + s))
+    assert_equal('\k', "foo".dup.sub!(/.../, '\k'))
+    assert_raise(RuntimeError) { "foo".dup.sub!(/(?<x>o)/, '\k<x') }
+    assert_equal('foo[bar]baz', "foobarbaz".dup.sub!(/(b..)/, '[\0]'))
+    assert_equal('foo[foo]baz', "foobarbaz".dup.sub!(/(b..)/, '[\`]'))
+    assert_equal('foo[baz]baz', "foobarbaz".dup.sub!(/(b..)/, '[\\\']'))
+    assert_equal('foo[r]baz', "foobarbaz".dup.sub!(/(b)(.)(.)/, '[\+]'))
+    assert_equal('foo[\\]baz', "foobarbaz".dup.sub!(/(b..)/, '[\\\\]'))
+    assert_equal('foo[\z]baz', "foobarbaz".dup.sub!(/(b..)/, '[\z]'))
   end
 
   def test_regsub_K

@@ -179,13 +179,13 @@ class TestRDocMarkupToHtmlCrossref < XrefTestCase
 
     @to = RDoc::Markup::ToHtmlCrossref.new @options, 'index.html', @c1
 
-    result = @to.to_html 'first.last@example.com'
+    result = @to.to_html 'first.last@example.com'.dup
 
     assert_equal 'first.last@example.com', result
   end
 
   def test_to_html_CROSSREF_email_hyperlink_all
-    result = @to.to_html 'first.last@example.com'
+    result = @to.to_html 'first.last@example.com'.dup
 
     assert_equal 'first.last@example.com', result
   end

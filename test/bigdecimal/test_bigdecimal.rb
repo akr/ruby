@@ -107,7 +107,7 @@ class TestBigDecimal < Test::Unit::TestCase
   def test_global_new_with_tainted_string
     Thread.new {
       $SAFE = 1
-      BigDecimal('1'.taint)
+      BigDecimal('1'.dup.taint)
     }.join
   end
 
@@ -164,7 +164,7 @@ class TestBigDecimal < Test::Unit::TestCase
   def test_new_with_tainted_string
     Thread.new {
       $SAFE = 1
-      BigDecimal.new('1'.taint)
+      BigDecimal.new('1'.dup.taint)
     }.join
   end
 

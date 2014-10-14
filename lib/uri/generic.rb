@@ -1344,7 +1344,7 @@ module URI
     # Constructs String from URI
     #
     def to_s
-      str = ''
+      str = ''.dup
       if @scheme
         str << @scheme
         str << ':'.freeze

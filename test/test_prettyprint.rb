@@ -14,7 +14,7 @@ class WadlerExample < Test::Unit::TestCase # :nodoc:
   end
 
   def hello(width)
-    PrettyPrint.format('', width) {|hello|
+    PrettyPrint.format(''.dup, width) {|hello|
       hello.group {
         hello.group {
           hello.group {
@@ -81,7 +81,7 @@ End
   end
 
   def tree(width)
-    PrettyPrint.format('', width) {|q| @tree.show(q)}
+    PrettyPrint.format(''.dup, width) {|q| @tree.show(q)}
   end
 
   def test_tree_00_19
@@ -126,7 +126,7 @@ End
   end
 
   def tree_alt(width)
-    PrettyPrint.format('', width) {|q| @tree.altshow(q)}
+    PrettyPrint.format(''.dup, width) {|q| @tree.altshow(q)}
   end
 
   def test_tree_alt_00_18
@@ -242,7 +242,7 @@ end
 
 class StrictPrettyExample < Test::Unit::TestCase # :nodoc:
   def prog(width)
-    PrettyPrint.format('', width) {|q|
+    PrettyPrint.format(''.dup, width) {|q|
       q.group {
         q.group {q.nest(2) {
                      q.text "if"; q.breakable;
@@ -387,7 +387,7 @@ end
 
 class TailGroup < Test::Unit::TestCase # :nodoc:
   def test_1
-    out = PrettyPrint.format('', 10) {|q|
+    out = PrettyPrint.format(''.dup, 10) {|q|
       q.group {
         q.group {
           q.text "abc"
@@ -426,7 +426,7 @@ end
 
 class Fill < Test::Unit::TestCase # :nodoc:
   def format(width)
-    PrettyPrint.format('', width) {|q|
+    PrettyPrint.format(''.dup, width) {|q|
       q.group {
         q.text 'abc'
         q.fill_breakable

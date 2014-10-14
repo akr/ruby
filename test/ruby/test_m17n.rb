@@ -28,7 +28,7 @@ class TestM17N < Test::Unit::TestCase
     assert_not_predicate(r, :fixed_encoding?)
     %w[ASCII-8BIT EUC-JP Windows-31J UTF-8].each {|ename|
       # "\xc2\xa1" is a valid sequence for ASCII-8BIT, EUC-JP, Windows-31J and UTF-8.
-      assert_nothing_raised { r =~ "\xc2\xa1".force_encoding(ename) }
+      assert_nothing_raised { r =~ "\xc2\xa1".dup.force_encoding(ename) }
     }
   end
 
@@ -37,9 +37,9 @@ class TestM17N < Test::Unit::TestCase
     %w[ASCII-8BIT EUC-JP Windows-31J UTF-8].each {|ename|
       enc = Encoding.find(ename)
       if enc == r.encoding
-        assert_nothing_raised { r =~ "\xc2\xa1".force_encoding(enc) }
+        assert_nothing_raised { r =~ "\xc2\xa1".dup.force_encoding(enc) }
       else
-        assert_raise(Encoding::CompatibilityError) { r =~ "\xc2\xa1".force_encoding(enc) }
+        assert_raise(Encoding::CompatibilityError) { r =~ "\xc2\xa1".dup.force_encoding(enc) }
       end
     }
   end
@@ -203,10 +203,10 @@ class TestM17N < Test::Unit::TestCase
         [Encoding::UTF_8, Encoding::EUC_JP, Encoding::Windows_31J, Encoding::GB18030].
           each do |e|
           Encoding.default_external = e
-          str = "\x81\x30\x81\x30".force_encoding('GB18030')
+          str = "\x81\x30\x81\x30".dup.force_encoding('GB18030')
           assert_equal(Encoding::GB18030 == e ? %{"#{str}"} : '"\x{81308130}"', str.inspect)
           str = e("\xa1\x8f\xa1\xa1")
-          expected = "\"\\xA1\x8F\xA1\xA1\"".force_encoding("EUC-JP")
+          expected = "\"\\xA1\x8F\xA1\xA1\"".dup.force_encoding("EUC-JP")
           assert_equal(Encoding::EUC_JP == e ? expected : "\"\\xA1\\x{8FA1A1}\"", str.inspect)
           str = s("\x81@")
           assert_equal(Encoding::Windows_31J == e ? %{"#{str}"} : '"\x{8140}"', str.inspect)
@@ -480,7 +480,7 @@ class TestM17N < Test::Unit::TestCase
     assert_regexp_fixed_ascii8bit(eval(a(%{/\xc2\xa1/n})))
     assert_regexp_fixed_ascii8bit(eval(a(%q{/\xc2\xa1/})))
 
-    assert_raise(SyntaxError) { eval("/\xa1\xa1/n".force_encoding("euc-jp")) }
+    assert_raise(SyntaxError) { eval("/\xa1\xa1/n".dup.force_encoding("euc-jp")) }
 
     [/\xc2\xa1/n, eval(a(%{/\xc2\xa1/})), eval(a(%{/\xc2\xa1/n}))].each {|r|
       assert_equal(nil, r =~ a("a"))
@@ -532,7 +532,7 @@ class TestM17N < Test::Unit::TestCase
 
   def test_regexp_windows_31j
     begin
-      Regexp.new("\xa1".force_encoding("windows-31j")) =~ "\xa1\xa1".force_encoding("euc-jp")
+      Regexp.new("\xa1".dup.force_encoding("windows-31j")) =~ "\xa1\xa1".dup.force_encoding("euc-jp")
     rescue Encoding::CompatibilityError
       err = $!
     end
@@ -554,40 +554,40 @@ class TestM17N < Test::Unit::TestCase
     r = /\xc2\xa1/e
     assert_raise(RegexpError) { /\xc2\xa1#{r}/s }
 
-    r1 = Regexp.new('foo'.force_encoding("ascii-8bit"))
-    r2 = eval('/bar#{r1}/'.force_encoding('ascii-8bit'))
+    r1 = Regexp.new('foo'.dup.force_encoding("ascii-8bit"))
+    r2 = eval('/bar#{r1}/'.dup.force_encoding('ascii-8bit'))
     assert_equal(Encoding::US_ASCII, r2.encoding)
 
-    r1 = Regexp.new('foo'.force_encoding("us-ascii"))
-    r2 = eval('/bar#{r1}/'.force_encoding('ascii-8bit'))
+    r1 = Regexp.new('foo'.dup.force_encoding("us-ascii"))
+    r2 = eval('/bar#{r1}/'.dup.force_encoding('ascii-8bit'))
     assert_equal(Encoding::US_ASCII, r2.encoding)
 
-    r1 = Regexp.new('foo'.force_encoding("ascii-8bit"))
-    r2 = eval('/bar#{r1}/'.force_encoding('us-ascii'))
+    r1 = Regexp.new('foo'.dup.force_encoding("ascii-8bit"))
+    r2 = eval('/bar#{r1}/'.dup.force_encoding('us-ascii'))
     assert_equal(Encoding::US_ASCII, r2.encoding)
 
-    r1 = Regexp.new('foo'.force_encoding("us-ascii"))
-    r2 = eval('/bar#{r1}/'.force_encoding('us-ascii'))
+    r1 = Regexp.new('foo'.dup.force_encoding("us-ascii"))
+    r2 = eval('/bar#{r1}/'.dup.force_encoding('us-ascii'))
     assert_equal(Encoding::US_ASCII, r2.encoding)
 
-    r1 = Regexp.new('\xa1'.force_encoding("ascii-8bit"))
-    r2 = eval('/bar#{r1}/'.force_encoding('ascii-8bit'))
+    r1 = Regexp.new('\xa1'.dup.force_encoding("ascii-8bit"))
+    r2 = eval('/bar#{r1}/'.dup.force_encoding('ascii-8bit'))
     assert_equal(Encoding::ASCII_8BIT, r2.encoding)
 
-    r1 = Regexp.new('\xa1'.force_encoding("ascii-8bit"))
-    r2 = eval('/bar#{r1}/'.force_encoding('us-ascii'))
+    r1 = Regexp.new('\xa1'.dup.force_encoding("ascii-8bit"))
+    r2 = eval('/bar#{r1}/'.dup.force_encoding('us-ascii'))
     assert_equal(Encoding::ASCII_8BIT, r2.encoding)
 
-    r1 = Regexp.new('foo'.force_encoding("ascii-8bit"))
-    r2 = eval('/\xa1#{r1}/'.force_encoding('ascii-8bit'))
+    r1 = Regexp.new('foo'.dup.force_encoding("ascii-8bit"))
+    r2 = eval('/\xa1#{r1}/'.dup.force_encoding('ascii-8bit'))
     assert_equal(Encoding::ASCII_8BIT, r2.encoding)
 
-    r1 = Regexp.new('foo'.force_encoding("us-ascii"))
-    r2 = eval('/\xa1#{r1}/'.force_encoding('ascii-8bit'))
+    r1 = Regexp.new('foo'.dup.force_encoding("us-ascii"))
+    r2 = eval('/\xa1#{r1}/'.dup.force_encoding('ascii-8bit'))
     assert_equal(Encoding::ASCII_8BIT, r2.encoding)
 
-    r1 = Regexp.new('\xa1'.force_encoding("ascii-8bit"))
-    r2 = eval('/\xa1#{r1}/'.force_encoding('ascii-8bit'))
+    r1 = Regexp.new('\xa1'.dup.force_encoding("ascii-8bit"))
+    r2 = eval('/\xa1#{r1}/'.dup.force_encoding('ascii-8bit'))
     assert_equal(Encoding::ASCII_8BIT, r2.encoding)
   end
 
@@ -597,36 +597,36 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_regexp_property
-    s = '\p{Hiragana}'.force_encoding("euc-jp")
+    s = '\p{Hiragana}'.dup.force_encoding("euc-jp")
     assert_equal(Encoding::EUC_JP, s.encoding)
     r = nil
     assert_nothing_raised {
       r = Regexp.new(s)
     }
     assert_predicate(r, :fixed_encoding?)
-    assert_match(r, "\xa4\xa2".force_encoding("euc-jp"))
+    assert_match(r, "\xa4\xa2".dup.force_encoding("euc-jp"))
 
-    r = eval('/\p{Hiragana}/'.force_encoding("euc-jp"))
+    r = eval('/\p{Hiragana}/'.dup.force_encoding("euc-jp"))
     assert_predicate(r, :fixed_encoding?)
-    assert_match(r, "\xa4\xa2".force_encoding("euc-jp"))
+    assert_match(r, "\xa4\xa2".dup.force_encoding("euc-jp"))
 
     r = /\p{Hiragana}/e
     assert_predicate(r, :fixed_encoding?)
-    assert_match(r, "\xa4\xa2".force_encoding("euc-jp"))
+    assert_match(r, "\xa4\xa2".dup.force_encoding("euc-jp"))
 
     r = /\p{AsciI}/e
     assert_predicate(r, :fixed_encoding?)
-    assert_match(r, "a".force_encoding("euc-jp"))
+    assert_match(r, "a".dup.force_encoding("euc-jp"))
 
     r = /\p{hiraganA}/e
     assert_predicate(r, :fixed_encoding?)
-    assert_match(r, "\xa4\xa2".force_encoding("euc-jp"))
+    assert_match(r, "\xa4\xa2".dup.force_encoding("euc-jp"))
 
-    r = eval('/\u{3042}\p{Hiragana}/'.force_encoding("euc-jp"))
+    r = eval('/\u{3042}\p{Hiragana}/'.dup.force_encoding("euc-jp"))
     assert_predicate(r, :fixed_encoding?)
     assert_equal(Encoding::UTF_8, r.encoding)
 
-    r = eval('/\p{Hiragana}\u{3042}/'.force_encoding("euc-jp"))
+    r = eval('/\p{Hiragana}\u{3042}/'.dup.force_encoding("euc-jp"))
     assert_predicate(r, :fixed_encoding?)
     assert_equal(Encoding::UTF_8, r.encoding)
   end
@@ -864,13 +864,14 @@ class TestM17N < Test::Unit::TestCase
 
   def test_sprintf_p
     Encoding.list.each do |e|
-      format = "%p".force_encoding(e)
+      format = "%p".dup.force_encoding(e)
       ['', 'a', "\xC2\xA1", "\x00"].each do |s|
+        s = s.dup
         s.force_encoding(e)
-        enc = (''.force_encoding(e) + s.inspect).encoding
+        enc = (''.dup.force_encoding(e) + s.inspect).encoding
         assert_strenc(s.inspect, enc, format % s)
       end
-      s = "\xC2\xA1".force_encoding(e)
+      s = "\xC2\xA1".dup.force_encoding(e)
       enc = ('' + s.inspect).encoding
       assert_strenc('%10s' % s.inspect, enc, "%10p" % s)
     end
@@ -986,7 +987,7 @@ class TestM17N < Test::Unit::TestCase
     bug5836 = '[ruby-core:41896]'
     Encoding.list.each do |enc|
       next unless enc.ascii_compatible?
-      s = "abc".force_encoding(enc)
+      s = "abc".dup.force_encoding(enc)
       assert_equal("", s[3, 1], bug5836)
     end
   end
@@ -1016,7 +1017,7 @@ class TestM17N < Test::Unit::TestCase
     assert_equal(s.tr_s("A", "B"), s)
 
     assert_nothing_raised {
-      "a".force_encoding("ASCII-8BIT").tr(a("a"), a("a"))
+      "a".dup.force_encoding("ASCII-8BIT").tr(a("a"), a("a"))
     }
 
     assert_equal(e("\xA1\xA1"), a("a").tr(a("a"), e("\xA1\xA1")))
@@ -1027,8 +1028,8 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_tr_s
-    assert_equal("\xA1\xA1".force_encoding("EUC-JP"),
-      "a".force_encoding("ASCII-8BIT").tr("a".force_encoding("ASCII-8BIT"), "\xA1\xA1".force_encoding("EUC-JP")))
+    assert_equal("\xA1\xA1".dup.force_encoding("EUC-JP"),
+      "a".dup.force_encoding("ASCII-8BIT").tr("a".dup.force_encoding("ASCII-8BIT"), "\xA1\xA1".dup.force_encoding("EUC-JP")))
   end
 
   def test_count
@@ -1047,7 +1048,7 @@ class TestM17N < Test::Unit::TestCase
     s = e("\xa3\xb0\xa3\xb1\xa3\xb2\xa3\xb3\xa3\xb4")
     assert_raise(Encoding::CompatibilityError){s.delete(a("\xa3\xb2"))}
 
-    a = "\u3042\u3044\u3046\u3042\u3044\u3046"
+    a = "\u3042\u3044\u3046\u3042\u3044\u3046".dup
     a.delete!("\u3042\u3044", "^\u3044")
     assert_equal("\u3044\u3046\u3044\u3046", a)
   end
@@ -1075,22 +1076,22 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_sub
-    s = "abc".sub(/b/, "\xa1\xa1".force_encoding("euc-jp"))
+    s = "abc".sub(/b/, "\xa1\xa1".dup.force_encoding("euc-jp"))
     assert_encoding("EUC-JP", s.encoding)
-    assert_equal(Encoding::EUC_JP, "\xa4\xa2".force_encoding("euc-jp").sub(/./, '\&').encoding)
-    assert_equal(Encoding::EUC_JP, "\xa4\xa2".force_encoding("euc-jp").gsub(/./, '\&').encoding)
+    assert_equal(Encoding::EUC_JP, "\xa4\xa2".dup.force_encoding("euc-jp").sub(/./, '\&').encoding)
+    assert_equal(Encoding::EUC_JP, "\xa4\xa2".dup.force_encoding("euc-jp").gsub(/./, '\&').encoding)
   end
 
   def test_sub2
-    s = "\x80".force_encoding("ASCII-8BIT")
-    r = Regexp.new("\x80".force_encoding("ASCII-8BIT"))
+    s = "\x80".dup.force_encoding("ASCII-8BIT")
+    r = Regexp.new("\x80".dup.force_encoding("ASCII-8BIT"))
     s2 = s.sub(r, "")
     assert_empty(s2)
     assert_predicate(s2, :ascii_only?)
   end
 
   def test_sub3
-    repl = "\x81".force_encoding("sjis")
+    repl = "\x81".dup.force_encoding("sjis")
     assert_equal(false, repl.valid_encoding?)
     s = "a@".sub(/a/, repl)
     assert_predicate(s, :valid_encoding?)
@@ -1151,18 +1152,18 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_gsub
-    s = 'abc'
+    s = 'abc'.dup
     s.ascii_only?
     s.gsub!(/b/, "\x80")
     assert_equal(false, s.ascii_only?, "[ruby-core:14566] reported by Sam Ruby")
 
-    s = "abc".force_encoding(Encoding::ASCII_8BIT)
+    s = "abc".dup.force_encoding(Encoding::ASCII_8BIT)
     assert_equal(Encoding::ASCII_8BIT, s.encoding)
 
     assert_raise(Encoding::CompatibilityError) {
       "abc".gsub(/[ac]/) {
-         $& == "a" ? "\xc2\xa1".force_encoding("euc-jp") :
-                     "\xc2\xa1".force_encoding("utf-8")
+         $& == "a" ? "\xc2\xa1".dup.force_encoding("euc-jp") :
+                     "\xc2\xa1".dup.force_encoding("utf-8")
       }
     }
     s = e("\xa3\xb0\xa3\xb1\xa3\xb2\xa3\xb3\xa3\xb4")
@@ -1197,19 +1198,19 @@ class TestM17N < Test::Unit::TestCase
 
   def test_each_char
     a = [e("\xa4\xa2"), "b", e("\xa4\xa4"), "c"]
-    s = "\xa4\xa2b\xa4\xa4c".force_encoding("euc-jp")
+    s = "\xa4\xa2b\xa4\xa4c".dup.force_encoding("euc-jp")
     assert_equal(a, s.each_char.to_a, "[ruby-dev:33211] #{encdump s}.each_char.to_a")
   end
 
   def test_str_concat
-    assert_equal(1, "".concat(0xA2).size)
-    assert_equal(Encoding::ASCII_8BIT, "".force_encoding("US-ASCII").concat(0xA2).encoding)
-    assert_equal("A\x84\x31\xA4\x39".force_encoding("GB18030"),
-                 "A".force_encoding("GB18030") << 0x8431A439)
+    assert_equal(1, "".dup.concat(0xA2).size)
+    assert_equal(Encoding::ASCII_8BIT, "".dup.force_encoding("US-ASCII").concat(0xA2).encoding)
+    assert_equal("A\x84\x31\xA4\x39".dup.force_encoding("GB18030"),
+                 "A".dup.force_encoding("GB18030") << 0x8431A439)
   end
 
   def test_regexp_match
-    assert_equal([0,0], //.match("\xa1\xa1".force_encoding("euc-jp"),-1).offset(0))
+    assert_equal([0,0], //.match("\xa1\xa1".dup.force_encoding("euc-jp"),-1).offset(0))
     assert_equal(0, // =~ :a)
   end
 
@@ -1239,8 +1240,8 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_symbol
-    s1 = "\xc2\xa1".force_encoding("euc-jp").intern
-    s2 = "\xc2\xa1".force_encoding("utf-8").intern
+    s1 = "\xc2\xa1".dup.force_encoding("euc-jp").intern
+    s2 = "\xc2\xa1".dup.force_encoding("utf-8").intern
     assert_not_equal(s1, s2)
   end
 
@@ -1258,7 +1259,7 @@ class TestM17N < Test::Unit::TestCase
     0.upto(255) {|b|
       assert_equal([b].pack("C"), b.chr)
     }
-    assert_equal("\x84\x31\xA4\x39".force_encoding("GB18030"), 0x8431A439.chr("GB18030"))
+    assert_equal("\x84\x31\xA4\x39".dup.force_encoding("GB18030"), 0x8431A439.chr("GB18030"))
     e = assert_raise(RangeError) {
       2206368128.chr(Encoding::UTF_8)
     }
@@ -1274,7 +1275,7 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_marshal
-    s1 = "\xa1\xa1".force_encoding("euc-jp")
+    s1 = "\xa1\xa1".dup.force_encoding("euc-jp")
     s2 = Marshal.load(Marshal.dump(s1))
     assert_equal(s1, s2)
   end
@@ -1346,35 +1347,35 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_regexp_source
-    s = "\xa4\xa2".force_encoding("euc-jp")
+    s = "\xa4\xa2".dup.force_encoding("euc-jp")
     r = Regexp.new(s)
     t = r.source
     assert_equal(s, t, "[ruby-dev:33377] Regexp.new(#{encdump s}).source")
   end
 
   def test_magic_comment
-    assert_equal(Encoding::US_ASCII, eval("__ENCODING__".force_encoding("US-ASCII")))
-    assert_equal(Encoding::ASCII_8BIT, eval("__ENCODING__".force_encoding("ASCII-8BIT")))
-    assert_equal(Encoding::US_ASCII, eval("# -*- encoding: US-ASCII -*-\n__ENCODING__".force_encoding("ASCII-8BIT")))
-    assert_equal(Encoding::ASCII_8BIT, eval("# -*- encoding: ASCII-8BIT -*-\n__ENCODING__".force_encoding("US-ASCII")))
+    assert_equal(Encoding::US_ASCII, eval("__ENCODING__".dup.force_encoding("US-ASCII")))
+    assert_equal(Encoding::ASCII_8BIT, eval("__ENCODING__".dup.force_encoding("ASCII-8BIT")))
+    assert_equal(Encoding::US_ASCII, eval("# -*- encoding: US-ASCII -*-\n__ENCODING__".dup.force_encoding("ASCII-8BIT")))
+    assert_equal(Encoding::ASCII_8BIT, eval("# -*- encoding: ASCII-8BIT -*-\n__ENCODING__".dup.force_encoding("US-ASCII")))
   end
 
   def test_magic_comment_vim
-    assert_equal(Encoding::US_ASCII, eval("# vim: filetype=ruby, fileencoding: US-ASCII, ts=3, sw=3\n__ENCODING__".force_encoding("ASCII-8BIT")))
-    assert_equal(Encoding::ASCII_8BIT, eval("# vim: filetype=ruby, fileencoding: ASCII-8BIT, ts=3, sw=3\n__ENCODING__".force_encoding("US-ASCII")))
+    assert_equal(Encoding::US_ASCII, eval("# vim: filetype=ruby, fileencoding: US-ASCII, ts=3, sw=3\n__ENCODING__".dup.force_encoding("ASCII-8BIT")))
+    assert_equal(Encoding::ASCII_8BIT, eval("# vim: filetype=ruby, fileencoding: ASCII-8BIT, ts=3, sw=3\n__ENCODING__".dup.force_encoding("US-ASCII")))
   end
 
   def test_magic_comment_at_various_positions
     # after shebang
-    assert_equal(Encoding::US_ASCII, eval("#!/usr/bin/ruby\n# -*- encoding: US-ASCII -*-\n__ENCODING__".force_encoding("ASCII-8BIT")))
-    assert_equal(Encoding::ASCII_8BIT, eval("#!/usr/bin/ruby\n# -*- encoding: ASCII-8BIT -*-\n__ENCODING__".force_encoding("US-ASCII")))
+    assert_equal(Encoding::US_ASCII, eval("#!/usr/bin/ruby\n# -*- encoding: US-ASCII -*-\n__ENCODING__".dup.force_encoding("ASCII-8BIT")))
+    assert_equal(Encoding::ASCII_8BIT, eval("#!/usr/bin/ruby\n# -*- encoding: ASCII-8BIT -*-\n__ENCODING__".dup.force_encoding("US-ASCII")))
     # wrong position
-    assert_equal(Encoding::ASCII_8BIT, eval("\n# -*- encoding: US-ASCII -*-\n__ENCODING__".force_encoding("ASCII-8BIT")))
-    assert_equal(Encoding::US_ASCII, eval("\n# -*- encoding: ASCII-8BIT -*-\n__ENCODING__".force_encoding("US-ASCII")))
+    assert_equal(Encoding::ASCII_8BIT, eval("\n# -*- encoding: US-ASCII -*-\n__ENCODING__".dup.force_encoding("ASCII-8BIT")))
+    assert_equal(Encoding::US_ASCII, eval("\n# -*- encoding: ASCII-8BIT -*-\n__ENCODING__".dup.force_encoding("US-ASCII")))
 
     # leading expressions
-    assert_equal(Encoding::ASCII_8BIT, eval("v=1 # -*- encoding: US-ASCII -*-\n__ENCODING__".force_encoding("ASCII-8BIT")))
-    assert_equal(Encoding::US_ASCII, eval("v=1 # -*- encoding: ASCII-8BIT -*-\n__ENCODING__".force_encoding("US-ASCII")))
+    assert_equal(Encoding::ASCII_8BIT, eval("v=1 # -*- encoding: US-ASCII -*-\n__ENCODING__".dup.force_encoding("ASCII-8BIT")))
+    assert_equal(Encoding::US_ASCII, eval("v=1 # -*- encoding: ASCII-8BIT -*-\n__ENCODING__".dup.force_encoding("US-ASCII")))
   end
 
   def test_regexp_usascii
@@ -1406,15 +1407,15 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_gbk
-    assert_equal("", "\x81\x40".force_encoding("GBK").chop)
+    assert_equal("", "\x81\x40".dup.force_encoding("GBK").chop)
   end
 
   def test_euc_tw
-    assert_equal("a", "a\x8e\xa2\xa1\xa1".force_encoding("euc-tw").chop)
+    assert_equal("a", "a\x8e\xa2\xa1\xa1".dup.force_encoding("euc-tw").chop)
   end
 
   def test_valid_encoding
-    s = "\xa1".force_encoding("euc-jp")
+    s = "\xa1".dup.force_encoding("euc-jp")
     assert_equal(false, s.valid_encoding?)
     assert_equal(true, (s+s).valid_encoding?, "[ruby-dev:33826]")
     assert_equal(true, (s*2).valid_encoding?, "[ruby-dev:33826]")
@@ -1422,25 +1423,25 @@ class TestM17N < Test::Unit::TestCase
     assert_equal(true, (s.dup << s).valid_encoding?)
     assert_equal(true, "".center(2, s).valid_encoding?)
 
-    s = "\xa1\xa1\x8f".force_encoding("euc-jp")
+    s = "\xa1\xa1\x8f".dup.force_encoding("euc-jp")
     assert_equal(false, s.valid_encoding?)
     assert_equal(true, s.reverse.valid_encoding?)
 
     bug4018 = '[ruby-core:33027]'
-    s = "\xa1\xa1".force_encoding("euc-jp")
+    s = "\xa1\xa1".dup.force_encoding("euc-jp")
     assert_equal(true, s.valid_encoding?)
-    s << "\x8f".force_encoding("euc-jp")
+    s << "\x8f".dup.force_encoding("euc-jp")
     assert_equal(false, s.valid_encoding?, bug4018)
-    s = "aa".force_encoding("utf-16be")
+    s = "aa".dup.force_encoding("utf-16be")
     assert_equal(true, s.valid_encoding?)
-    s << "\xff".force_encoding("utf-16be")
+    s << "\xff".dup.force_encoding("utf-16be")
     assert_equal(false, s.valid_encoding?, bug4018)
 
     bug6190 = '[ruby-core:43557]'
     s = "\xe9"
     s = s.encode("utf-8", "utf-8")
     assert_equal(false, s.valid_encoding?, bug6190)
-    s = "\xe9"
+    s = "\xe9".dup
     s.encode!("utf-8", "utf-8")
     assert_equal(false, s.valid_encoding?, bug6190)
   end
@@ -1477,12 +1478,12 @@ class TestM17N < Test::Unit::TestCase
   def test_force_encoding
     assert_equal(u("\x80"), "".center(1, u("\x80")),
                  "moved from btest/knownbug, [ruby-dev:33807]")
-    a = "".force_encoding("ascii-8bit") << 0xC3 << 0xB6
+    a = "".dup.force_encoding("ascii-8bit") << 0xC3 << 0xB6
     assert_equal(1, a.force_encoding("utf-8").size, '[ruby-core:22437]')
-    b = "".force_encoding("ascii-8bit") << 0xC3.chr << 0xB6.chr
+    b = "".dup.force_encoding("ascii-8bit") << 0xC3.chr << 0xB6.chr
     assert_equal(1, b.force_encoding("utf-8").size, '[ruby-core:22437]')
 
-    assert_raise(TypeError){ ''.force_encoding(nil) }
+    assert_raise(TypeError){ ''.dup.force_encoding(nil) }
   end
 
   def test_combchar_codepoint
@@ -1499,7 +1500,7 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_str_b
-    s = "\u3042"
+    s = "\u3042".dup
     assert_equal(a("\xE3\x81\x82"), s.b)
     assert_equal(Encoding::ASCII_8BIT, s.b.encoding)
     s.taint
@@ -1509,7 +1510,7 @@ class TestM17N < Test::Unit::TestCase
   end
 
   def test_scrub
-    str = "\u3042\u3044"
+    str = "\u3042\u3044".dup
     assert_not_same(str, str.scrub)
     str.force_encoding(Encoding::ISO_2022_JP) # dummy encoding
     assert_not_same(str, str.scrub)
@@ -1544,21 +1545,21 @@ class TestM17N < Test::Unit::TestCase
     assert_raise(ArgumentError) {u("a\x81").scrub {|c| c}}
 
     assert_equal("\uFFFD\u3042".encode("UTF-16BE"),
-                 "\xD8\x00\x30\x42".force_encoding(Encoding::UTF_16BE).
+                 "\xD8\x00\x30\x42".dup.force_encoding(Encoding::UTF_16BE).
                  scrub)
     assert_equal("\uFFFD\u3042".encode("UTF-16LE"),
-                 "\x00\xD8\x42\x30".force_encoding(Encoding::UTF_16LE).
+                 "\x00\xD8\x42\x30".dup.force_encoding(Encoding::UTF_16LE).
                  scrub)
     assert_equal("\uFFFD".encode("UTF-32BE"),
-                 "\xff".force_encoding(Encoding::UTF_32BE).
+                 "\xff".dup.force_encoding(Encoding::UTF_32BE).
                  scrub)
     assert_equal("\uFFFD".encode("UTF-32LE"),
-                 "\xff".force_encoding(Encoding::UTF_32LE).
+                 "\xff".dup.force_encoding(Encoding::UTF_32LE).
                  scrub)
   end
 
   def test_scrub_bang
-    str = "\u3042\u3044"
+    str = "\u3042\u3044".dup
     assert_same(str, str.scrub!)
     str.force_encoding(Encoding::ISO_2022_JP) # dummy encoding
     assert_same(str, str.scrub!)

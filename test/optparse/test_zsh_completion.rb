@@ -13,7 +13,7 @@ class TestOptionParser::BashCompletion < Test::Unit::TestCase
   end
 
   def test_compsys
-    compsys = @opt.compsys("", "zshcompsys")
+    compsys = @opt.compsys("".dup, "zshcompsys")
     assert_match(/\"-z\[zzz\]\"/, compsys)
     assert_match(/\"--foo\[\]\"/, compsys)
     assert_match(/\"--bar\[\]\"/, compsys)

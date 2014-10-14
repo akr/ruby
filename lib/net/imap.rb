@@ -1175,7 +1175,7 @@ module Net
     end
 
     def get_response
-      buff = ""
+      buff = "".dup
       while true
         s = @sock.gets(CRLF)
         break unless s
@@ -3152,7 +3152,7 @@ module Net
       end
 
       def atom
-        result = ""
+        result = "".dup
         while true
           token = lookahead
           if atom_token?(token)

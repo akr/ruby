@@ -69,7 +69,7 @@ module RDoc::Text
 
     text.each_line do |line|
       line.gsub!(/^((?:.{8})*?)([^\t\r\n]{0,7})\t/) do
-        r = "#{$1}#{$2}#{' ' * (8 - $2.size)}"
+        r = "#{$1}#{$2}#{' ' * (8 - $2.size)}".dup
         r.force_encoding text.encoding if Object.const_defined? :Encoding
         r
       end until line !~ /\t/
@@ -91,7 +91,7 @@ module RDoc::Text
       indent = line_indent if indent > line_indent
     end
 
-    empty = ''
+    empty = ''.dup
     empty.force_encoding text.encoding if Object.const_defined? :Encoding
 
     text.gsub(/^ {0,#{indent}}/, empty)
@@ -158,7 +158,7 @@ module RDoc::Text
   def strip_hashes text
     return text if text =~ /^(?>\s*)[^\#]/
 
-    empty = ''
+    empty = ''.dup
     empty.force_encoding text.encoding if Object.const_defined? :Encoding
 
     text.gsub(/^\s*(#+)/) { $1.tr '#', ' ' }.gsub(/^\s+$/, empty)
@@ -181,14 +181,14 @@ module RDoc::Text
 
     text = text.gsub %r%Document-method:\s+[\w:.#=!?]+%, ''
 
-    space = ' '
+    space = ' '.dup
     space.force_encoding encoding if encoding
 
     text.sub!  %r%/\*+%       do space * $&.length end
     text.sub!  %r%\*+/%       do space * $&.length end
     text.gsub! %r%^[ \t]*\*%m do space * $&.length end
 
-    empty = ''
+    empty = ''.dup
     empty.force_encoding encoding if encoding
     text.gsub(/^\s+$/, empty)
   end
@@ -203,7 +203,7 @@ module RDoc::Text
 
       encoded = RDoc::Text::TO_HTML_CHARACTERS[text.encoding]
     else
-      html = ''
+      html = ''.dup
       encoded = {
         :close_dquote => '”',
         :close_squote => '’',

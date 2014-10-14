@@ -100,7 +100,7 @@ module WEBrick
       @status = HTTPStatus::RC_OK
       @reason_phrase = nil
       @http_version = HTTPVersion::convert(@config[:HTTPVersion])
-      @body = ''
+      @body = ''.dup
       @keep_alive = true
       @cookies = []
       @request_method = nil
@@ -283,7 +283,7 @@ module WEBrick
 
     def send_header(socket) # :nodoc:
       if @http_version.major > 0
-        data = status_line()
+        data = status_line().dup
         @header.each{|key, value|
           tmp = key.gsub(/\bwww|^te$|\b\w/){ $&.upcase }
           data << "#{tmp}: #{value}" << CRLF
@@ -351,7 +351,7 @@ module WEBrick
         host, port = @config[:ServerName], @config[:Port]
       end
 
-      @body = ''
+      @body = ''.dup
       @body << <<-_end_of_html_
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
 <HTML>
@@ -390,8 +390,8 @@ module WEBrick
           # do nothing
         elsif chunked?
           begin
-            buf  = ''
-            data = ''
+            buf  = ''.dup
+            data = ''.dup
             while true
               @body.readpartial( @buffer_size, buf ) # there is no need to clear buf?
               data << format("%x", buf.bytesize) << CRLF
@@ -420,7 +420,7 @@ module WEBrick
         body ? @body.bytesize : 0
         while buf = @body[@sent_size, @buffer_size]
           break if buf.empty?
-          data = ""
+          data = "".dup
           data << format("%x", buf.bytesize) << CRLF
           data << buf << CRLF
           _write_data(socket, data)

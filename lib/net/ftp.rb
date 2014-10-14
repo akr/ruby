@@ -614,7 +614,7 @@ module Net
           f = open(localfile, "w")
         end
       elsif !block_given?
-        result = ""
+        result = "".dup
       end
       begin
         f.binmode if localfile
@@ -641,7 +641,7 @@ module Net
       if localfile
         f = open(localfile, "w")
       elsif !block_given?
-        result = ""
+        result = "".dup
       end
       begin
         retrlines("RETR " + remotefile) do |line, newline|
@@ -1092,11 +1092,11 @@ module Net
 
       def read(len = nil)
         if len
-          s = super(len, "", true)
+          s = super(len, "".dup, true)
           return s.empty? ? nil : s
         else
-          result = ""
-          while s = super(DEFAULT_BLOCKSIZE, "", true)
+          result = "".dup
+          while s = super(DEFAULT_BLOCKSIZE, "".dup, true)
             break if s.empty?
             result << s
           end

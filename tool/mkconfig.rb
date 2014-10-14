@@ -17,7 +17,7 @@ unless File.directory?(dir = File.dirname(rbconfig_rb))
 end
 
 version = RUBY_VERSION
-config = ""
+config = "".dup
 def config.write(arg)
   concat(arg.to_s)
 end
@@ -217,14 +217,14 @@ end
 v_others.compact!
 
 if $install_name
-  if install_name and vars.expand("$(RUBY_INSTALL_NAME)") == $install_name
+  if install_name and vars.expand("$(RUBY_INSTALL_NAME)".dup) == $install_name
     $install_name = install_name
   end
   v_fast << "  CONFIG[\"ruby_install_name\"] = \"" + $install_name + "\"\n"
   v_fast << "  CONFIG[\"RUBY_INSTALL_NAME\"] = \"" + $install_name + "\"\n"
 end
 if $so_name
-  if so_name and vars.expand("$(RUBY_SO_NAME)") == $so_name
+  if so_name and vars.expand("$(RUBY_SO_NAME)".dup) == $so_name
     $so_name = so_name
   end
   v_fast << "  CONFIG[\"RUBY_SO_NAME\"] = \"" + $so_name + "\"\n"
@@ -254,6 +254,9 @@ print <<EOS
     }
     val.replace(newval) unless newval == val
     val
+  end
+  CONFIG.each_key do |key|
+    CONFIG[key] = CONFIG[key].dup
   end
   CONFIG.each_value do |val|
     RbConfig::expand(val)

@@ -62,7 +62,7 @@ class TestAlias < Test::Unit::TestCase
   end
 
   def test_send_alias
-    x = "abc"
+    x = "abc".dup
     class << x
       alias_method :try, :__send__
     end

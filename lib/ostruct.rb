@@ -232,7 +232,7 @@ class OpenStruct
   # Returns a string containing a detailed summary of the keys and values.
   #
   def inspect
-    str = "#<#{self.class}"
+    str = "#<#{self.class}".dup
 
     ids = (Thread.current[InspectKey] ||= [])
     if ids.include?(object_id)

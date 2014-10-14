@@ -19,7 +19,7 @@ class TestShiftJIS < Test::Unit::TestCase
   end
 
   def test_code_to_mbclen
-    s = "‚ ‚¢‚¤‚¦‚¨"
+    s = "‚ ‚¢‚¤‚¦‚¨".dup
     s << 0x82a9
     assert_equal("‚ ‚¢‚¤‚¦‚¨‚©", s)
     assert_raise(RangeError) { s << 0x82 }

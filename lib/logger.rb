@@ -518,7 +518,7 @@ private
       when ::String
         msg
       when ::Exception
-        "#{ msg.message } (#{ msg.class })\n" <<
+        "#{ msg.message } (#{ msg.class })\n".dup <<
           (msg.backtrace || []).join("\n")
       else
         msg.inspect

@@ -91,7 +91,7 @@ module URI
       when String
         tmp[:opaque] = tmp[:to].dup
       else
-        tmp[:opaque] = ''
+        tmp[:opaque] = ''.dup
       end
 
       if tmp[:headers]

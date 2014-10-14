@@ -1081,7 +1081,7 @@ class TestHash < Test::Unit::TestCase
     h.compare_by_identity
     assert_predicate(h, :compare_by_identity?)
     #assert_equal("bar", h[a])
-    assert_nil(h["foo"])
+    assert_nil(h["foo".dup])
 
     bug8703 = '[ruby-core:56256] [Bug #8703] copied identhash'
     h.clear

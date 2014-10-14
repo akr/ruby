@@ -21,7 +21,7 @@ class TestRDocParserRuby < RDoc::TestCase
     @options.quiet = true
     @options.option_parser = OptionParser.new
 
-    @comment = RDoc::Comment.new '', @top_level
+    @comment = RDoc::Comment.new ''.dup, @top_level
 
     @stats = RDoc::Stats.new @store, 0
   end
@@ -203,19 +203,19 @@ class C; end
   def test_look_for_directives_in_attr
     util_parser ""
 
-    comment = RDoc::Comment.new "# :attr: my_attr\n", @top_level
+    comment = RDoc::Comment.new "# :attr: my_attr\n".dup, @top_level
 
     @parser.look_for_directives_in @top_level, comment
 
     assert_equal "# :attr: my_attr\n", comment.text
 
-    comment = RDoc::Comment.new "# :attr_reader: my_method\n", @top_level
+    comment = RDoc::Comment.new "# :attr_reader: my_method\n".dup, @top_level
 
     @parser.look_for_directives_in @top_level, comment
 
     assert_equal "# :attr_reader: my_method\n", comment.text
 
-    comment = RDoc::Comment.new "# :attr_writer: my_method\n", @top_level
+    comment = RDoc::Comment.new "# :attr_writer: my_method\n".dup, @top_level
 
     @parser.look_for_directives_in @top_level, comment
 
@@ -225,7 +225,7 @@ class C; end
   def test_look_for_directives_in_commented
     util_parser ""
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 # how to make a section:
 # # :section: new section
     COMMENT
@@ -243,13 +243,13 @@ class C; end
   def test_look_for_directives_in_method
     util_parser ""
 
-    comment = RDoc::Comment.new "# :method: my_method\n", @top_level
+    comment = RDoc::Comment.new "# :method: my_method\n".dup, @top_level
 
     @parser.look_for_directives_in @top_level, comment
 
     assert_equal "# :method: my_method\n", comment.text
 
-    comment = RDoc::Comment.new "# :singleton-method: my_method\n", @top_level
+    comment = RDoc::Comment.new "# :singleton-method: my_method\n".dup, @top_level
 
     @parser.look_for_directives_in @top_level, comment
 
@@ -259,7 +259,7 @@ class C; end
   def test_look_for_directives_in_section
     util_parser ""
 
-    comment = RDoc::Comment.new <<-COMMENT, @top_level
+    comment = RDoc::Comment.new <<-COMMENT.dup, @top_level
 # :section: new section
 # woo stuff
     COMMENT
@@ -276,7 +276,7 @@ class C; end
   def test_look_for_directives_in_unhandled
     util_parser ""
 
-    comment = RDoc::Comment.new "# :unhandled: blah\n", @top_level
+    comment = RDoc::Comment.new "# :unhandled: blah\n".dup, @top_level
 
     @parser.look_for_directives_in @top_level, comment
 
@@ -492,7 +492,7 @@ class C; end
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# :attr: \n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# :attr: \n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar"
 
@@ -513,7 +513,7 @@ class C; end
     klass.parent = @top_level
 
     comment =
-      RDoc::Comment.new "##\n# :attr_accessor: \n# my method\n", @top_level
+      RDoc::Comment.new "##\n# :attr_accessor: \n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar"
 
@@ -533,7 +533,7 @@ class C; end
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# :attr: foo\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# :attr: foo\n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar"
 
@@ -554,7 +554,7 @@ class C; end
     klass.parent = @top_level
 
     comment =
-      RDoc::Comment.new "##\n# :attr_reader: \n# my method\n", @top_level
+      RDoc::Comment.new "##\n# :attr_reader: \n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar"
 
@@ -574,7 +574,7 @@ class C; end
     klass.parent = @top_level
     klass.stop_doc
 
-    comment = RDoc::Comment.new "##\n# :attr: \n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# :attr: \n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar"
 
@@ -590,7 +590,7 @@ class C; end
     klass.parent = @top_level
 
     comment =
-      RDoc::Comment.new "##\n# :attr_writer: \n# my method\n", @top_level
+      RDoc::Comment.new "##\n# :attr_writer: \n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar"
 
@@ -1071,7 +1071,7 @@ EOF
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# :attr: foo\n# my attr\n", @top_level
+    comment = RDoc::Comment.new "##\n# :attr: foo\n# my attr\n".dup, @top_level
 
     util_parser "\n"
 
@@ -1103,7 +1103,7 @@ EOF
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# :attr_reader: foo\n", @top_level
+    comment = RDoc::Comment.new "##\n# :attr_reader: foo\n".dup, @top_level
 
     util_parser "\n"
 
@@ -1121,7 +1121,7 @@ EOF
     klass.parent = @top_level
     klass.stop_doc
 
-    comment = RDoc::Comment.new "##\n# :attr: foo\n# my attr\n", @top_level
+    comment = RDoc::Comment.new "##\n# :attr: foo\n# my attr\n".dup, @top_level
 
     util_parser "\n"
 
@@ -1136,7 +1136,7 @@ EOF
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# :method: foo\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# :method: foo\n# my method\n".dup, @top_level
 
     util_parser "\n"
 
@@ -1188,7 +1188,7 @@ EOF
     tk = @parser.get_tk
 
     @parser.parse_comment klass, tk,
-                          comment("##\n# :method: foo\n# :args: a, b\n")
+                          comment("##\n# :method: foo\n# :args: a, b\n".dup)
 
     foo = klass.method_list.first
     assert_equal 'foo',  foo.name
@@ -1200,7 +1200,7 @@ EOF
     klass.parent = @top_level
     klass.stop_doc
 
-    comment = RDoc::Comment.new "##\n# :method: foo\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# :method: foo\n# my method\n".dup, @top_level
 
     util_parser "\n"
 
@@ -1378,7 +1378,7 @@ A::B::C = 1
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar\nadd_my_method :baz"
 
@@ -1431,7 +1431,7 @@ A::B::C = 1
     klass = RDoc::NormalClass.new 'Foo'
     klass.parent = @top_level
 
-    comment = RDoc::Comment.new "##\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# my method\n".dup, @top_level
 
     content = <<-CONTENT
 inline(:my_method) do |*args|
@@ -1450,7 +1450,7 @@ end
 
   def test_parse_meta_method_define_method
     klass = RDoc::NormalClass.new 'Foo'
-    comment = RDoc::Comment.new "##\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# my method\n".dup, @top_level
 
     util_parser "define_method :foo do end"
 
@@ -1469,7 +1469,7 @@ end
     klass.parent = @top_level
 
     comment =
-      RDoc::Comment.new "##\n# :method: woo_hoo!\n# my method\n", @top_level
+      RDoc::Comment.new "##\n# :method: woo_hoo!\n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar\nadd_my_method :baz"
 
@@ -1488,7 +1488,7 @@ end
     klass.parent = @top_level
 
     comment =
-      RDoc::Comment.new "##\n# :singleton-method:\n# my method\n", @top_level
+      RDoc::Comment.new "##\n# :singleton-method:\n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar\nadd_my_method :baz"
 
@@ -1508,7 +1508,7 @@ end
     klass.parent = @top_level
 
     comment =
-      RDoc::Comment.new "##\n# :singleton-method: woo_hoo!\n# my method\n",
+      RDoc::Comment.new "##\n# :singleton-method: woo_hoo!\n# my method\n".dup,
                         @top_level
 
     util_parser "add_my_method :foo, :bar\nadd_my_method :baz"
@@ -1526,7 +1526,7 @@ end
 
   def test_parse_meta_method_string_name
     klass = RDoc::NormalClass.new 'Foo'
-    comment = RDoc::Comment.new "##\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# my method\n".dup, @top_level
 
     util_parser "add_my_method 'foo'"
 
@@ -1545,7 +1545,7 @@ end
     klass.parent = @top_level
     klass.stop_doc
 
-    comment = RDoc::Comment.new "##\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# my method\n".dup, @top_level
 
     util_parser "add_my_method :foo, :bar\nadd_my_method :baz"
 
@@ -1558,7 +1558,7 @@ end
 
   def test_parse_meta_method_unknown
     klass = RDoc::NormalClass.new 'Foo'
-    comment = RDoc::Comment.new "##\n# my method\n", @top_level
+    comment = RDoc::Comment.new "##\n# my method\n".dup, @top_level
 
     util_parser "add_my_method ('foo')"
 
@@ -1783,7 +1783,7 @@ end
 
     tk = @parser.get_tk
 
-    @parser.parse_method klass, RDoc::Parser::Ruby::NORMAL, tk, comment('')
+    @parser.parse_method klass, RDoc::Parser::Ruby::NORMAL, tk, comment(''.dup)
 
     assert_empty klass.method_list
   end
@@ -1798,7 +1798,7 @@ end
 
     tk = @parser.get_tk
 
-    @parser.parse_method klass, RDoc::Parser::Ruby::NORMAL, tk, comment('')
+    @parser.parse_method klass, RDoc::Parser::Ruby::NORMAL, tk, comment(''.dup)
 
     refute_empty klass.method_list
   end
@@ -3307,7 +3307,7 @@ end
   end
 
   def util_parser(content)
-    @parser = RDoc::Parser::Ruby.new @top_level, @filename, content, @options,
+    @parser = RDoc::Parser::Ruby.new @top_level, @filename, content.dup, @options,
                                      @stats
   end
 

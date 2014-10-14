@@ -107,7 +107,7 @@ module REXMLTests
     end
 
     def parse( stringOrReadable )
-      @text = ""
+      @text = "".dup
       REXML::Document.parse_stream( stringOrReadable, self )
       @text
     end

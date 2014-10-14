@@ -119,7 +119,7 @@ module REXML
 
     # Returns this entity as a string.  See write().
     def to_s
-      rv = ''
+      rv = ''.dup
       write rv
       rv
     end

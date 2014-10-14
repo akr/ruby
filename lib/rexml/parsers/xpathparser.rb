@@ -403,9 +403,9 @@ module REXML
         if rest != path
           while rest =~ /^\s*([<>]=?)\s*/
             if $1[0] == ?<
-              sym = "lt"
+              sym = "lt".dup
             else
-              sym = "gt"
+              sym = "gt".dup
             end
             sym << "eq" if $1[-1] == ?=
             n = [ sym.intern, n, [] ]

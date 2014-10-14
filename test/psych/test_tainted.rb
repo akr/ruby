@@ -89,7 +89,7 @@ module Psych
     end
 
     def assert_taintedness string
-      @parser.parse string.taint
+      @parser.parse string.dup.taint
     end
   end
 

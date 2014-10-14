@@ -218,7 +218,7 @@ class Gem::Request
   end
 
   def user_agent
-    ua = "RubyGems/#{Gem::VERSION} #{Gem::Platform.local}"
+    ua = "RubyGems/#{Gem::VERSION} #{Gem::Platform.local}".dup
 
     ruby_version = RUBY_VERSION
     ruby_version += 'dev' if RUBY_PATCHLEVEL == -1

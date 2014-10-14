@@ -67,7 +67,7 @@ def usage(msg)
 end
 
 def generate_eventids1(ids)
-  buf = ""
+  buf = "".dup
   ids.each do |id, arity|
     buf << %Q[static ID ripper_id_#{id};\n]
   end
@@ -95,7 +95,7 @@ def generate_eventids1(ids)
 end
 
 def generate_eventids2_table(ids)
-  buf = ""
+  buf = "".dup
   buf << %Q[static void\n]
   buf << %Q[ripper_init_eventids2_table(VALUE self)\n]
   buf << %Q[{\n]

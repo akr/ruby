@@ -404,7 +404,7 @@ if defined? DBM
       assert_equal('foo', @dbm.delete(key) {|k| k.replace 'called block'; :blockval})
       assert_equal(0, @dbm.size)
 
-      key = 'no called block'
+      key = 'no called block'.dup
       assert_equal(:blockval, @dbm.delete(key) {|k| k.replace 'called block'; :blockval})
       assert_equal(0, @dbm.size)
     end

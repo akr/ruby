@@ -2,7 +2,7 @@ require "test/unit"
 
 class TestCP949 < Test::Unit::TestCase
   def s(s)
-    s.force_encoding("cp949")
+    s.dup.force_encoding("cp949")
   end
 
   def test_mbc_enc_len

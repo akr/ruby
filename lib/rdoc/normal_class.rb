@@ -44,7 +44,7 @@ class RDoc::NormalClass < RDoc::ClassModule
   end
 
   def to_s # :nodoc:
-    display = "#{self.class.name} #{self.full_name}"
+    display = "#{self.class.name} #{self.full_name}".dup
     if superclass
       display << ' < ' << (superclass.is_a?(String) ? superclass : superclass.full_name)
     end

@@ -137,7 +137,7 @@ module REXML
     # node-set that is first in document order.
     # If the node-set is empty, an empty string is returned.
     def Functions::string_value( o )
-      rv = ""
+      rv = "".dup
       o.children.each { |e|
         if e.node_type == :text
           rv << e.to_s

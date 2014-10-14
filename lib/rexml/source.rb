@@ -148,7 +148,7 @@ module REXML
         @to_utf = true
       else
         @to_utf = false
-        @buffer.force_encoding ::Encoding::UTF_8
+        @buffer = @buffer.dup.force_encoding ::Encoding::UTF_8
       end
     end
   end
@@ -165,9 +165,9 @@ module REXML
       @pending_buffer = nil
 
       if encoding
-        super("", encoding)
+        super("".dup, encoding)
       else
-        super(@source.read(3) || "")
+        super(@source.read(3) || "".dup)
       end
 
       if !@to_utf and

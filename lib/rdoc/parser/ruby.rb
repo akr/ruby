@@ -224,7 +224,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
 
   def collect_first_comment
     skip_tkspace
-    comment = ''
+    comment = ''.dup
     comment.force_encoding @encoding if @encoding
     first_line = true
     first_comment_tk_class = nil
@@ -329,7 +329,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
   def get_class_or_module container, ignore_constants = false
     skip_tkspace
     name_t = get_tk
-    given_name = ''
+    given_name = ''.dup
 
     # class ::A -> A is in the top level
     case name_t
@@ -569,7 +569,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
   # Adds useful info about the parser to +message+
 
   def make_message message
-    prefix = "#{@file_name}:"
+    prefix = "#{@file_name}:".dup
 
     prefix << "#{@scanner.line_no}:#{@scanner.char_no}:" if @scanner
 
@@ -877,7 +877,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
       return
     end
 
-    value = ''
+    value = ''.dup
     con = RDoc::Constant.new name, value, comment
 
     body = parse_constant_body container, con
@@ -898,7 +898,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
 
   def parse_constant_body container, constant # :nodoc:
     nest     = 0
-    rhs_name = ''
+    rhs_name = ''.dup
 
     get_tkread
 
@@ -1634,7 +1634,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
             non_comment_seen = parse_comment container, tk, comment unless
               comment.empty?
 
-            comment = ''
+            comment = ''.dup
             comment.force_encoding @encoding if @encoding
           end
 
@@ -1999,7 +1999,7 @@ class RDoc::Parser::Ruby < RDoc::Parser
         parse_top_level_statements @top_level
 
       rescue StandardError => e
-        bytes = ''
+        bytes = ''.dup
 
         20.times do @scanner.ungetc end
         count = 0

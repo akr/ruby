@@ -548,7 +548,7 @@ end
   def test_self_from_yaml_syck_default_key_bug
     # This is equivalent to (and totally valid) psych 1.0 output and
     # causes parse errors on syck.
-    yaml = <<-YAML
+    yaml = <<-YAML.dup
 --- !ruby/object:Gem::Specification
 name: posix-spawn
 version: !ruby/object:Gem::Version
@@ -583,7 +583,7 @@ bindir:
   end
 
   def test_self_from_yaml_cleans_up_defaultkey
-    yaml = <<-YAML
+    yaml = <<-YAML.dup
 --- !ruby/object:Gem::Specification
 name: posix-spawn
 version: !ruby/object:Gem::Version
@@ -617,7 +617,7 @@ bindir:
   end
 
   def test_self_from_yaml_cleans_up_defaultkey_from_newer_192
-    yaml = <<-YAML
+    yaml = <<-YAML.dup
 --- !ruby/object:Gem::Specification
 name: posix-spawn
 version: !ruby/object:Gem::Version
@@ -651,7 +651,7 @@ bindir:
   end
 
   def test_self_from_yaml_cleans_up_Date_objects
-    yaml = <<-YAML
+    yaml = <<-YAML.dup
 --- !ruby/object:Gem::Specification
 rubygems_version: 0.8.1
 specification_version: 1
@@ -795,7 +795,7 @@ dependencies: []
     silence_warnings { Encoding.default_internal = 'US-ASCII' }
 
     spec2 = @a2.dup
-    bin = "\u5678"
+    bin = "\u5678".dup
     spec2.authors = [bin]
     full_path = spec2.spec_file
     write_file full_path do |io|
@@ -829,7 +829,7 @@ dependencies: []
   end
 
   def test_self_normalize_yaml_input_with_non_183_yaml
-    input = "--- !ruby/object:Gem::Specification "
+    input = "--- !ruby/object:Gem::Specification ".dup
     assert_equal input, Gem::Specification.normalize_yaml_input(input)
   end
 
@@ -846,7 +846,7 @@ dependencies: []
   end
 
   def test_self_normalize_yaml_input_with_192_yaml
-    input = "--- !ruby/object:Gem::Specification \nblah: !!null \n"
+    input = "--- !ruby/object:Gem::Specification \nblah: !!null \n".dup
     expected = "--- !ruby/object:Gem::Specification \nblah: \n"
 
     assert_equal expected, Gem::Specification.normalize_yaml_input(input)

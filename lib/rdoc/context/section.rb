@@ -33,7 +33,7 @@ class RDoc::Context::Section
 
   attr_reader :title
 
-  @@sequence = "SEC00000"
+  @@sequence = "SEC00000".dup
 
   ##
   # Creates a new section with +title+ and +comment+

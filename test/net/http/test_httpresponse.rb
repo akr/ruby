@@ -64,7 +64,7 @@ EOS
 
     res = Net::HTTPResponse.read_new(io)
 
-    body = ''
+    body = ''.dup
 
     res.reading_body io, true do
       res.read_body do |chunk|
@@ -220,7 +220,7 @@ EOS
 
     res = Net::HTTPResponse.read_new(io)
 
-    body = ''
+    body = ''.dup
 
     res.reading_body io, true do
       res.read_body body

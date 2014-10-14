@@ -73,7 +73,7 @@ class TestPsych < Psych::TestCase
 
   def test_dump_io
     hash = {'hello' => 'TGIF!'}
-    stringio = StringIO.new ''
+    stringio = StringIO.new ''.dup
     assert_equal stringio, Psych.dump(hash, stringio)
     assert_equal Psych.dump(hash), stringio.string
   end

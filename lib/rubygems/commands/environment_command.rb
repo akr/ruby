@@ -71,7 +71,7 @@ lib/rubygems/defaults/operating_system.rb
   end
 
   def execute
-    out = ''
+    out = ''.dup
     arg = options[:args][0]
     out <<
       case arg
@@ -103,7 +103,7 @@ lib/rubygems/defaults/operating_system.rb
   end
 
   def show_environment # :nodoc:
-    out = "RubyGems Environment:\n"
+    out = "RubyGems Environment:\n".dup
 
     out << "  - RUBYGEMS VERSION: #{Gem::VERSION}\n"
 

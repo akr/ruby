@@ -2,7 +2,7 @@ require "test/unit"
 
 class TestBig5 < Test::Unit::TestCase
   def s(s)
-    s.force_encoding("big5")
+    s.dup.force_encoding("big5")
   end
 
   def test_mbc_enc_len

@@ -239,7 +239,7 @@ class Net::HTTPGenericRequest
     boundary ||= SecureRandom.urlsafe_base64(40)
     chunked_p = chunked?
 
-    buf = ''
+    buf = ''.dup
     params.each do |key, value, h={}|
       key = quote_string(key, charset)
       filename =
@@ -320,7 +320,7 @@ class Net::HTTPGenericRequest
   end
 
   def write_header(sock, ver, path)
-    buf = "#{@method} #{path} HTTP/#{ver}\r\n"
+    buf = "#{@method} #{path} HTTP/#{ver}\r\n".dup
     each_capitalized do |k,v|
       buf << "#{k}: #{v}\r\n"
     end

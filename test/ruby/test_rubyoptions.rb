@@ -210,7 +210,7 @@ class TestRubyOptions < Test::Unit::TestCase
                       /unknown encoding name - test_ruby_test_rubyoptions_foobarbazqux \(RuntimeError\)/)
 
     if /mswin|mingw|aix/ =~ RUBY_PLATFORM &&
-      (str = "\u3042".force_encoding(Encoding.find("locale"))).valid_encoding?
+      (str = "\u3042".dup.force_encoding(Encoding.find("locale"))).valid_encoding?
       # This result depends on locale because LANG=C doesn't affect locale
       # on Windows.
       # On AIX, the source encoding of stdin with LANG=C is ISO-8859-1,

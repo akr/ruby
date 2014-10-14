@@ -4,9 +4,9 @@ module Emoji
 
   class TestRenameSJIS < Test::Unit::TestCase
     def test_shift_jis
-      assert_raise(ArgumentError) { "".force_encoding("Shift_JIS-DoCoMo") }
-      assert_raise(ArgumentError) { "".force_encoding("Shift_JIS-KDDI") }
-      assert_raise(ArgumentError) { "".force_encoding("Shift_JIS-SoftBank") }
+      assert_raise(ArgumentError) { "".dup.force_encoding("Shift_JIS-DoCoMo") }
+      assert_raise(ArgumentError) { "".dup.force_encoding("Shift_JIS-KDDI") }
+      assert_raise(ArgumentError) { "".dup.force_encoding("Shift_JIS-SoftBank") }
     end
   end
 
@@ -356,7 +356,7 @@ module Emoji
   end
 
   def utf8(str)
-    str.force_encoding("UTF-8")
+    str.dup.force_encoding("UTF-8")
   end
 
   def to_utf8(str)
@@ -376,7 +376,7 @@ module Emoji
   end
 
   def utf8_docomo(str)
-    str.force_encoding("UTF8-DoCoMo")
+    str.dup.force_encoding("UTF8-DoCoMo")
   end
 
   def to_utf8_docomo(str)
@@ -384,7 +384,7 @@ module Emoji
   end
 
   def utf8_kddi(str)
-    str.force_encoding("UTF8-KDDI")
+    str.dup.force_encoding("UTF8-KDDI")
   end
 
   def to_utf8_kddi(str)
@@ -392,7 +392,7 @@ module Emoji
   end
 
   def utf8_softbank(str)
-    str.force_encoding("UTF8-SoftBank")
+    str.dup.force_encoding("UTF8-SoftBank")
   end
 
   def to_utf8_softbank(str)
@@ -400,7 +400,7 @@ module Emoji
   end
 
   def sjis_docomo(str)
-    str.force_encoding("SJIS-DoCoMo")
+    str.dup.force_encoding("SJIS-DoCoMo")
   end
 
   def to_sjis_docomo(str)
@@ -408,7 +408,7 @@ module Emoji
   end
 
   def sjis_kddi(str)
-    str.force_encoding("SJIS-KDDI")
+    str.dup.force_encoding("SJIS-KDDI")
   end
 
   def to_sjis_kddi(str)
@@ -416,7 +416,7 @@ module Emoji
   end
 
   def sjis_softbank(str)
-    str.force_encoding("SJIS-SoftBank")
+    str.dup.force_encoding("SJIS-SoftBank")
   end
 
   def to_sjis_softbank(str)
@@ -424,7 +424,7 @@ module Emoji
   end
 
   def iso2022jp_kddi(str)
-    str.force_encoding("ISO-2022-JP-KDDI")
+    str.dup.force_encoding("ISO-2022-JP-KDDI")
   end
 
   def to_iso2022jp_kddi(str)
@@ -432,7 +432,7 @@ module Emoji
   end
 
   def stateless_iso2022jp_kddi(str)
-    str.force_encoding("stateless-ISO-2022-JP-KDDI")
+    str.dup.force_encoding("stateless-ISO-2022-JP-KDDI")
   end
 
   def to_stateless_iso2022jp_kddi(str)

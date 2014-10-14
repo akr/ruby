@@ -540,7 +540,7 @@ EOT
   end
 
   def test_argument_encoding
-    source = "{}".force_encoding("ascii-8bit")
+    source = "{}".dup.force_encoding("ascii-8bit")
     JSON::Parser.new(source)
     assert_equal Encoding::ASCII_8BIT, source.encoding
   end if defined?(Encoding::ASCII_8BIT)

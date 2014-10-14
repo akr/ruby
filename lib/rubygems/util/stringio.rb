@@ -1,6 +1,6 @@
 class Gem::StringSink
   def initialize
-    @string = ""
+    @string = "".dup
   end
 
   attr_reader :string

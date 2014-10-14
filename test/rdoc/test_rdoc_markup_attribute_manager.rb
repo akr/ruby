@@ -46,7 +46,7 @@ class TestRDocMarkupAttributeManager < RDoc::TestCase
 
   def test_adding
     assert_equal(["cat ", @wombat_on, "and", @wombat_off, " dog" ],
-                  @am.flow("cat {and} dog"))
+                  @am.flow("cat {and} dog".dup))
     #assert_equal(["cat {and} dog" ], @am.flow("cat \\{and} dog"))
   end
 
@@ -103,85 +103,85 @@ class TestRDocMarkupAttributeManager < RDoc::TestCase
   end
 
   def test_basic
-    assert_equal(["cat"], @am.flow("cat"))
+    assert_equal(["cat"], @am.flow("cat".dup))
 
     assert_equal(["cat ", @bold_on, "and", @bold_off, " dog"],
-                  @am.flow("cat *and* dog"))
+                  @am.flow("cat *and* dog".dup))
 
     assert_equal(["cat ", @bold_on, "AND", @bold_off, " dog"],
-                  @am.flow("cat *AND* dog"))
+                  @am.flow("cat *AND* dog".dup))
 
     assert_equal(["cat ", @em_on, "And", @em_off, " dog"],
-                  @am.flow("cat _And_ dog"))
+                  @am.flow("cat _And_ dog".dup))
 
-    assert_equal(["cat *and dog*"], @am.flow("cat *and dog*"))
+    assert_equal(["cat *and dog*"], @am.flow("cat *and dog*".dup))
 
-    assert_equal(["*cat and* dog"], @am.flow("*cat and* dog"))
+    assert_equal(["*cat and* dog"], @am.flow("*cat and* dog".dup))
 
     assert_equal(["cat *and ", @bold_on, "dog", @bold_off],
-                  @am.flow("cat *and *dog*"))
+                  @am.flow("cat *and *dog*".dup))
 
     assert_equal(["cat ", @em_on, "and", @em_off, " dog"],
-                  @am.flow("cat _and_ dog"))
+                  @am.flow("cat _and_ dog".dup))
 
     assert_equal(["cat_and_dog"],
-                  @am.flow("cat_and_dog"))
+                  @am.flow("cat_and_dog".dup))
 
     assert_equal(["cat ", @tt_on, "and", @tt_off, " dog"],
-                  @am.flow("cat +and+ dog"))
+                  @am.flow("cat +and+ dog".dup))
 
     assert_equal(["cat ", @tt_on, "X::Y", @tt_off, " dog"],
-                  @am.flow("cat +X::Y+ dog"))
+                  @am.flow("cat +X::Y+ dog".dup))
 
     assert_equal(["cat ", @bold_on, "a_b_c", @bold_off, " dog"],
-                  @am.flow("cat *a_b_c* dog"))
+                  @am.flow("cat *a_b_c* dog".dup))
 
     assert_equal(["cat __ dog"],
-                  @am.flow("cat __ dog"))
+                  @am.flow("cat __ dog".dup))
 
     assert_equal(["cat ", @em_on, "_", @em_off, " dog"],
-                  @am.flow("cat ___ dog"))
+                  @am.flow("cat ___ dog".dup))
   end
 
   def test_bold
     assert_equal [@bold_on, 'bold', @bold_off],
-                 @am.flow("*bold*")
+                 @am.flow("*bold*".dup)
 
     assert_equal [@bold_on, 'Bold:', @bold_off],
-                 @am.flow("*Bold:*")
+                 @am.flow("*Bold:*".dup)
 
     assert_equal [@bold_on, '\\bold', @bold_off],
-                 @am.flow("*\\bold*")
+                 @am.flow("*\\bold*".dup)
   end
 
   def test_bold_html_escaped
-    assert_equal ['cat <b>dog</b>'], @am.flow('cat \<b>dog</b>')
+    assert_equal ['cat <b>dog</b>'], @am.flow('cat \<b>dog</b>'.dup)
   end
 
   def test_combined
     assert_equal(["cat ", @em_on, "and", @em_off, " ", @bold_on, "dog", @bold_off],
-                  @am.flow("cat _and_ *dog*"))
+                  @am.flow("cat _and_ *dog*".dup))
 
     assert_equal(["cat ", @em_on, "a__nd", @em_off, " ", @bold_on, "dog", @bold_off],
-                  @am.flow("cat _a__nd_ *dog*"))
+                  @am.flow("cat _a__nd_ *dog*".dup))
   end
 
   def test_convert_attrs
-    str = '+foo+'
+    str = '+foo+'.dup
     attrs = RDoc::Markup::AttrSpan.new str.length
 
     @am.convert_attrs str, attrs
 
     assert_equal "\000foo\000", str
 
-    str = '+:foo:+'
+    str = '+:foo:+'.dup
     attrs = RDoc::Markup::AttrSpan.new str.length
 
     @am.convert_attrs str, attrs
 
     assert_equal "\000:foo:\000", str
 
-    str = '+x-y+'
+    str = '+x-y+'.dup
     attrs = RDoc::Markup::AttrSpan.new str.length
 
     @am.convert_attrs str, attrs
@@ -190,93 +190,93 @@ class TestRDocMarkupAttributeManager < RDoc::TestCase
   end
 
   def test_convert_attrs_ignores_code
-    assert_equal 'foo <CODE>__send__</CODE> bar', output('foo <code>__send__</code> bar')
+    assert_equal 'foo <CODE>__send__</CODE> bar', output('foo <code>__send__</code> bar'.dup)
   end
 
   def test_convert_attrs_ignores_tt
-    assert_equal 'foo <CODE>__send__</CODE> bar', output('foo <tt>__send__</tt> bar')
+    assert_equal 'foo <CODE>__send__</CODE> bar', output('foo <tt>__send__</tt> bar'.dup)
   end
 
   def test_convert_attrs_preserves_double
-    assert_equal 'foo.__send__ :bar', output('foo.__send__ :bar')
-    assert_equal 'use __FILE__ to', output('use __FILE__ to')
+    assert_equal 'foo.__send__ :bar', output('foo.__send__ :bar'.dup)
+    assert_equal 'use __FILE__ to', output('use __FILE__ to'.dup)
   end
 
   def test_convert_attrs_does_not_ignore_after_tt
-    assert_equal 'the <CODE>IF:</CODE><EM>key</EM> directive', output('the <tt>IF:</tt>_key_ directive')
+    assert_equal 'the <CODE>IF:</CODE><EM>key</EM> directive', output('the <tt>IF:</tt>_key_ directive'.dup)
   end
 
   def test_escapes
-    assert_equal '<CODE>text</CODE>',   output('<tt>text</tt>')
-    assert_equal '<tt>text</tt>',       output('\\<tt>text</tt>')
-    assert_equal '<tt>',                output('\\<tt>')
-    assert_equal '<CODE><tt></CODE>',   output('<tt>\\<tt></tt>')
-    assert_equal '<CODE>\\<tt></CODE>', output('<tt>\\\\<tt></tt>')
-    assert_equal '<B>text</B>',         output('*text*')
-    assert_equal '*text*',              output('\\*text*')
-    assert_equal '\\',                  output('\\')
-    assert_equal '\\text',              output('\\text')
-    assert_equal '\\\\text',            output('\\\\text')
-    assert_equal 'text \\ text',        output('text \\ text')
+    assert_equal '<CODE>text</CODE>',   output('<tt>text</tt>'.dup)
+    assert_equal '<tt>text</tt>',       output('\\<tt>text</tt>'.dup)
+    assert_equal '<tt>',                output('\\<tt>'.dup)
+    assert_equal '<CODE><tt></CODE>',   output('<tt>\\<tt></tt>'.dup)
+    assert_equal '<CODE>\\<tt></CODE>', output('<tt>\\\\<tt></tt>'.dup)
+    assert_equal '<B>text</B>',         output('*text*'.dup)
+    assert_equal '*text*',              output('\\*text*'.dup)
+    assert_equal '\\',                  output('\\'.dup)
+    assert_equal '\\text',              output('\\text'.dup)
+    assert_equal '\\\\text',            output('\\\\text'.dup)
+    assert_equal 'text \\ text',        output('text \\ text'.dup)
 
     assert_equal 'and <CODE>\\s</CODE> matches space',
-                 output('and <tt>\\s</tt> matches space')
+                 output('and <tt>\\s</tt> matches space'.dup)
     assert_equal 'use <CODE><tt>text</CODE></tt> for code',
-                 output('use <tt>\\<tt>text</tt></tt> for code')
+                 output('use <tt>\\<tt>text</tt></tt> for code'.dup)
     assert_equal 'use <CODE><tt>text</tt></CODE> for code',
-                 output('use <tt>\\<tt>text\\</tt></tt> for code')
+                 output('use <tt>\\<tt>text\\</tt></tt> for code'.dup)
     assert_equal 'use <tt><tt>text</tt></tt> for code',
-                 output('use \\<tt>\\<tt>text</tt></tt> for code')
+                 output('use \\<tt>\\<tt>text</tt></tt> for code'.dup)
     assert_equal 'use <tt><CODE>text</CODE></tt> for code',
-                 output('use \\<tt><tt>text</tt></tt> for code')
+                 output('use \\<tt><tt>text</tt></tt> for code'.dup)
     assert_equal 'use <CODE>+text+</CODE> for code',
-                 output('use <tt>\\+text+</tt> for code')
+                 output('use <tt>\\+text+</tt> for code'.dup)
     assert_equal 'use <tt><CODE>text</CODE></tt> for code',
-                 output('use \\<tt>+text+</tt> for code')
+                 output('use \\<tt>+text+</tt> for code'.dup)
     assert_equal 'illegal <tag>not</tag> changed',
-                 output('illegal <tag>not</tag> changed')
+                 output('illegal <tag>not</tag> changed'.dup)
     assert_equal 'unhandled <p>tag</p> unchanged',
-                 output('unhandled <p>tag</p> unchanged')
+                 output('unhandled <p>tag</p> unchanged'.dup)
   end
 
   def test_html_like_em_bold
     assert_equal ["cat ", @em_on, "and ", @em_to_bold, "dog", @bold_off],
-                  @am.flow("cat <i>and </i><b>dog</b>")
+                  @am.flow("cat <i>and </i><b>dog</b>".dup)
   end
 
   def test_html_like_em_bold_SGML
     assert_equal ["cat ", @em_on, "and ", @em_to_bold, "dog", @bold_off],
-                  @am.flow("cat <i>and <b></i>dog</b>")
+                  @am.flow("cat <i>and <b></i>dog</b>".dup)
   end
 
   def test_html_like_em_bold_nested_1
     assert_equal(["cat ", @bold_em_on, "and", @bold_em_off, " dog"],
-                  @am.flow("cat <i><b>and</b></i> dog"))
+                  @am.flow("cat <i><b>and</b></i> dog".dup))
   end
 
   def test_html_like_em_bold_nested_2
     assert_equal ["cat ", @em_on, "and ", @em_then_bold, "dog", @bold_em_off],
-                  @am.flow("cat <i>and <b>dog</b></i>")
+                  @am.flow("cat <i>and <b>dog</b></i>".dup)
   end
 
   def test_html_like_em_bold_nested_mixed_case
     assert_equal ["cat ", @em_on, "and ", @em_then_bold, "dog", @bold_em_off],
-                  @am.flow("cat <i>and <B>dog</B></I>")
+                  @am.flow("cat <i>and <B>dog</B></I>".dup)
   end
 
   def test_html_like_em_bold_mixed_case
     assert_equal ["cat ", @em_on, "and", @em_off, " ", @bold_on, "dog", @bold_off],
-                  @am.flow("cat <i>and</i> <B>dog</b>")
+                  @am.flow("cat <i>and</i> <B>dog</b>".dup)
   end
 
   def test_html_like_teletype
     assert_equal ["cat ", @tt_on, "dog", @tt_off],
-                 @am.flow("cat <tt>dog</Tt>")
+                 @am.flow("cat <tt>dog</Tt>".dup)
   end
 
   def test_html_like_teletype_em_bold_SGML
     assert_equal [@tt_on, "cat", @tt_off, " ", @em_on, "and ", @em_to_bold, "dog", @bold_off],
-                  @am.flow("<tt>cat</tt> <i>and <b></i>dog</b>")
+                  @am.flow("<tt>cat</tt> <i>and <b></i>dog</b>".dup)
   end
 
   def test_initial_html
@@ -295,17 +295,17 @@ class TestRDocMarkupAttributeManager < RDoc::TestCase
     def @am.str()     @str       end
     def @am.str=(str) @str = str end
 
-    @am.str = '<code>foo</code>'
+    @am.str = '<code>foo</code>'.dup
     @am.mask_protected_sequences
 
     assert_equal "<code>foo</code>",       @am.str
 
-    @am.str = '<code>foo\\</code>'
+    @am.str = '<code>foo\\</code>'.dup
     @am.mask_protected_sequences
 
     assert_equal "<code>foo<\x04/code>", @am.str, 'escaped close'
 
-    @am.str = '<code>foo\\\\</code>'
+    @am.str = '<code>foo\\\\</code>'.dup
     @am.mask_protected_sequences
 
     assert_equal "<code>foo\\</code>",     @am.str, 'escaped backslash'
@@ -313,19 +313,19 @@ class TestRDocMarkupAttributeManager < RDoc::TestCase
 
   def test_protect
     assert_equal(['cat \\ dog'],
-                 @am.flow('cat \\ dog'))
+                 @am.flow('cat \\ dog'.dup))
 
     assert_equal(["cat <tt>dog</Tt>"],
-                 @am.flow("cat \\<tt>dog</Tt>"))
+                 @am.flow("cat \\<tt>dog</Tt>".dup))
 
     assert_equal(["cat ", @em_on, "and", @em_off, " <B>dog</b>"],
-                  @am.flow("cat <i>and</i> \\<B>dog</b>"))
+                  @am.flow("cat <i>and</i> \\<B>dog</b>".dup))
 
     assert_equal(["*word* or <b>text</b>"],
-                 @am.flow("\\*word* or \\<b>text</b>"))
+                 @am.flow("\\*word* or \\<b>text</b>".dup))
 
     assert_equal(["_cat_", @em_on, "dog", @em_off],
-                  @am.flow("\\_cat_<i>dog</i>"))
+                  @am.flow("\\_cat_<i>dog</i>".dup))
   end
 
   def test_special
@@ -337,20 +337,20 @@ class TestRDocMarkupAttributeManager < RDoc::TestCase
     # tests.  Unfortunately, the markup engine right now does not actually
     # check whether a cross-reference is valid before flagging it.
     #
-    assert_equal(["cats'"], @am.flow("cats'"))
+    assert_equal(["cats'"], @am.flow("cats'".dup))
 
     assert_equal(["cats' ", crossref("#fred"), " dogs'"].flatten,
-                  @am.flow("cats' #fred dogs'"))
+                  @am.flow("cats' #fred dogs'".dup))
 
     assert_equal([crossref("#fred"), " dogs'"].flatten,
-                  @am.flow("#fred dogs'"))
+                  @am.flow("#fred dogs'".dup))
 
-    assert_equal(["cats' ", crossref("#fred")].flatten, @am.flow("cats' #fred"))
+    assert_equal(["cats' ", crossref("#fred")].flatten, @am.flow("cats' #fred".dup))
   end
 
   def test_tt_html
     assert_equal [@tt_on, '"\n"', @tt_off],
-                 @am.flow('<tt>"\n"</tt>')
+                 @am.flow('<tt>"\n"</tt>'.dup)
   end
 
   def output str

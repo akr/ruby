@@ -335,7 +335,7 @@ class Net::HTTPResponse
     if block
       Net::ReadAdapter.new(block)
     else
-      dest || ''
+      dest || ''.dup
     end
   end
 

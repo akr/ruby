@@ -74,7 +74,7 @@ class TestWEBrickCGI < Test::Unit::TestCase
       }
 
       req = Net::HTTP::Get.new("/webrick.cgi")
-      cookie =  %{$Version="1"; }
+      cookie =  %{$Version="1"; }.dup
       cookie << %{Customer="WILE_E_COYOTE"; $Path="/acme"; }
       cookie << %{Part_Number="Rocket_Launcher_0001"; $Path="/acme"; }
       cookie << %{Shipping="FedEx"; $Path="/acme"}

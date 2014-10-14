@@ -142,7 +142,7 @@ class RDoc::TestCase < MiniTest::Unit::TestCase
   # Enables pretty-print output
 
   def mu_pp obj # :nodoc:
-    s = ''
+    s = ''.dup
     s = PP.pp obj, s
     s = s.force_encoding Encoding.default_external if defined? Encoding
     s.chomp

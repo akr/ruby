@@ -10,7 +10,7 @@ require 'shellwords'
 class String
   # Wraps a string in escaped quotes if it contains whitespace.
   def quote
-    /\s/ =~ self ? "\"#{self}\"" : "#{self}"
+    /\s/ =~ self ? "\"#{self}\"".dup : "#{self}".dup
   end
 
   # Escape whitespaces for Makefile.
@@ -424,8 +424,8 @@ EOM
   end
 
   def create_tmpsrc(src)
-    src = "#{COMMON_HEADERS}\n#{src}"
-    src = yield(src) if block_given?
+    src = "#{COMMON_HEADERS}\n#{src}".dup
+    src = yield(src).dup if block_given?
     src.gsub!(/[ \t]+$/, '')
     src.gsub!(/\A\n+|^\n+$/, '')
     src.sub!(/[^\n]\z/, "\\&\n")
@@ -473,13 +473,13 @@ MSG
                                   'src' => "#{CONFTEST_C}",
                                   'arch_hdrdir' => $arch_hdrdir.quote,
                                   'top_srcdir' => $top_srcdir.quote,
-                                  'INCFLAGS' => "#$INCFLAGS",
-                                  'CPPFLAGS' => "#$CPPFLAGS",
-                                  'CFLAGS' => "#$CFLAGS",
-                                  'ARCH_FLAG' => "#$ARCH_FLAG",
-                                  'LDFLAGS' => "#$LDFLAGS #{ldflags}",
-                                  'LOCAL_LIBS' => "#$LOCAL_LIBS #$libs",
-                                  'LIBS' => "#{librubyarg} #{opt} #$LIBS")
+                                  'INCFLAGS' => "#$INCFLAGS".dup,
+                                  'CPPFLAGS' => "#$CPPFLAGS".dup,
+                                  'CFLAGS' => "#$CFLAGS".dup,
+                                  'ARCH_FLAG' => "#$ARCH_FLAG".dup,
+                                  'LDFLAGS' => "#$LDFLAGS #{ldflags}".dup,
+                                  'LOCAL_LIBS' => "#$LOCAL_LIBS #$libs".dup,
+                                  'LIBS' => "#{librubyarg} #{opt} #$LIBS".dup)
     conf['LIBPATH'] = libpathflag(libpath.map {|s| RbConfig::expand(s.dup, conf)})
     RbConfig::expand(TRY_LINK.dup, conf)
   end
@@ -488,7 +488,7 @@ MSG
     conf = RbConfig::CONFIG.merge('hdrdir' => $hdrdir.quote, 'srcdir' => $srcdir.quote,
                                   'arch_hdrdir' => $arch_hdrdir.quote,
                                   'top_srcdir' => $top_srcdir.quote)
-    RbConfig::expand("$(CC) #$INCFLAGS #$CPPFLAGS #$CFLAGS #$ARCH_FLAG #{opt} -c #{CONFTEST_C}",
+    RbConfig::expand("$(CC) #$INCFLAGS #$CPPFLAGS #$CFLAGS #$ARCH_FLAG #{opt} -c #{CONFTEST_C}".dup,
                      conf)
   end
 
@@ -499,7 +499,7 @@ MSG
     if $universal and (arch_flag = conf['ARCH_FLAG']) and !arch_flag.empty?
       conf['ARCH_FLAG'] = arch_flag.gsub(/(?:\G|\s)-arch\s+\S+/, '')
     end
-    RbConfig::expand("$(CPP) #$INCFLAGS #$CPPFLAGS #$CFLAGS #{opt} #{CONFTEST_C} #{outfile}",
+    RbConfig::expand("$(CPP) #$INCFLAGS #$CPPFLAGS #$CFLAGS #{opt} #{CONFTEST_C} #{outfile}".dup,
                      conf)
   end
 
@@ -915,7 +915,7 @@ SRC
     a = r = nil
     Logging::postpone do
       r = yield
-      a = (fmt ? "#{fmt % r}" : r ? "yes" : "no") << "\n"
+      a = (fmt ? "#{fmt % r}" : r ? "yes" : "no") + "\n"
       "#{f}#{m}-------------------- #{a}\n"
     end
     message(a)
@@ -931,7 +931,7 @@ SRC
             break noun = noun.send(meth, *args)
           end
         end
-        msg << " #{pre} #{noun}" unless noun.empty?
+        msg += " #{pre} #{noun}" unless noun.empty?
       end
       msg
     end
@@ -1264,7 +1264,7 @@ SRC
   end
 
   # :stopdoc:
-  STRING_OR_FAILED_FORMAT = "%s"
+  STRING_OR_FAILED_FORMAT = "%s".dup
   def STRING_OR_FAILED_FORMAT.%(x) # :nodoc:
     x ? super : "failed"
   end
@@ -1792,10 +1792,10 @@ SRC
       end
       libs = get['libs-only-l']
       ldflags = (Shellwords.shellwords(ldflags) - Shellwords.shellwords(libs)).quote.join(" ")
-      $CFLAGS += " " << cflags
-      $CXXFLAGS += " " << cflags
+      $CFLAGS += " " + cflags
+      $CXXFLAGS += " " + cflags
       $LDFLAGS = [orig_ldflags, ldflags].join(' ')
-      $libs += " " << libs
+      $libs += " " + libs
       Logging::message "package configuration for %s\n", pkg
       Logging::message "cflags: %s\nldflags: %s\nlibs: %s\n\n",
                        cflags, ldflags, libs
@@ -2445,7 +2445,7 @@ site-install-rb: install-rb
     $ARCH_FLAG = with_config("arch_flag", arg_config("ARCH_FLAG", config["ARCH_FLAG"])).dup
     $CPPFLAGS = with_config("cppflags", arg_config("CPPFLAGS", config["CPPFLAGS"])).dup
     $LDFLAGS = with_config("ldflags", arg_config("LDFLAGS", config["LDFLAGS"])).dup
-    $INCFLAGS = "-I$(arch_hdrdir)"
+    $INCFLAGS = "-I$(arch_hdrdir)".dup
     $INCFLAGS << " -I$(hdrdir)/ruby/backward" unless $extmk
     $INCFLAGS << " -I$(hdrdir) -I$(srcdir)"
     $DLDFLAGS = with_config("dldflags", arg_config("DLDFLAGS", config["DLDFLAGS"])).dup

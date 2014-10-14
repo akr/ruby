@@ -74,7 +74,7 @@ DELIMITER
        >
       EOF
       doc = REXML::Document.new source
-      doc.write(out="")
+      doc.write(out="".dup)
       assert(out[/>\'>/] != nil, "Couldn't find >'>")
       assert(out[/\]>/] != nil, "Couldn't find ]>")
     end
@@ -138,7 +138,7 @@ DELIMITER
       text = 'test text'
       e = REXML::Element.new('Test')
       e.add_text(text)
-      REXML::Formatters::Default.new.write(e,out="")
+      REXML::Formatters::Default.new.write(e,out="".dup)
 
       doc = REXML::Document.new(out)
       outtext = doc.root.text
@@ -229,10 +229,10 @@ DELIMITER
     end
 
     def test_umlaut
-      koln_iso = "K\xf6ln"
-      koln_utf = "K\xc3\xb6ln"
-      source_iso = "<?xml version='1.0' encoding='ISO-8859-1'?><test>#{koln_iso}</test>"
-      source_utf = "<?xml version='1.0' encoding='UTF-8'?><test>#{koln_utf}</test>"
+      koln_iso = "K\xf6ln".dup
+      koln_utf = "K\xc3\xb6ln".dup
+      source_iso = "<?xml version='1.0' encoding='ISO-8859-1'?><test>#{koln_iso}</test>".dup
+      source_utf = "<?xml version='1.0' encoding='UTF-8'?><test>#{koln_utf}</test>".dup
 
       if String.method_defined? :encode
         koln_iso.force_encoding('iso-8859-1')
@@ -244,10 +244,10 @@ DELIMITER
       doc = REXML::Document.new(source_iso)
       assert_equal('ISO-8859-1', doc.xml_decl.encoding)
       assert_equal(koln_utf, doc.root.text)
-      doc.write(out="")
+      doc.write(out="".dup)
       assert_equal(source_iso, out )
       doc.xml_decl.encoding = 'UTF-8'
-      doc.write(out="")
+      doc.write(out="".dup)
       assert_equal(source_utf, out)
 
       doc = Document.new <<-EOF
@@ -267,19 +267,19 @@ Die Technik ist das R\xFCckgrat der meisten Gesch\xFCftsprozesse bei Home of the
 </intranet>
 EOF
       tn = XPath.first(doc, "//nebenspalte/text()[2]")
-      expected_iso = "N\xFCtzliches von Flashern f\xFCr Flasher."
+      expected_iso = "N\xFCtzliches von Flashern f\xFCr Flasher.".dup
       expected_utf = expected_iso.unpack('C*').pack('U*')
       expected_iso.force_encoding(::Encoding::ISO_8859_1)
       expected_utf.force_encoding(::Encoding::UTF_8)
       assert_equal(expected_utf, tn.to_s.strip)
       f = REXML::Formatters::Default.new
-      f.write( tn, Output.new(o = "", "ISO-8859-1") )
+      f.write( tn, Output.new(o = "".dup, "ISO-8859-1") )
       assert_equal(expected_iso, o.strip)
 
       doc = File.open(fixture_path('xmlfile-bug.xml')) {|file| Document.new file }
       tn = XPath.first(doc, "//nebenspalte/text()[2]")
       assert_equal(expected_utf, tn.to_s.strip)
-      f.write( tn, Output.new(o = "", "ISO-8859-1") )
+      f.write( tn, Output.new(o = "".dup, "ISO-8859-1") )
       assert_equal(expected_iso, o.strip)
     end
 
@@ -475,7 +475,7 @@ EOL
 %extern-common;
 ]>}
       doc = Document.new( src )
-      doc.write( out="" )
+      doc.write( out="".dup )
       src = src.tr('"', "'")
       out = out.tr('"', "'")
       assert_equal( src, out )
@@ -492,12 +492,12 @@ EOL
       f = REXML::Formatters::Default.new
       txt = 'abc&#248;def'
       a = Text.new( txt,false,nil,true )
-      f.write(a,out="")
+      f.write(a,out="".dup)
       assert_equal( txt, out )
 
       txt = '<sean><russell>abc&#248;def</russell></sean>'
       a = Document.new( txt, { :raw => ["russell"] } )
-      f.write(a,out="")
+      f.write(a,out="".dup)
       assert_equal( txt, out )
     end
 
@@ -508,7 +508,7 @@ EOL
       b << c
       a << b
 
-      REXML::Formatters::Pretty.new.write(a,"")
+      REXML::Formatters::Pretty.new.write(a,"".dup)
     end
 
     def test_pos

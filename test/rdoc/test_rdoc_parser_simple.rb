@@ -21,7 +21,7 @@ class TestRDocParserSimple < RDoc::TestCase
   end
 
   def test_initialize_metadata
-    parser = util_parser ":unhandled: \n"
+    parser = util_parser ":unhandled: \n".dup
 
     assert_includes @top_level.metadata, 'unhandled'
 
@@ -29,7 +29,7 @@ class TestRDocParserSimple < RDoc::TestCase
   end
 
   def test_remove_coding_comment
-    parser = util_parser <<-TEXT
+    parser = util_parser <<-TEXT.dup
 # -*- mode: rdoc; coding: utf-8; fill-column: 74; -*-
 
 Regular expressions (<i>regexp</i>s) are patterns which describe the
@@ -72,7 +72,7 @@ contents of a string.
   #   # ---
 
   def test_remove_private_comments
-    parser = util_parser "foo\n\n--\nbar\n++\n\nbaz\n"
+    parser = util_parser "foo\n\n--\nbar\n++\n\nbaz\n".dup
 
     parser.scan
 
@@ -82,7 +82,7 @@ contents of a string.
   end
 
   def test_remove_private_comments_rule
-    parser = util_parser "foo\n---\nbar"
+    parser = util_parser "foo\n---\nbar".dup
 
     parser.scan
 
@@ -92,7 +92,7 @@ contents of a string.
   end
 
   def test_remove_private_comments_star
-    parser = util_parser "* foo\n* bar\n"
+    parser = util_parser "* foo\n* bar\n".dup
 
     parser.scan
 
@@ -100,7 +100,7 @@ contents of a string.
   end
 
   def test_scan
-    parser = util_parser 'it *really* works'
+    parser = util_parser 'it *really* works'.dup
 
     parser.scan
 

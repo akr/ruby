@@ -82,7 +82,7 @@ class TestMarshal < Test::Unit::TestCase
   end
 
   def test_too_long_string
-    data = Marshal.dump(C.new("a".force_encoding("ascii-8bit")))
+    data = Marshal.dump(C.new("a".dup.force_encoding("ascii-8bit")))
     data[-2, 1] = "\003\377\377\377"
     assert_raise_with_message(ArgumentError, "marshal data too short", "[ruby-dev:32054]") {
       Marshal.load(data)
@@ -91,7 +91,7 @@ class TestMarshal < Test::Unit::TestCase
 
 
   def test_userdef_encoding
-    s1 = "\xa4\xa4".force_encoding("euc-jp")
+    s1 = "\xa4\xa4".dup.force_encoding("euc-jp")
     o1 = C.new(s1)
     m = Marshal.dump(o1)
     o2 = Marshal.load(m)
@@ -256,15 +256,15 @@ class TestMarshal < Test::Unit::TestCase
 
   iso_8859_1 = Encoding::ISO_8859_1
 
-  structISO8859_1 = Struct.new("r\xe9sum\xe9".force_encoding(iso_8859_1).intern)
-  const_set("R\xe9sum\xe9".force_encoding(iso_8859_1), structISO8859_1)
+  structISO8859_1 = Struct.new("r\xe9sum\xe9".dup.force_encoding(iso_8859_1).intern)
+  const_set("R\xe9sum\xe9".dup.force_encoding(iso_8859_1), structISO8859_1)
   structISO8859_1.name
   StructISO8859_1 = structISO8859_1
   classISO8859_1 = Class.new do
-    attr_accessor "r\xe9sum\xe9".force_encoding(iso_8859_1)
-    eval("def initialize(x) @r\xe9sum\xe9 = x; end".force_encoding(iso_8859_1))
+    attr_accessor "r\xe9sum\xe9".dup.force_encoding(iso_8859_1)
+    eval("def initialize(x) @r\xe9sum\xe9 = x; end".dup.force_encoding(iso_8859_1))
   end
-  const_set("R\xe9sum\xe92".force_encoding(iso_8859_1), classISO8859_1)
+  const_set("R\xe9sum\xe92".dup.force_encoding(iso_8859_1), classISO8859_1)
   classISO8859_1.name
   ClassISO8859_1 = classISO8859_1
 
@@ -307,8 +307,8 @@ class TestMarshal < Test::Unit::TestCase
     assert_equal(/u/, Marshal.load("\004\bI/\a\\u\000\006:\016@encoding\"\vEUC-JP"))
 
     bug2109 = '[ruby-core:25625]'
-    a = "\x82\xa0".force_encoding(Encoding::Windows_31J)
-    b = "\x82\xa2".force_encoding(Encoding::Windows_31J)
+    a = "\x82\xa0".dup.force_encoding(Encoding::Windows_31J)
+    b = "\x82\xa2".dup.force_encoding(Encoding::Windows_31J)
     c = [/#{a}/, /#{b}/]
     assert_equal(c, Marshal.load(Marshal.dump(c)), bug2109)
 
@@ -366,7 +366,7 @@ class TestMarshal < Test::Unit::TestCase
 
   def test_dump_buffer
     bug2390 = '[ruby-dev:39744]'
-    w = ""
+    w = "".dup
     def w.write(str)
       self << str.to_s
     end
@@ -416,14 +416,14 @@ class TestMarshal < Test::Unit::TestCase
   end
 
   def test_marshal_string_encoding
-    o1 = ["foo".force_encoding("EUC-JP")] + [ "bar" ] * 2
+    o1 = ["foo".dup.force_encoding("EUC-JP")] + [ "bar" ] * 2
     m = Marshal.dump(o1)
     o2 = Marshal.load(m)
     assert_equal(o1, o2, "[ruby-dev:40388]")
   end
 
   def test_marshal_regexp_encoding
-    o1 = [Regexp.new("r1".force_encoding("EUC-JP"))] + ["r2"] * 2
+    o1 = [Regexp.new("r1".dup.force_encoding("EUC-JP"))] + ["r2"] * 2
     m = Marshal.dump(o1)
     o2 = Marshal.load(m)
     assert_equal(o1, o2, "[ruby-dev:40416]")
@@ -438,7 +438,7 @@ class TestMarshal < Test::Unit::TestCase
 
   def test_marshal_symbol_ascii8bit
     bug6209 = '[ruby-core:43762]'
-    o1 = "\xff".force_encoding("ASCII-8BIT").intern
+    o1 = "\xff".dup.force_encoding("ASCII-8BIT").intern
     m = Marshal.dump(o1)
     o2 = nil
     assert_nothing_raised(EncodingError, bug6209) {o2 = Marshal.load(m)}
@@ -552,7 +552,7 @@ class TestMarshal < Test::Unit::TestCase
   end
 
   def test_marshal_dump_ivar
-    s = "data with ivar"
+    s = "data with ivar".dup
     s.instance_variable_set(:@t, 42)
     t = Bug8276.new(s)
     s = Marshal.dump(t)
@@ -560,7 +560,7 @@ class TestMarshal < Test::Unit::TestCase
   end
 
   def test_marshal_load_ivar
-    s = "data with ivar"
+    s = "data with ivar".dup
     s.instance_variable_set(:@t, 42)
     hook = ->(v) {
       if LoadData === v
@@ -603,8 +603,8 @@ class TestMarshal < Test::Unit::TestCase
   end
 
   def test_packed_string
-    packed = ["foo"].pack("p")
-    bare = "".force_encoding(Encoding::ASCII_8BIT) << packed
+    packed = ["foo".dup].pack("p")
+    bare = "".dup.force_encoding(Encoding::ASCII_8BIT) << packed
     assert_equal(Marshal.dump(bare), Marshal.dump(packed))
   end
 

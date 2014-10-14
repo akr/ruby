@@ -228,7 +228,7 @@ module WEBrick
     # Quotes and escapes quotes in +str+
 
     def quote(str)
-      '"' << str.gsub(/[\\\"]/o, "\\\1") << '"'
+      '"'.dup << str.gsub(/[\\\"]/o, "\\\1") << '"'
     end
     module_function :quote
 
@@ -492,7 +492,7 @@ module WEBrick
     # Escapes path +str+
 
     def escape_path(str)
-      result = ""
+      result = "".dup
       str.scan(%r{/([^/]*)}).each{|i|
         result << "/" << _escape(i[0], UNESCAPED_PCHAR)
       }

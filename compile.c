@@ -4253,6 +4253,17 @@ iseq_compile_each(rb_iseq_t *iseq, LINK_ANCHOR *ret, NODE * node, int poped)
 	    break;
 	}
 	/* optimization shortcut
+	 *   "dynamic #{string} literal".freeze.dup -> "dynamic #{string} literal"
+	 */
+	if (node->nd_recv && nd_type(node->nd_recv) == NODE_CALL &&
+	    node->nd_mid == idDup && node->nd_args == NULL &&
+            node->nd_recv->nd_recv && nd_type(node->nd_recv->nd_recv) == NODE_DSTR &&
+	    node->nd_recv->nd_mid == idFreeze && node->nd_recv->nd_args == NULL)
+	{
+	    COMPILE(ret, "recv", node->nd_recv->nd_recv);
+	    break;
+	}
+	/* optimization shortcut
 	 *   obj["literal"] -> opt_aref_with(obj, "literal")
 	 */
 	if (node->nd_mid == idAREF && !private_recv_p(node) && node->nd_args &&

@@ -255,7 +255,7 @@ class TestIO < Test::Unit::TestCase
   def test_each_codepoint
     make_tempfile {|t|
       bug2959 = '[ruby-core:28650]'
-      a = ""
+      a = "".dup
       File.open(t, 'rt') {|f|
         f.each_codepoint {|c| a << c}
       }
@@ -266,7 +266,7 @@ class TestIO < Test::Unit::TestCase
   def test_codepoints
     make_tempfile {|t|
       bug2959 = '[ruby-core:28650]'
-      a = ""
+      a = "".dup
       File.open(t, 'rt') {|f|
         assert_warn(/deprecated/) {
           f.codepoints {|c| a << c}
@@ -862,7 +862,7 @@ class TestIO < Test::Unit::TestCase
     mkcdtmpdir {
       EnvUtil.with_default_internal(Encoding::UTF_8) do
         # StringIO to object with to_path
-        bytes = "\xDE\xAD\xBE\xEF".force_encoding(Encoding::ASCII_8BIT)
+        bytes = "\xDE\xAD\xBE\xEF".dup.force_encoding(Encoding::ASCII_8BIT)
         src = StringIO.new(bytes)
         dst = Object.new
         def dst.to_path
@@ -882,7 +882,7 @@ class TestIO < Test::Unit::TestCase
     mkcdtmpdir {
       EnvUtil.with_default_internal(Encoding::UTF_8) do
         # StringIO to object with to_path
-        bytes = "\xDE\xAD\xBE\xEF".force_encoding(Encoding::ASCII_8BIT)
+        bytes = "\xDE\xAD\xBE\xEF".dup.force_encoding(Encoding::ASCII_8BIT)
         File.binwrite("qux", bytes)
         dst = StringIO.new
         src = Object.new
@@ -1138,14 +1138,14 @@ class TestIO < Test::Unit::TestCase
     end, proc do |r|
       assert_raise(ArgumentError) { r.readpartial(-1) }
       assert_equal("fooba", r.readpartial(5))
-      r.readpartial(5, s = "")
+      r.readpartial(5, s = "".dup)
       assert_equal("rbaz", s)
     end)
   end
 
   def test_readpartial_lock
     with_pipe do |r, w|
-      s = ""
+      s = "".dup
       t = Thread.new { r.readpartial(5, s) }
       Thread.pass until t.stop?
       assert_raise(RuntimeError) { s.clear }
@@ -1171,14 +1171,14 @@ class TestIO < Test::Unit::TestCase
       w.write "foob"
       w.close
     end, proc do |r|
-      r.readpartial(5, s = "01234567")
+      r.readpartial(5, s = "01234567".dup)
       assert_equal("foob", s)
     end)
   end
 
   def test_readpartial_buffer_error
     with_pipe do |r, w|
-      s = ""
+      s = "".dup
       t = Thread.new { r.readpartial(5, s) }
       Thread.pass until t.stop?
       t.kill
@@ -1194,7 +1194,7 @@ class TestIO < Test::Unit::TestCase
     end, proc do |r|
       assert_raise(ArgumentError) { r.read(-1) }
       assert_equal("fooba", r.read(5))
-      r.read(nil, s = "")
+      r.read(nil, s = "".dup)
       assert_equal("rbaz", s)
     end)
   end
@@ -1202,7 +1202,7 @@ class TestIO < Test::Unit::TestCase
   def test_read_lock
     with_pipe do |r, w|
       s = ""
-      t = Thread.new { r.read(5, s) }
+      t = Thread.new { r.read(5, s.dup) }
       Thread.pass until t.stop?
       assert_raise(RuntimeError) { s.clear }
       w.write "foobarbaz"
@@ -1216,14 +1216,14 @@ class TestIO < Test::Unit::TestCase
       w.write "foob"
       w.close
     end, proc do |r|
-      r.read(nil, s = "01234567")
+      r.read(nil, s = "01234567".dup)
       assert_equal("foob", s)
     end)
   end
 
   def test_read_buffer_error
     with_pipe do |r, w|
-      s = ""
+      s = "".dup
       t = Thread.new { r.read(5, s) }
       Thread.pass until t.stop?
       t.kill
@@ -1231,7 +1231,7 @@ class TestIO < Test::Unit::TestCase
       assert_equal("", s)
     end
     with_pipe do |r, w|
-      s = "xxx"
+      s = "xxx".dup
       t = Thread.new {r.read(2, s)}
       Thread.pass until t.stop?
       t.kill
@@ -1255,7 +1255,7 @@ class TestIO < Test::Unit::TestCase
     with_pipe {|r, w|
       w.write "foob"
       w.close
-      r.read_nonblock(5, s = "01234567")
+      r.read_nonblock(5, s = "01234567".dup)
       assert_equal("foob", s)
     }
   end
@@ -1283,7 +1283,7 @@ class TestIO < Test::Unit::TestCase
 
     with_pipe {|r, w|
       begin
-        r.read_nonblock 4096, ""
+        r.read_nonblock 4096, "".dup
       rescue Errno::EWOULDBLOCK
         assert_kind_of(IO::WaitReadable, $!)
       end
@@ -1306,14 +1306,14 @@ class TestIO < Test::Unit::TestCase
     return if !have_nonblock?
     skip "IO#read_nonblock is not supported on file/pipe." if /mswin|bccwin|mingw/ =~ RUBY_PLATFORM
     with_pipe {|r, w|
-      assert_equal :wait_readable, r.read_nonblock(4096, "", exception: false)
+      assert_equal :wait_readable, r.read_nonblock(4096, "".dup, exception: false)
       w.puts "HI!"
-      buf = "buf"
+      buf = "buf".dup
       value = r.read_nonblock(4096, buf, exception: false)
       assert_equal value, "HI!\n"
       assert_same(buf, value)
       w.close
-      assert_equal nil, r.read_nonblock(4096, "", exception: false)
+      assert_equal nil, r.read_nonblock(4096, "".dup, exception: false)
     }
   end
 
@@ -1846,7 +1846,7 @@ class TestIO < Test::Unit::TestCase
       w.write "foob"
       w.close
     end, proc do |r|
-      r.sysread( 5, s = "01234567" )
+      r.sysread( 5, s = "01234567".dup )
       assert_equal( "foob", s )
     end)
   end
@@ -2093,7 +2093,7 @@ End
         f.reopen(t.path, "r:UTF-8:EUC-JP")
         s = f.gets
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xB9\xC8\xB6\xCCbar\n".force_encoding(Encoding::EUC_JP), s)
+        assert_equal("\xB9\xC8\xB6\xCCbar\n".dup.force_encoding(Encoding::EUC_JP), s)
       }
     }
   end
@@ -2112,7 +2112,7 @@ End
         assert_nothing_raised(feature7103) {f.reopen(t.path, encoding: "UTF-8:EUC-JP")}
         s = f.gets
         assert_equal(Encoding::EUC_JP, s.encoding)
-        assert_equal("\xB9\xC8\xB6\xCCbar\n".force_encoding(Encoding::EUC_JP), s)
+        assert_equal("\xB9\xC8\xB6\xCCbar\n".dup.force_encoding(Encoding::EUC_JP), s)
       }
     }
   end
@@ -2710,7 +2710,7 @@ End
       File.binwrite(path, "BAR")
       assert_equal("BAR", File.read(path))
       File.binwrite(path, "\u{3042}")
-      assert_equal("\u{3042}".force_encoding("ASCII-8BIT"), File.binread(path))
+      assert_equal("\u{3042}".dup.force_encoding("ASCII-8BIT"), File.binread(path))
       File.delete path
       assert_equal(6, File.binwrite(path, 'string', 2))
       File.delete path
@@ -2792,13 +2792,13 @@ End
 
     assert_nothing_raised do
       File.open('/dev/urandom'){|f1|
-        entropy_count = ""
+        entropy_count = "".dup
         # RNDGETENTCNT(0x80045200) mean "get entropy count".
         f1.ioctl(0x80045200, entropy_count)
       }
     end
 
-    buf = ''
+    buf = ''.dup
     assert_nothing_raised do
       fionread = 0x541B
       File.open(__FILE__){|f1|
@@ -2815,7 +2815,7 @@ End
     return unless system('tty', '-s') # stdin is not a terminal
     File.open('/dev/tty') { |f|
       tiocgwinsz=0x5413
-      winsize=""
+      winsize="".dup
       assert_nothing_raised {
         f.ioctl(tiocgwinsz, winsize)
       }
@@ -2856,7 +2856,7 @@ End
       }
       File.open("tmp.txt", "rb") {|f|
         f.pos = File.size("tmp.txt")
-        s = "not empty string        "
+        s = "not empty string        ".dup
         assert_equal("", f.read(0,s))
       }
     }
@@ -2954,7 +2954,7 @@ End
     t.close
     w = []
     assert_nothing_raised(RuntimeError, bug6764) do
-      buf = ''
+      buf = ''.dup
       File.open(t.path, "r") do |r|
         while yield(r, size, buf)
           w << buf.dup
@@ -3088,7 +3088,7 @@ End
   def test_read_unlocktmp_ensure
     bug8669 = '[ruby-core:56121] [Bug #8669]'
 
-    str = ""
+    str = "".dup
     IO.pipe {|r,|
       t = Thread.new { r.read(nil, str) }
       sleep 0.1 until t.stop?
@@ -3102,7 +3102,7 @@ End
   def test_readpartial_unlocktmp_ensure
     bug8669 = '[ruby-core:56121] [Bug #8669]'
 
-    str = ""
+    str = "".dup
     IO.pipe {|r, w|
       t = Thread.new { r.readpartial(4096, str) }
       sleep 0.1 until t.stop?
@@ -3116,7 +3116,7 @@ End
   def test_sysread_unlocktmp_ensure
     bug8669 = '[ruby-core:56121] [Bug #8669]'
 
-    str = ""
+    str = "".dup
     IO.pipe {|r, w|
       t = Thread.new { r.sysread(4096, str) }
       sleep 0.1 until t.stop?

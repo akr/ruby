@@ -176,7 +176,7 @@ module REXML
     end
 
     def inspect
-      rv = ""
+      rv = "".dup
       write( rv )
       rv
     end

@@ -356,7 +356,7 @@ class TestSDBM < Test::Unit::TestCase
     assert_equal('foo', @sdbm.delete(key) {|k| k.replace 'called block'; :blockval})
     assert_equal(0, @sdbm.size)
 
-    key = 'no called block'
+    key = 'no called block'.dup
     assert_equal(:blockval, @sdbm.delete(key) {|k| k.replace 'called block'; :blockval})
     assert_equal(0, @sdbm.size)
   end

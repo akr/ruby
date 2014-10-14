@@ -20,22 +20,22 @@ EOT
 
   def test_substr
     assert_str_equal(
-      "abcdefgh".force_encoding("utf-32le"),
-      "abcdefgh".force_encoding("utf-32le")[0,3])
+      "abcdefgh".dup.force_encoding("utf-32le"),
+      "abcdefgh".dup.force_encoding("utf-32le")[0,3])
     assert_str_equal(
-      "abcdefgh".force_encoding("utf-32be"),
-      "abcdefgh".force_encoding("utf-32be")[0,3])
+      "abcdefgh".dup.force_encoding("utf-32be"),
+      "abcdefgh".dup.force_encoding("utf-32be")[0,3])
   end
 
   def test_mbc_len
-    al = "abcdefghijkl".force_encoding("utf-32le").each_char.to_a
-    ab = "abcdefghijkl".force_encoding("utf-32be").each_char.to_a
-    assert_equal("abcd".force_encoding("utf-32le"), al.shift)
-    assert_equal("efgh".force_encoding("utf-32le"), al.shift)
-    assert_equal("ijkl".force_encoding("utf-32le"), al.shift)
-    assert_equal("abcd".force_encoding("utf-32be"), ab.shift)
-    assert_equal("efgh".force_encoding("utf-32be"), ab.shift)
-    assert_equal("ijkl".force_encoding("utf-32be"), ab.shift)
+    al = "abcdefghijkl".dup.force_encoding("utf-32le").each_char.to_a
+    ab = "abcdefghijkl".dup.force_encoding("utf-32be").each_char.to_a
+    assert_equal("abcd".dup.force_encoding("utf-32le"), al.shift)
+    assert_equal("efgh".dup.force_encoding("utf-32le"), al.shift)
+    assert_equal("ijkl".dup.force_encoding("utf-32le"), al.shift)
+    assert_equal("abcd".dup.force_encoding("utf-32be"), ab.shift)
+    assert_equal("efgh".dup.force_encoding("utf-32be"), ab.shift)
+    assert_equal("ijkl".dup.force_encoding("utf-32be"), ab.shift)
   end
 
   def ascii_to_utf16le(s)
@@ -57,15 +57,15 @@ EOT
     assert_equal(ascii_to_utf16be("bar\n"), ab.shift)
     assert_equal(ascii_to_utf16be("baz\n"), ab.shift)
 
-    sl = "a\0".force_encoding("utf-32le")
-    sb = "a\0".force_encoding("utf-32be")
+    sl = "a\0".dup.force_encoding("utf-32le")
+    sb = "a\0".dup.force_encoding("utf-32be")
     assert_equal(sl, sl.chomp)
     assert_equal(sb, sb.chomp)
   end
 
   def test_mbc_to_code
-    sl = "a\0\0\0".force_encoding("utf-32le")
-    sb = "\0\0\0a".force_encoding("utf-32be")
+    sl = "a\0\0\0".dup.force_encoding("utf-32le")
+    sb = "\0\0\0a".dup.force_encoding("utf-32be")
     assert_equal("a".ord, sl.ord)
     assert_equal("a".ord, sb.ord)
   end
@@ -84,8 +84,8 @@ EOT
   end
 
   def test_code_to_mbc
-    sl = "a\0\0\0".force_encoding("utf-32le")
-    sb = "\0\0\0a".force_encoding("utf-32be")
+    sl = "a\0\0\0".dup.force_encoding("utf-32le")
+    sb = "\0\0\0a".dup.force_encoding("utf-32be")
     assert_equal(sl, "a".ord.chr("utf-32le"))
     assert_equal(sb, "a".ord.chr("utf-32be"))
   end

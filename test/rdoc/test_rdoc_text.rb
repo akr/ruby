@@ -61,7 +61,7 @@ class TestRDocText < RDoc::TestCase
   def test_expand_tabs_encoding
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    inn = "hello\ns\tdave"
+    inn = "hello\ns\tdave".dup
     inn.force_encoding Encoding::BINARY
 
     out = expand_tabs inn
@@ -91,7 +91,7 @@ The comments associated with
   def test_flush_left_encoding
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    text = <<-TEXT
+    text = <<-TEXT.dup
 
   we don't worry too much.
 
@@ -301,7 +301,7 @@ paragraph will be cut off …
   def test_strip_hashes_encoding
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    text = <<-TEXT
+    text = <<-TEXT.dup
 ##
 # we don't worry too much.
 #
@@ -338,7 +338,7 @@ paragraph will be cut off …
 
     assert_equal Encoding::UTF_8, ''.encoding, 'Encoding sanity check'
 
-    text = " \n"
+    text = " \n".dup
     text.force_encoding Encoding::US_ASCII
 
     stripped = strip_newlines text
@@ -387,7 +387,7 @@ paragraph will be cut off …
   def test_strip_stars_encoding
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    text = <<-TEXT
+    text = <<-TEXT.dup
 /*
  * * we don't worry too much.
  *
@@ -413,7 +413,7 @@ paragraph will be cut off …
   def test_strip_stars_encoding2
     skip "Encoding not implemented" unless Object.const_defined? :Encoding
 
-    text = <<-TEXT
+    text = <<-TEXT.dup
 /*
  * * we don't worry too much.
  *

@@ -503,7 +503,7 @@ class TestSprintfComb < Test::Unit::TestCase
         else
           result = emu_f(sp, hs, pl, mi, zr, width, precision-1-e, type, sign, int, exp)
         end
-        result.sub!(/\.[0-9]*/) { $&.sub(/\.?0*\z/, '') } if !hs
+        result = result.sub(/\.[0-9]*/) { $&.sub(/\.?0*\z/, '') } if !hs
       else
         raise "unexpected type: #{type}"
       end

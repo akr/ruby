@@ -97,7 +97,7 @@ EOR
     def test_category20
       values = [nil, CATEGORY_DOMAIN]
       values.each do |value|
-        domain = ""
+        domain = "".dup
         domain << %Q[domain="#{value}"] if value
 
         ["", "Example Text"].each do |text|

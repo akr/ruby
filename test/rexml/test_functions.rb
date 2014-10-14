@@ -10,7 +10,7 @@ module REXMLTests
       # confuse-a-function
       source = "<a>more <b id='1'/><b id='2'>dumb</b><b id='3'/><c/> text</a>"
       doc = Document.new source
-      res = ""
+      res = "".dup
       XPath::each(doc.root, "text()") {|val| res << val.to_s}
       assert_equal "more  text", res
 

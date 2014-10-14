@@ -9,7 +9,7 @@ class TestRDocRubyLex < RDoc::TestCase
   end
 
   def test_class_tokenize
-    tokens = RDoc::RubyLex.tokenize "def x() end", nil
+    tokens = RDoc::RubyLex.tokenize "def x() end".dup, nil
 
     expected = [
       @TK::TkDEF       .new( 0, 1,  0, "def"),
@@ -26,7 +26,7 @@ class TestRDocRubyLex < RDoc::TestCase
   end
 
   def test_class_tokenize___END__
-    tokens = RDoc::RubyLex.tokenize '__END__', nil
+    tokens = RDoc::RubyLex.tokenize '__END__'.dup, nil
 
     expected = [
       @TK::TkEND_OF_SCRIPT.new(0, 1, 0, '__END__'),
@@ -37,7 +37,7 @@ class TestRDocRubyLex < RDoc::TestCase
   end
 
   def test_class_tokenize_character_literal
-    tokens = RDoc::RubyLex.tokenize "?\\", nil
+    tokens = RDoc::RubyLex.tokenize "?\\".dup, nil
 
     expected = [
       @TK::TkCHAR.new( 0, 1,  0, "?\\"),
@@ -74,7 +74,7 @@ end
   end
 
   def test_class_tokenize_hash_symbol
-    tokens = RDoc::RubyLex.tokenize '{ class:"foo" }', nil
+    tokens = RDoc::RubyLex.tokenize '{ class:"foo" }'.dup, nil
 
     expected = [
       @TK::TkLBRACE    .new( 0, 1,  0, '{'),
@@ -187,7 +187,7 @@ U
   end
 
   def test_class_tokenize_identifier_high_unicode
-    tokens = RDoc::RubyLex.tokenize '𝖒', nil
+    tokens = RDoc::RubyLex.tokenize '𝖒'.dup, nil
 
     expected = @TK::TkIDENTIFIER.new(0, 1, 0, '𝖒')
 
@@ -195,7 +195,7 @@ U
   end
 
   def test_class_tokenize_percent_1
-    tokens = RDoc::RubyLex.tokenize 'v%10==10', nil
+    tokens = RDoc::RubyLex.tokenize 'v%10==10'.dup, nil
 
     expected = [
       @TK::TkIDENTIFIER.new(0, 1, 0, 'v'),
@@ -210,7 +210,7 @@ U
   end
 
   def test_class_tokenize_percent_r
-    tokens = RDoc::RubyLex.tokenize '%r[hi]', nil
+    tokens = RDoc::RubyLex.tokenize '%r[hi]'.dup, nil
 
     expected = [
       @TK::TkREGEXP.new( 0, 1,  0, '%r[hi]'),
@@ -221,7 +221,7 @@ U
   end
 
   def test_class_tokenize_percent_w
-    tokens = RDoc::RubyLex.tokenize '%w[hi]', nil
+    tokens = RDoc::RubyLex.tokenize '%w[hi]'.dup, nil
 
     expected = [
       @TK::TkDSTRING.new( 0, 1,  0, '%w[hi]'),
@@ -232,7 +232,7 @@ U
   end
 
   def test_class_tokenize_percent_w_quote
-    tokens = RDoc::RubyLex.tokenize '%w"hi"', nil
+    tokens = RDoc::RubyLex.tokenize '%w"hi"'.dup, nil
 
     expected = [
       @TK::TkDSTRING.new( 0, 1,  0, '%w"hi"'),
@@ -243,7 +243,7 @@ U
   end
 
   def test_class_tokenize_regexp
-    tokens = RDoc::RubyLex.tokenize "/hay/", nil
+    tokens = RDoc::RubyLex.tokenize "/hay/".dup, nil
 
     expected = [
       @TK::TkREGEXP.new( 0, 1,  0, "/hay/"),
@@ -254,7 +254,7 @@ U
   end
 
   def test_class_tokenize_regexp_options
-    tokens = RDoc::RubyLex.tokenize "/hAY/i", nil
+    tokens = RDoc::RubyLex.tokenize "/hAY/i".dup, nil
 
     expected = [
       @TK::TkREGEXP.new( 0, 1,  0, "/hAY/i"),
@@ -263,7 +263,7 @@ U
 
     assert_equal expected, tokens
 
-    tokens = RDoc::RubyLex.tokenize "/hAY/ix", nil
+    tokens = RDoc::RubyLex.tokenize "/hAY/ix".dup, nil
 
     expected = [
       @TK::TkREGEXP.new( 0, 1,  0, "/hAY/ix"),
@@ -274,7 +274,7 @@ U
   end
 
   def test_class_tokenize_regexp_backref
-    tokens = RDoc::RubyLex.tokenize "/[csh](..) [csh]\\1 in/", nil
+    tokens = RDoc::RubyLex.tokenize "/[csh](..) [csh]\\1 in/".dup, nil
 
     expected = [
       @TK::TkREGEXP.new( 0, 1,  0, "/[csh](..) [csh]\\1 in/"),
@@ -285,7 +285,7 @@ U
   end
 
   def test_class_tokenize_regexp_escape
-    tokens = RDoc::RubyLex.tokenize "/\\//", nil
+    tokens = RDoc::RubyLex.tokenize "/\\//".dup, nil
 
     expected = [
       @TK::TkREGEXP.new( 0, 1,  0, "/\\//"),
@@ -296,7 +296,7 @@ U
   end
 
   def test_class_tokenize_string
-    tokens = RDoc::RubyLex.tokenize "'hi'", nil
+    tokens = RDoc::RubyLex.tokenize "'hi'".dup, nil
 
     expected = [
       @TK::TkSTRING.new( 0, 1,  0, "'hi'"),
@@ -307,84 +307,84 @@ U
   end
 
   def test_class_tokenize_string_escape
-    tokens = RDoc::RubyLex.tokenize '"\\n"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\n"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\n\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\r"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\r"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\r\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\f"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\f"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\f\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\\\"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\\\"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\\\\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\t"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\t"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\t\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\v"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\v"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\v\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\a"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\a"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\a\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\e"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\e"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\e\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\b"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\b"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\b\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\s"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\s"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\s\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\d"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\d"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\d\""), tokens.first
 
   end
 
   def test_class_tokenize_string_escape_control
-    tokens = RDoc::RubyLex.tokenize '"\\C-a"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\C-a"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\C-a\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\c\\a"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\c\\a"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\c\\a\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\C-\\M-a"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\C-\\M-a"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\C-\\M-a\""), tokens.first
   end
 
   def test_class_tokenize_string_escape_meta
-    tokens = RDoc::RubyLex.tokenize '"\\M-a"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\M-a"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\M-a\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\M-\\C-a"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\M-\\C-a"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\M-\\C-a\""), tokens.first
   end
 
   def test_class_tokenize_string_escape_hexadecimal
-    tokens = RDoc::RubyLex.tokenize '"\\x0"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\x0"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\x0\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\x00"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\x00"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\x00\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\x000"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\x000"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\x000\""), tokens.first
   end
 
   def test_class_tokenize_string_escape_octal
-    tokens = RDoc::RubyLex.tokenize '"\\0"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\0"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\0\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\00"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\00"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\00\""), tokens.first
 
-    tokens = RDoc::RubyLex.tokenize '"\\000"', nil
+    tokens = RDoc::RubyLex.tokenize '"\\000"'.dup, nil
     assert_equal @TK::TkSTRING.new( 0, 1,  0, "\"\\000\""), tokens.first
   end
 
   def test_class_tokenize_symbol
-    tokens = RDoc::RubyLex.tokenize 'scope module: :v1', nil
+    tokens = RDoc::RubyLex.tokenize 'scope module: :v1'.dup, nil
 
     expected = [
       @TK::TkIDENTIFIER.new( 0, 1,  0, 'scope'),
@@ -401,18 +401,18 @@ U
   end
 
   def test_unary_minus
-    ruby_lex = RDoc::RubyLex.new("-1", nil)
+    ruby_lex = RDoc::RubyLex.new("-1".dup, nil)
     assert_equal("-1", ruby_lex.token.value)
 
-    ruby_lex = RDoc::RubyLex.new("a[-2]", nil)
+    ruby_lex = RDoc::RubyLex.new("a[-2]".dup, nil)
     2.times { ruby_lex.token } # skip "a" and "["
     assert_equal("-2", ruby_lex.token.value)
 
-    ruby_lex = RDoc::RubyLex.new("a[0..-12]", nil)
+    ruby_lex = RDoc::RubyLex.new("a[0..-12]".dup, nil)
     4.times { ruby_lex.token } # skip "a", "[", "0", and ".."
     assert_equal("-12", ruby_lex.token.value)
 
-    ruby_lex = RDoc::RubyLex.new("0+-0.1", nil)
+    ruby_lex = RDoc::RubyLex.new("0+-0.1".dup, nil)
     2.times { ruby_lex.token } # skip "0" and "+"
     assert_equal("-0.1", ruby_lex.token.value)
   end

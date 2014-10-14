@@ -481,7 +481,7 @@ class TestFileExhaustive < Test::Unit::TestCase
     else
       [["cp437", a], ["cp932", a]]
     end.each do |cp, expected|
-      assert_equal(expected.force_encoding(cp), File.expand_path(a.dup.force_encoding(cp)), cp)
+      assert_equal(expected.dup.force_encoding(cp), File.expand_path(a.dup.force_encoding(cp)), cp)
     end
 
     path = "\u3042\u3044\u3046\u3048\u304a".encode("EUC-JP")
@@ -671,21 +671,21 @@ class TestFileExhaustive < Test::Unit::TestCase
 
   def test_expand_path_returns_tainted_strings_or_not
     assert_equal(true, File.expand_path('foo').tainted?)
-    assert_equal(true, File.expand_path('foo'.taint).tainted?)
-    assert_equal(true, File.expand_path('/foo'.taint).tainted?)
+    assert_equal(true, File.expand_path('foo'.dup.taint).tainted?)
+    assert_equal(true, File.expand_path('/foo'.dup.taint).tainted?)
     assert_equal(true, File.expand_path('foo', 'bar').tainted?)
-    assert_equal(true, File.expand_path('foo', '/bar'.taint).tainted?)
-    assert_equal(true, File.expand_path('foo'.taint, '/bar').tainted?)
+    assert_equal(true, File.expand_path('foo', '/bar'.dup.taint).tainted?)
+    assert_equal(true, File.expand_path('foo'.dup.taint, '/bar').tainted?)
     assert_equal(true, File.expand_path('~').tainted?) if ENV["HOME"]
 
     if DRIVE
       assert_equal(true, File.expand_path('/foo').tainted?)
       assert_equal(false, File.expand_path('//foo').tainted?)
-      assert_equal(true, File.expand_path('C:/foo'.taint).tainted?)
+      assert_equal(true, File.expand_path('C:/foo'.dup.taint).tainted?)
       assert_equal(false, File.expand_path('C:/foo').tainted?)
       assert_equal(true, File.expand_path('foo', '/bar').tainted?)
-      assert_equal(true, File.expand_path('foo', 'C:/bar'.taint).tainted?)
-      assert_equal(true, File.expand_path('foo'.taint, 'C:/bar').tainted?)
+      assert_equal(true, File.expand_path('foo', 'C:/bar'.dup.taint).tainted?)
+      assert_equal(true, File.expand_path('foo'.dup.taint, 'C:/bar').tainted?)
       assert_equal(false, File.expand_path('foo', 'C:/bar').tainted?)
       assert_equal(false, File.expand_path('C:/foo/../bar').tainted?)
       assert_equal(false, File.expand_path('foo', '//bar').tainted?)
@@ -817,11 +817,11 @@ class TestFileExhaustive < Test::Unit::TestCase
     assert_incompatible_encoding {|d| File.basename(d, ".*")}
     assert_raise(Encoding::CompatibilityError) {File.basename("foo.ext", ".*".encode("utf-16le"))}
 
-    s = "foo\x93_a".force_encoding("cp932")
+    s = "foo\x93_a".dup.force_encoding("cp932")
     assert_equal(s, File.basename(s, "_a"))
 
     s = "\u4032.\u3024"
-    assert_equal(s, File.basename(s, ".\x95\\".force_encoding("cp932")))
+    assert_equal(s, File.basename(s, ".\x95\\".dup.force_encoding("cp932")))
   end
 
   def test_dirname

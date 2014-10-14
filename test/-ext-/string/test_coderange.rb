@@ -13,17 +13,17 @@ class Test_StringCoderange < Test::Unit::TestCase
 
   def test_ascii8bit
     enc = @a8
-    str = "a"
+    str = "a".dup
     str.force_encoding(enc)
     assert_equal :"7bit", Bug::String.new(str).coderange_scan
 
-    str = "a\xBE".force_encoding(enc)
+    str = "a\xBE".dup.force_encoding(enc)
     assert_equal :valid, Bug::String.new(str).coderange_scan
   end
 
   def test_usascii
     enc = @a7
-    str = "a"
+    str = "a".dup
     str.force_encoding(enc)
     assert_equal :"7bit", Bug::String.new(str).coderange_scan
 
@@ -35,7 +35,7 @@ class Test_StringCoderange < Test::Unit::TestCase
 
   def test_utf8
     enc = @u8
-    str = "a"
+    str = "a".dup
     str.force_encoding(enc)
     assert_equal :"7bit", Bug::String.new(str).coderange_scan
 
