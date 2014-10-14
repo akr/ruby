@@ -284,7 +284,7 @@ module Test
         faildesc = proc do
           if signo = status.termsig
             signame = Signal.signame(signo)
-            sigdesc = "signal #{signo}"
+            sigdesc = "signal #{signo}".dup
           end
           log = EnvUtil.diagnostic_reports(signame, EnvUtil.rubybin, pid, now)
           if signame
@@ -293,7 +293,7 @@ module Test
           if status.coredump?
             sigdesc << " (core dumped)"
           end
-          full_message = ''
+          full_message = ''.dup
           if message and !message.empty?
             full_message << message << "\n"
           end

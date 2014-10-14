@@ -52,7 +52,6 @@ module OpenSSL
         begin
           parse_config_lines(io)
         rescue ConfigError => e
-          p e.message
           e.message.replace("error in line #{io.lineno}: " + e.message)
           raise
         end
@@ -84,7 +83,7 @@ module OpenSSL
               section = $1.strip
               data[section] ||= {}
             else
-              raise ConfigError, "missing close square bracket"
+              raise ConfigError, "missing close square bracket".dup
             end
           else
             if /\A([^:\s]*)(?:::([^:\s]*))?\s*=(.*)\z/ =~ definition
@@ -97,7 +96,7 @@ module OpenSSL
               value = unescape_value(data, section, $3)
               (data[section] ||= {})[key] = value.strip
             else
-              raise ConfigError, "missing equal sign"
+              raise ConfigError, "missing equal sign".dup
             end
           end
         end
@@ -149,7 +148,7 @@ module OpenSSL
             if v = get_key_string(data, refsec, ref)
               scanned << v
             else
-              raise ConfigError, "variable has no value"
+              raise ConfigError, "variable has no value".dup
             end
           else
             raise 'must not reaced'
@@ -165,7 +164,7 @@ module OpenSSL
           value = m[1] || m[2]
           rest = m.post_match
         elsif [?(, ?{].include?(value[0])
-          raise ConfigError, "no close brace"
+          raise ConfigError, "no close brace".dup
         end
         if m = value.match(/[a-zA-Z0-9_]*(?:::[a-zA-Z0-9_]*)?/)
           return m[0], m.post_match + rest
