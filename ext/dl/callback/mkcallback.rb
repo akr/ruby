@@ -128,7 +128,7 @@ def gencallback(ty, calltype, proc_entry, argc, n)
   else
     args = (0...argc).collect{|i| "DLSTACK_TYPE stack#{i}"}.join(", ")
   end
-  src = <<-EOS
+  src = <<-EOS.dup
 #{calltype == STDCALL ? "\n#ifdef FUNC_STDCALL" : ""}
 static #{dltype[:type]}
 FUNC_#{calltype.upcase}(#{func_name(ty,argc,n,calltype)})(#{args})
@@ -170,7 +170,7 @@ end
 def gen_callback_file(ty)
   filename = "#{$output}-#{ty}.c"
   initname = "rb_dl_init_callbacks_#{ty}"
-  body = <<-EOS
+  body = <<-EOS.dup
 #include "dl.h"
 
 extern VALUE rb_DLCdeclCallbackAddrs, rb_DLCdeclCallbackProcs;
