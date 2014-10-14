@@ -511,7 +511,7 @@ end
 # when a board is found we "draw it" into a string and then flip that string, adding both to
 # the list (hash) of solutions if they are unique.
 def add_board
-  board_string = "99999999999999999999999999999999999999999999999999"
+  board_string = "99999999999999999999999999999999999999999999999999".dup
   @all_pieces.each {  | piece | piece.fill_string( board_string ) }
   save( board_string)
   save( board_string.reverse)

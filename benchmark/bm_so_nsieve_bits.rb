@@ -13,7 +13,7 @@ LowMask = BitsPerChar - 1
 
 def sieve(m)
   items = "\xFF" * ((m / BitsPerChar) + 1)
-  masks = ""
+  masks = "".dup
   BitsPerChar.times do |b|
     masks << (1 << b).chr
   end
