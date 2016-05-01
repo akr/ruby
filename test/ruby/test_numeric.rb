@@ -1,11 +1,12 @@
 # frozen_string_literal: false
 require 'test/unit'
+require '-test-/bignum'
 
 class TestNumeric < Test::Unit::TestCase
   def test_coerce
     a, b = 1.coerce(2)
-    assert_equal(Fixnum, a.class)
-    assert_equal(Fixnum, b.class)
+    assert_fixnum(a)
+    assert_fixnum(b)
 
     a, b = 1.coerce(2.0)
     assert_equal(Float, a.class)
@@ -28,7 +29,7 @@ class TestNumeric < Test::Unit::TestCase
     assert_raise_with_message(TypeError, /:"\\u3042"/) {1^:"\u{3042}"}
 
     bug10711 = '[ruby-core:67405] [Bug #10711]'
-    exp = "1.2 can't be coerced into Fixnum"
+    exp = "1.2 can't be coerced into Integer"
     assert_raise_with_message(TypeError, exp, bug10711) { 1 & 1.2 }
   end
 
@@ -253,7 +254,7 @@ class TestNumeric < Test::Unit::TestCase
 
   def test_step
     i, bignum = 32, 1 << 30
-    bignum <<= (i <<= 1) - 32 until bignum.is_a?(Bignum)
+    bignum <<= (i <<= 1) - 32 until bignum.bignum?
     assert_raise(ArgumentError) { 1.step(10, 1, 0) { } }
     assert_raise(ArgumentError) { 1.step(10, 1, 0).size }
     assert_raise(ArgumentError) { 1.step(10, 0) { } }

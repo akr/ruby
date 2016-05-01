@@ -217,11 +217,11 @@ positive_int_p(VALUE num)
     const ID mid = '>';
 
     if (FIXNUM_P(num)) {
-	if (method_basic_p(rb_cFixnum))
+	if (method_basic_p(rb_cInteger))
 	    return FIXNUM_POSITIVE_P(num);
     }
     else if (RB_TYPE_P(num, T_BIGNUM)) {
-	if (method_basic_p(rb_cBignum))
+	if (method_basic_p(rb_cInteger))
 	    return BIGNUM_POSITIVE_P(num);
     }
     return RTEST(compare_with_zero(num, mid));
@@ -233,11 +233,11 @@ negative_int_p(VALUE num)
     const ID mid = '<';
 
     if (FIXNUM_P(num)) {
-	if (method_basic_p(rb_cFixnum))
+	if (method_basic_p(rb_cInteger))
 	    return FIXNUM_NEGATIVE_P(num);
     }
     else if (RB_TYPE_P(num, T_BIGNUM)) {
-	if (method_basic_p(rb_cBignum))
+	if (method_basic_p(rb_cInteger))
 	    return BIGNUM_NEGATIVE_P(num);
     }
     return RTEST(compare_with_zero(num, mid));
@@ -710,11 +710,11 @@ num_positive_p(VALUE num)
     const ID mid = '>';
 
     if (FIXNUM_P(num)) {
-	if (method_basic_p(rb_cFixnum))
+	if (method_basic_p(rb_cInteger))
 	    return (SIGNED_VALUE)num > (SIGNED_VALUE)INT2FIX(0) ? Qtrue : Qfalse;
     }
     else if (RB_TYPE_P(num, T_BIGNUM)) {
-	if (method_basic_p(rb_cBignum))
+	if (method_basic_p(rb_cInteger))
 	    return BIGNUM_POSITIVE_P(num) && !rb_bigzero_p(num) ? Qtrue : Qfalse;
     }
     return compare_with_zero(num, mid);
@@ -2321,11 +2321,11 @@ num_step_negative_p(VALUE num)
     VALUE r;
 
     if (FIXNUM_P(num)) {
-	if (method_basic_p(rb_cFixnum))
+	if (method_basic_p(rb_cInteger))
 	    return (SIGNED_VALUE)num < 0;
     }
     else if (RB_TYPE_P(num, T_BIGNUM)) {
-	if (method_basic_p(rb_cBignum))
+	if (method_basic_p(rb_cInteger))
 	    return BIGNUM_NEGATIVE_P(num);
     }
     r = rb_rescue(num_step_compare_with_zero, num, coerce_rescue_quiet, Qnil);
@@ -2950,13 +2950,6 @@ int_even_p(VALUE num)
  *     1.succ      #=> 2
  *     (-1).succ   #=> 0
  */
-
-static VALUE
-fix_succ(VALUE num)
-{
-    long i = FIX2LONG(num) + 1;
-    return LONG2NUM(i);
-}
 
 VALUE
 rb_int_succ(VALUE num)
@@ -4961,6 +4954,7 @@ Init_Numeric(void)
     rb_define_method(rb_cInteger, "abs", int_abs, 0);
     rb_define_method(rb_cInteger, "magnitude", int_abs, 0);
 
+    rb_define_method(rb_cInteger, "===", int_equal, 1);
     rb_define_method(rb_cInteger, "==", int_equal, 1);
     rb_define_method(rb_cInteger, ">", int_gt, 1);
     rb_define_method(rb_cInteger, ">=", int_ge, 1);
@@ -4979,22 +4973,8 @@ Init_Numeric(void)
     rb_define_method(rb_cInteger, "size", int_size, 0);
     rb_define_method(rb_cInteger, "bit_length", rb_int_bit_length, 0);
 
-    rb_cFixnum = rb_define_class("Fixnum", rb_cInteger);
-
-    rb_define_method(rb_cFixnum, "+", fix_plus, 1);
-    rb_define_method(rb_cFixnum, "-", fix_minus, 1);
-    rb_define_method(rb_cFixnum, "*", fix_mul, 1);
-    rb_define_method(rb_cFixnum, "/", fix_div, 1);
-    rb_define_method(rb_cFixnum, "%", fix_mod, 1);
-
-    rb_define_method(rb_cFixnum, "==", fix_equal, 1);
-    rb_define_method(rb_cFixnum, "===", fix_equal, 1);
-    rb_define_method(rb_cFixnum, ">",  fix_gt, 1);
-    rb_define_method(rb_cFixnum, ">=", fix_ge, 1);
-    rb_define_method(rb_cFixnum, "<",  fix_lt, 1);
-    rb_define_method(rb_cFixnum, "<=", fix_le, 1);
-
-    rb_define_method(rb_cFixnum, "succ", fix_succ, 0);
+    rb_cFixnum = rb_cInteger;
+    rb_define_const(rb_cObject, "Fixnum", rb_cInteger);
 
     rb_cFloat  = rb_define_class("Float", rb_cNumeric);
 

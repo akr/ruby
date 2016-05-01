@@ -5,14 +5,14 @@ require 'objspace'
 class TestRubyOptimization < Test::Unit::TestCase
 
   BIGNUM_POS_MIN_32 = 1073741824      # 2 ** 30
-  if BIGNUM_POS_MIN_32.kind_of?(Fixnum)
+  if BIGNUM_POS_MIN_32.fixnum?
     FIXNUM_MAX = 4611686018427387903  # 2 ** 62 - 1
   else
     FIXNUM_MAX = 1073741823           # 2 ** 30 - 1
   end
 
   BIGNUM_NEG_MAX_32 = -1073741825     # -2 ** 30 - 1
-  if BIGNUM_NEG_MAX_32.kind_of?(Fixnum)
+  if BIGNUM_NEG_MAX_32.fixnum?
     FIXNUM_MIN = -4611686018427387904 # -2 ** 62
   else
     FIXNUM_MIN = -1073741824          # -2 ** 30
@@ -37,35 +37,35 @@ class TestRubyOptimization < Test::Unit::TestCase
   def test_fixnum_plus
     a, b = 1, 2
     assert_equal 3, a + b
-    assert_instance_of Fixnum, FIXNUM_MAX
-    assert_instance_of Bignum, FIXNUM_MAX + 1
+    assert_fixnum FIXNUM_MAX
+    assert_bignum FIXNUM_MAX + 1
 
     assert_equal 21, 10 + 11
-    assert_redefine_method('Fixnum', '+', 'assert_equal 11, 10 + 11')
+    assert_redefine_method('Integer', '+', 'assert_equal 11, 10 + 11')
   end
 
   def test_fixnum_minus
     assert_equal 5, 8 - 3
-    assert_instance_of Fixnum, FIXNUM_MIN
-    assert_instance_of Bignum, FIXNUM_MIN - 1
+    assert_fixnum FIXNUM_MIN
+    assert_bignum FIXNUM_MIN - 1
 
     assert_equal 5, 8 - 3
-    assert_redefine_method('Fixnum', '-', 'assert_equal 3, 8 - 3')
+    assert_redefine_method('Integer', '-', 'assert_equal 3, 8 - 3')
   end
 
   def test_fixnum_mul
     assert_equal 15, 3 * 5
-    assert_redefine_method('Fixnum', '*', 'assert_equal 5, 3 * 5')
+    assert_redefine_method('Integer', '*', 'assert_equal 5, 3 * 5')
   end
 
   def test_fixnum_div
     assert_equal 3, 15 / 5
-    assert_redefine_method('Fixnum', '/', 'assert_equal 5, 15 / 5')
+    assert_redefine_method('Integer', '/', 'assert_equal 5, 15 / 5')
   end
 
   def test_fixnum_mod
     assert_equal 1, 8 % 7
-    assert_redefine_method('Fixnum', '%', 'assert_equal 7, 8 % 7')
+    assert_redefine_method('Integer', '%', 'assert_equal 7, 8 % 7')
   end
 
   def test_float_plus
@@ -392,7 +392,7 @@ class TestRubyOptimization < Test::Unit::TestCase
     end
     assert_equal :nomatch, eval("foo = :blah\n#{code}")
     check.each do |foo, _|
-      klass = foo.class.to_s
+      klass = foo.method(:===).owner.to_s
       assert_separately([], <<-"end;") # do
         class #{klass}
           undef ===

@@ -1,6 +1,7 @@
 # frozen_string_literal: false
 require 'minitest/unit'
 require 'pp'
+require '-test-/bignum'
 
 module Test
   module Unit
@@ -769,6 +770,16 @@ eom
           raise MiniTest::Assertion, msg
         end
         values
+      end
+
+      def assert_fixnum(v, msg=nil)
+        assert_instance_of(Integer, v, msg)
+        assert_predicate(v, :fixnum?, msg)
+      end
+
+      def assert_bignum(v, msg=nil)
+        assert_instance_of(Integer, v, msg)
+        assert_predicate(v, :bignum?, msg)
       end
 
       class << (AssertFile = Struct.new(:failure_message).new)

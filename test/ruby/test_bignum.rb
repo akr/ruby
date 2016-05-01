@@ -1,17 +1,16 @@
 # frozen_string_literal: false
 require 'test/unit'
+require "rbconfig/sizeof"
+require "-test-/bignum"
 
 class TestBignum < Test::Unit::TestCase
-  b = 2**64
-  b *= b until Bignum === b
+  FIXNUM_MIN = Integer::FIXNUM_MIN
+  FIXNUM_MAX = Integer::FIXNUM_MAX
 
-  f = b
-  while Bignum === f-1
-    f >>= 1
-  end
-  BIGNUM_MIN = f
-  FIXNUM_MAX = f-1
+  BIGNUM_MIN = FIXNUM_MAX + 1
+  b = BIGNUM_MIN
 
+  f = BIGNUM_MIN
   n = 0
   until f == 0
     f >>= 1
@@ -19,17 +18,17 @@ class TestBignum < Test::Unit::TestCase
   end
   BIGNUM_MIN_BITS = n
 
-  T_ZERO = b.coerce(0).first
-  T_ONE  = b.coerce(1).first
-  T_MONE = b.coerce(-1).first
-  T31  = b.coerce(2**31).first   # 2147483648
-  T31P = b.coerce(T31 - 1).first # 2147483647
-  T32  = b.coerce(2**32).first   # 4294967296
-  T32P = b.coerce(T32 - 1).first # 4294967295
-  T64  = b.coerce(2**64).first   # 18446744073709551616
-  T64P = b.coerce(T64 - 1).first # 18446744073709551615
-  T1024  = b.coerce(2**1024).first
-  T1024P = b.coerce(T1024 - 1).first
+  T_ZERO = b.big_coerce(0).first
+  T_ONE  = b.big_coerce(1).first
+  T_MONE = b.big_coerce(-1).first
+  T31  = b.big_coerce(2**31).first   # 2147483648
+  T31P = b.big_coerce(T31 - 1).first # 2147483647
+  T32  = b.big_coerce(2**32).first   # 4294967296
+  T32P = b.big_coerce(T32 - 1).first # 4294967295
+  T64  = b.big_coerce(2**64).first   # 18446744073709551616
+  T64P = b.big_coerce(T64 - 1).first # 18446744073709551615
+  T1024  = b.big_coerce(2**1024).first
+  T1024P = b.big_coerce(T1024 - 1).first
 
   def setup
     @verbose = $VERBOSE
@@ -54,18 +53,18 @@ class TestBignum < Test::Unit::TestCase
   end
 
   def test_prepare
-    assert_instance_of(Bignum, @big)
-    assert_instance_of(Bignum, T_ZERO)
-    assert_instance_of(Bignum, T_ONE)
-    assert_instance_of(Bignum, T_MONE)
-    assert_instance_of(Bignum, T31)
-    assert_instance_of(Bignum, T31P)
-    assert_instance_of(Bignum, T32)
-    assert_instance_of(Bignum, T32P)
-    assert_instance_of(Bignum, T64)
-    assert_instance_of(Bignum, T64P)
-    assert_instance_of(Bignum, T1024)
-    assert_instance_of(Bignum, T1024P)
+    assert_bignum(@big)
+    assert_bignum(T_ZERO)
+    assert_bignum(T_ONE)
+    assert_bignum(T_MONE)
+    assert_bignum(T31)
+    assert_bignum(T31P)
+    assert_bignum(T32)
+    assert_bignum(T32P)
+    assert_bignum(T64)
+    assert_bignum(T64P)
+    assert_bignum(T1024)
+    assert_bignum(T1024P)
   end
 
   def test_bignum
@@ -472,7 +471,7 @@ class TestBignum < Test::Unit::TestCase
     assert_raise(TypeError, ArgumentError) { T32**"foo" }
 
     feature3429 = '[ruby-core:30735]'
-    assert_instance_of(Bignum, (2 ** 7830457), feature3429)
+    assert_bignum((2 ** 7830457), feature3429)
   end
 
   def test_and
@@ -605,7 +604,7 @@ class TestBignum < Test::Unit::TestCase
   end
 
   def test_interrupt_during_to_s
-    if defined?(Bignum::GMP_VERSION)
+    if defined?(Integer::GMP_VERSION)
       return # GMP doesn't support interrupt during an operation.
     end
     time = Time.now
@@ -626,7 +625,7 @@ class TestBignum < Test::Unit::TestCase
   end
 
   def test_interrupt_during_bigdivrem
-    if defined?(Bignum::GMP_VERSION)
+    if defined?(Integer::GMP_VERSION)
       return # GMP doesn't support interrupt during an operation.
     end
     return unless Process.respond_to?(:kill)
@@ -659,7 +658,7 @@ class TestBignum < Test::Unit::TestCase
   end
 
   def test_too_big_to_s
-    if (big = 2**31-1).is_a?(Fixnum)
+    if (big = 2**31-1).fixnum?
       return
     end
     assert_raise_with_message(RangeError, /too big to convert/) {(1 << big).to_s}
